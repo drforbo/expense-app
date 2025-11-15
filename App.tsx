@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
+import ConnectBankScreen from './screens/ConnectBankScreen';
 
 interface UserProfile {
   contentType: string;
@@ -16,26 +17,26 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [hasBank, setHasBank] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        checkForProfile(session.user.id);
+        checkUserStatus(session.user.id);
       } else {
         setLoading(false);
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        checkForProfile(session.user.id);
+        checkUserStatus(session.user.id);
       } else {
         setHasProfile(false);
+        setHasBank(false);
         setLoading(false);
       }
     });
@@ -43,7 +44,7 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkForProfile = async (userId: string) => {
+  const checkUserStatus = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -52,6 +53,7 @@ export default function App() {
 
     if (data) {
       setHasProfile(true);
+      setHasBank(!!data.plaid_access_token);
       setUserProfile({
         contentType: data.content_type,
         typicalProducts: data.typical_products,
@@ -80,9 +82,7 @@ export default function App() {
         }
       ]);
 
-    if (error) {
-      console.error('Error saving profile:', error);
-    } else {
+    if (!error) {
       setHasProfile(true);
       setUserProfile(profile);
     }
@@ -106,15 +106,20 @@ export default function App() {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
-  // Signed in with profile
+  // Has profile but no bank connected
+  if (!hasBank) {
+    return <ConnectBankScreen userId={session.user.id} />;
+  }
+
+  // Fully set up
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>✅ Welcome back!</Text>
+      <Text style={styles.text}>✅ All Set!</Text>
       <Text style={styles.subtext}>
         {session.user.email}
       </Text>
       <Text style={styles.subtext}>
-        Content Type: {userProfile?.contentType}
+        Bank connected • Ready to categorize expenses
       </Text>
     </View>
   );
@@ -143,5 +148,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     marginBottom: 4,
+    textAlign: 'center',
   },
 });
