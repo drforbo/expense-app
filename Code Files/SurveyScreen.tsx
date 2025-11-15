@@ -34,27 +34,30 @@ export default function SurveyScreen() {
       id: 'businessPercent',
       question: 'Business use percentage?',
       options: [
-        { label: '100%', value: 100 },
-        { label: '75%', value: 75 },
-        { label: '50%', value: 50 },
-        { label: '25%', value: 25 },
+        { label: '100%', value: 100, emoji: '' },
+        { label: '75%', value: 75, emoji: '' },
+        { label: '50%', value: 50, emoji: '' },
+        { label: '25%', value: 25, emoji: '' },
       ],
     },
+
+    //This is kind of the same as above - needs to be cleaner
     {
       id: 'usedInContent',
       question: 'Will you use this in a video or content?',
       options: [
-        { label: 'Yes', value: true },
-        { label: 'No', value: false },
-        { label: 'Maybe', value: null },
+        { label: 'Yes', value: true, emoji: '' },
+        { label: 'No', value: false, emoji: '' },
+        { label: 'Maybe', value: null, emoji: '' },
       ],
     },
+    //Why this question
     {
       id: 'recurring',
       question: 'Is this a one-off or recurring?',
       options: [
-        { label: 'One-off', value: false },
-        { label: 'Recurring', value: true },
+        { label: 'One-off', value: false, emoji: '' },
+        { label: 'Recurring', value: true, emoji: '' },
       ],
     },
   ];
