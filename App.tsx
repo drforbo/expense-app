@@ -2,13 +2,21 @@ import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import OnboardingScreen from './screens/OnboardingScreen';
 
+interface UserProfile {
+  contentType: string;
+  typicalProducts: string;
+  creationMethod: string[];
+  toolsUsed: string[];
+  businessStructure: string;
+}
+
 export default function App() {
-  const [userProfile, setUserProfile] = useState(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   if (!userProfile) {
     return (
       <OnboardingScreen 
-        onComplete={(profile) => {
+        onComplete={(profile: UserProfile) => {
           setUserProfile(profile);
           console.log('User profile:', profile);
         }}
@@ -16,7 +24,6 @@ export default function App() {
     );
   }
 
-  // After onboarding is complete
   return (
     <View style={styles.container}>
       <Text style={styles.text}>✅ Onboarding Complete!</Text>
