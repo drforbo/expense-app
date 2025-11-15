@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 export default function ConnectBankScreen({ userId }: { userId: string }) {
-  const [linkToken, setLinkToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const createLinkToken = async () => {
+  const testServerConnection = async () => {
     setLoading(true);
     try {
+      console.log('Testing connection to:', process.env.EXPO_PUBLIC_API_URL);
+      
       const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/create_link_token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -16,10 +17,16 @@ export default function ConnectBankScreen({ userId }: { userId: string }) {
       });
 
       const data = await response.json();
-      setLinkToken(data.link_token);
-    } catch (error) {
+      console.log('Server response:', data);
+      
+      if (data.link_token) {
+        Alert.alert('Success!', 'Server connection works!\n\nLink token received.');
+      } else {
+        Alert.alert('Error', 'No link token received');
+      }
+    } catch (error: any) {
       console.error('Error:', error);
-      Alert.alert('Error', 'Failed to initialize bank connection');
+      Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -29,61 +36,18 @@ export default function ConnectBankScreen({ userId }: { userId: string }) {
     <View style={styles.container}>
       <Text style={styles.title}>Connect Your Bank</Text>
       <Text style={styles.subtitle}>
-        Link your bank account to automatically track expenses
+        Testing server connection
       </Text>
 
-      {linkToken ? (
-        <PlaidLink
-          tokenConfig={{
-            token: linkToken,
-          }}
-          onSuccess={async (success) => {
-            console.log('Plaid success:', success);
-            
-            // Exchange public token for access token
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/exchange_public_token`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                public_token: success.publicToken,
-                userId: userId,
-              }),
-            });
-
-            const data = await response.json();
-            console.log('Access token:', data.access_token);
-
-            // Save to Supabase
-            const { error } = await supabase
-              .from('users')
-              .update({ plaid_access_token: data.access_token })
-              .eq('id', userId);
-
-            if (error) {
-              console.error('Error saving token:', error);
-            } else {
-              Alert.alert('Success!', 'Bank connected successfully');
-            }
-          }}
-          onExit={(exit) => {
-            console.log('Plaid exit:', exit);
-          }}
-        >
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Open Bank Connection</Text>
-          </TouchableOpacity>
-        </PlaidLink>
-      ) : (
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={createLinkToken}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Loading...' : 'Connect Bank Account'}
-          </Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={testServerConnection}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Testing...' : 'Test Server Connection'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
