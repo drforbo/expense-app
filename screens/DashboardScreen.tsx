@@ -51,6 +51,54 @@ export default function DashboardScreen({ userId }: { userId: string }) {
     }
   };
 
+  const testAICategorization = async () => {
+    if (transactions.length === 0) {
+      alert('Sync transactions first!');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      // Get user profile
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      // Test with first transaction
+      const testTransaction = transactions[0];
+      
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/categorize_transaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction: testTransaction,
+          userProfile: {
+            contentType: userData.content_type,
+            typicalProducts: userData.typical_products,
+            creationMethod: userData.creation_method,
+            toolsUsed: userData.tools_used,
+            businessStructure: userData.business_structure,
+          },
+          userAnswers: {
+            wasForContent: 'yes', // Dummy answer for testing
+          },
+        }),
+      });
+
+      const result = await response.json();
+      console.log('AI Result:', result);
+      
+      alert(`AI Categorization:\n\n${result.category}\n${result.businessPercent}% business\n\n${result.reasoning}`);
+    } catch (error: any) {
+      console.error('Error:', error);
+      alert('AI test failed: ' + error.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
@@ -65,15 +113,32 @@ export default function DashboardScreen({ userId }: { userId: string }) {
         </Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: '#10b981' }, syncing && styles.buttonDisabled]}
+        onPress={testAICategorization}
+        disabled={syncing}
+      >
+        <Text style={styles.buttonText}>
+          {syncing ? 'Testing...' : 'Test AI on First Transaction'}
+        </Text>
+      </TouchableOpacity>
+
       <ScrollView style={styles.list}>
         {transactions.map((tx, index) => (
-          <View key={index} style={styles.transaction}>
+          <TouchableOpacity 
+            key={index} 
+            style={styles.transaction}
+            onPress={() => {
+              // Navigate to survey for this transaction
+              console.log('Categorize:', tx);
+            }}
+          >
             <View>
               <Text style={styles.merchant}>{tx.merchant_name || tx.name}</Text>
               <Text style={styles.date}>{tx.date}</Text>
             </View>
             <Text style={styles.amount}>£{Math.abs(tx.amount).toFixed(2)}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -97,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   buttonDisabled: {
     backgroundColor: '#d1d5db',
@@ -109,6 +174,7 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    marginTop: 8,
   },
   transaction: {
     backgroundColor: 'white',

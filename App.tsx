@@ -112,5 +112,33 @@ if (!hasBank) {
   return <ConnectBankScreen userId={session.user.id} onConnected={() => checkUserStatus(session.user.id)} />;
 }
 
- // Fully set up
+// Fully set up
 return <DashboardScreen userId={session.user.id} />;
+}
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  text: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  subtext: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+});
