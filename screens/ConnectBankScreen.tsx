@@ -2,27 +2,39 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
 
-export default function ConnectBankScreen({ userId }: { userId: string }) {
+export default function ConnectBankScreen({ userId, onConnected }: { userId: string; onConnected: () => void }) {
   const [loading, setLoading] = useState(false);
 
-  const testServerConnection = async () => {
+  const connectSandboxBank = async () => {
     setLoading(true);
     try {
-      console.log('Testing connection to:', process.env.EXPO_PUBLIC_API_URL);
+      console.log('Connecting sandbox bank...');
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/create_link_token`, {
+      // Create sandbox access token
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/create_sandbox_token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
 
       const data = await response.json();
-      console.log('Server response:', data);
+      console.log('Got access token');
       
-      if (data.link_token) {
-        Alert.alert('Success!', 'Server connection works!\n\nLink token received.');
-      } else {
-        Alert.alert('Error', 'No link token received');
+      if (data.access_token) {
+        // Save to database
+        const { error } = await supabase
+          .from('users')
+          .update({ plaid_access_token: data.access_token })
+          .eq('id', userId);
+
+        if (error) {
+          console.error('Error saving token:', error);
+          Alert.alert('Error', 'Failed to save bank connection');
+        } else {
+          Alert.alert('Success!', 'Test bank connected!\n\n(Using Plaid Sandbox)', [
+            { text: 'OK', onPress: onConnected }
+          ]);
+        }
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -36,16 +48,16 @@ export default function ConnectBankScreen({ userId }: { userId: string }) {
     <View style={styles.container}>
       <Text style={styles.title}>Connect Your Bank</Text>
       <Text style={styles.subtitle}>
-        Testing server connection
+        For testing, we'll connect a sandbox bank account
       </Text>
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={testServerConnection}
+        onPress={connectSandboxBank}
         disabled={loading}
       >
         <Text style={styles.buttonText}>
-          {loading ? 'Testing...' : 'Test Server Connection'}
+          {loading ? 'Connecting...' : 'Connect Test Bank (Sandbox)'}
         </Text>
       </TouchableOpacity>
     </View>

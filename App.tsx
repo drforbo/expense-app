@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import ConnectBankScreen from './screens/ConnectBankScreen';
+import DashboardScreen from './screens/DashboardScreen';
 
 interface UserProfile {
   contentType: string;
@@ -106,48 +107,10 @@ export default function App() {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
-  // Has profile but no bank connected
-  if (!hasBank) {
-    return <ConnectBankScreen userId={session.user.id} />;
-  }
-
-  // Fully set up
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>✅ All Set!</Text>
-      <Text style={styles.subtext}>
-        {session.user.email}
-      </Text>
-      <Text style={styles.subtext}>
-        Bank connected • Ready to categorize expenses
-      </Text>
-    </View>
-  );
+ // Has profile but no bank connected
+if (!hasBank) {
+  return <ConnectBankScreen userId={session.user.id} onConnected={() => checkUserStatus(session.user.id)} />;
 }
 
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  subtext: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-});
+ // Fully set up
+return <DashboardScreen userId={session.user.id} />;
