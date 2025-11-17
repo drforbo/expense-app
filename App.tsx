@@ -5,6 +5,7 @@ import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import ConnectBankScreen from './screens/ConnectBankScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import UserTypeScreen from './screens/UserTypeScreen';
 
 interface UserProfile {
   contentType: string;
