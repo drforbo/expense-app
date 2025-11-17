@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 export default function DashboardScreen({ userId }: { userId: string }) {
@@ -27,7 +27,7 @@ export default function DashboardScreen({ userId }: { userId: string }) {
         .single();
 
       if (!userData?.plaid_access_token) {
-        alert('No bank connected');
+        Alert.alert('No bank connected');
         return;
       }
 
@@ -42,10 +42,10 @@ export default function DashboardScreen({ userId }: { userId: string }) {
       console.log('Transactions:', data.transactions);
       setTransactions(data.transactions);
       
-      alert(`Found ${data.count} transactions!`);
+      Alert.alert(`Found ${data.count} transactions!`);
     } catch (error: any) {
       console.error('Error:', error);
-      alert('Failed to sync transactions');
+      Alert.alert('Failed to sync transactions');
     } finally {
       setSyncing(false);
     }
@@ -53,7 +53,7 @@ export default function DashboardScreen({ userId }: { userId: string }) {
 
   const testAICategorization = async () => {
     if (transactions.length === 0) {
-      alert('Sync transactions first!');
+      Alert.alert('Sync transactions first!');
       return;
     }
 
@@ -90,10 +90,10 @@ export default function DashboardScreen({ userId }: { userId: string }) {
       const result = await response.json();
       console.log('AI Result:', result);
       
-      alert(`AI Categorization:\n\n${result.category}\n${result.businessPercent}% business\n\n${result.reasoning}`);
+      Alert.alert(`AI Categorization:\n\n${result.category}\n${result.businessPercent}% business\n\n${result.reasoning}`);
     } catch (error: any) {
       console.error('Error:', error);
-      alert('AI test failed: ' + error.message);
+      Alert.alert('AI test failed: ' + error.message);
     } finally {
       setSyncing(false);
     }

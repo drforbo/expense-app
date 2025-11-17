@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import { supabase } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -21,6 +22,13 @@ export default function App() {
   const [hasProfile, setHasProfile] = useState(false);
   const [hasBank, setHasBank] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Load fonts
+  let [fontsLoaded] = useFonts({
+    'Montserrat': Montserrat_700Bold,
+    'Montserrat-Regular': Montserrat_400Regular,
+    'Montserrat-SemiBold': Montserrat_600SemiBold,
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -90,10 +98,11 @@ export default function App() {
     }
   };
 
-  if (loading) {
+  // Show loading while fonts or data are loading
+  if (!fontsLoaded || loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color="#F64B42" />
       </View>
     );
   }
@@ -108,13 +117,13 @@ export default function App() {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
- // Has profile but no bank connected
-if (!hasBank) {
-  return <ConnectBankScreen userId={session.user.id} onConnected={() => checkUserStatus(session.user.id)} />;
-}
+  // Has profile but no bank connected
+  if (!hasBank) {
+    return <ConnectBankScreen userId={session.user.id} onConnected={() => checkUserStatus(session.user.id)} />;
+  }
 
-// Fully set up
-return <DashboardScreen userId={session.user.id} />;
+  // Fully set up
+  return <DashboardScreen userId={session.user.id} />;
 }
 
 const styles = StyleSheet.create({
@@ -122,7 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F6F6F5',
   },
   container: {
     flex: 1,
