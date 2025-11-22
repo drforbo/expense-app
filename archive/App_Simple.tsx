@@ -10,7 +10,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 
 // Import your onboarding flow
-import { OnboardingFlow } from './screens/onboarding/OnboardingFlow';
+import OnboardingFlow from '../screens/onboarding/OnboardingFlow';
 
 // Keep splash screen visible while we load fonts
 SplashScreen.preventAutoHideAsync();
@@ -32,9 +32,15 @@ export default function App() {
   }, [fontsLoaded, fontError]);
 
   const handleOnboardingComplete = (data: any) => {
-    console.log('Onboarding completed!', data);
-    // TODO: Navigate to dashboard or next screen
-    // TODO: Save onboarding data
+    console.log('✅ Onboarding completed!', data);
+    console.log('User type:', data.userType);
+    console.log('Employment:', data.employment);
+    console.log('Income:', data.income);
+    console.log('Bank connected:', data.bankConnected);
+    console.log('Plan:', data.plan);
+    
+    // TODO: Save to Supabase
+    // TODO: Navigate to Dashboard
   };
 
   // Don't render anything until fonts are loaded

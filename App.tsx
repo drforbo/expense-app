@@ -18,7 +18,9 @@ interface OnboardingData {
   workType: string;
   customWorkType?: string;
   timeCommitment: string;
-  incomeRange: string;
+  monthlyIncome: number;              
+  receivesGiftedItems: boolean;       
+  hasInternationalIncome: boolean;    
   trackingGoal: string;
 }
 
@@ -160,20 +162,30 @@ export default function App() {
                 <View style={styles.summaryItem}>
                   <Ionicons name="cash" size={20} color="#FF6B6B" />
                   <Text style={styles.summaryText}>
-                    {onboardingData.incomeRange === '0-500' && 'Under £500/month'}
-                    {onboardingData.incomeRange === '500-2000' && '£500-£2,000/month'}
-                    {onboardingData.incomeRange === '2000-5000' && '£2,000-£5,000/month'}
-                    {onboardingData.incomeRange === '5000+' && 'Over £5,000/month'}
+                    £{onboardingData.monthlyIncome.toLocaleString()}/month
+                  </Text>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Ionicons name="gift" size={20} color="#FF6B6B" />
+                  <Text style={styles.summaryText}>
+                    {onboardingData.receivesGiftedItems ? 'Receives gifted items' : 'No gifted items'}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Ionicons name="globe" size={20} color="#FF6B6B" />
+                  <Text style={styles.summaryText}>
+                    {onboardingData.hasInternationalIncome ? 'International income' : 'UK only'}
                   </Text>
                 </View>
 
                 <View style={styles.summaryItem}>
                   <Ionicons name="flag" size={20} color="#FF6B6B" />
                   <Text style={styles.summaryText}>
-                    {onboardingData.trackingGoal === 'compliance' && 'Stay HMRC compliant'}
-                    {onboardingData.trackingGoal === 'deductions' && 'Maximize deductions'}
-                    {onboardingData.trackingGoal === 'understanding' && 'Understand finances'}
-                    {onboardingData.trackingGoal === 'tax_prep' && 'Make tax season easier'}
+                    {onboardingData.trackingGoal === 'compliance' && 'Sole trader'}
+                    {onboardingData.trackingGoal === 'deductions' && 'Limited company'}
+                    {onboardingData.trackingGoal === 'tax_prep' && 'Not yet registered'}
                   </Text>
                 </View>
               </View>

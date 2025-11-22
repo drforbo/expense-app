@@ -174,16 +174,16 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
 
         <View style={styles.featuresContainer}>
           <Feature 
-            text="Your complete tax to-do list" 
+            text="Your personal tax to-do list" 
             emoji="✅"
           />
           <Feature 
-            text="Track expenses that save you money" 
-            emoji="💰"
+            text="Feel on top of taxes" 
+            emoji="🏆"
           />
           <Feature 
-            text="Export for your accountant (or DIY it)" 
-            emoji="📤"
+            text="Track expenses in your sleep" 
+            emoji="🔥"
           />
         </View>
 

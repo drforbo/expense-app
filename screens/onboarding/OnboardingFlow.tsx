@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,10 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
 
@@ -24,11 +26,13 @@ interface OnboardingData {
   workType: string;
   customWorkType?: string;
   timeCommitment: string;
-  incomeRange: string;
+  monthlyIncome: number;
+  receivesGiftedItems: boolean;
+  hasInternationalIncome: boolean;
   trackingGoal: string;
 }
 
-type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal';
+type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal' | 'personalizedGuide';
 
 export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowProps) {
   const [currentScreen, setCurrentScreen] = useState<Screen>('workType');
@@ -38,8 +42,18 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
   const [customWorkType, setCustomWorkType] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [timeCommitment, setTimeCommitment] = useState<string>('');
-  const [incomeRange, setIncomeRange] = useState<string>('');
   const [trackingGoal, setTrackingGoal] = useState<string>('');
+  
+  // Income question states
+  const [incomeQuestionIndex, setIncomeQuestionIndex] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(1000);
+  const [receivesGiftedItems, setReceivesGiftedItems] = useState<boolean | null>(null);
+  const [hasInternationalIncome, setHasInternationalIncome] = useState<boolean | null>(null);
+  
+  // Personalized guide states
+  const [personalizedGuide, setPersonalizedGuide] = useState('');
+  const [guideLoading, setGuideLoading] = useState(false);
+  const [guideError, setGuideError] = useState<string | null>(null);
 
   const workTypeLabel = () => {
     if (workType === 'content_creation') return 'content';
@@ -47,6 +61,65 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
     if (workType === 'side_hustle') return 'side income';
     if (workType === 'other' && customWorkType) return customWorkType;
     return 'work';
+  };
+
+  const formatCurrency = (value: number) => {
+    if (value >= 10000) {
+      return `£${(value / 1000).toFixed(0)}k`;
+    }
+    return `£${value.toLocaleString()}`;
+  };
+
+  const generatePersonalizedGuide = async () => {
+    try {
+      setGuideLoading(true);
+      setGuideError(null);
+
+      // Call your backend server
+      const API_URL = 'http://192.168.1.129:3000';
+      
+      const response = await fetch(`${API_URL}/api/generate-guide`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workType: customWorkType || workType,
+          timeCommitment,
+          monthlyIncome,
+          receivesGiftedItems,
+          hasInternationalIncome,
+          trackingGoal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate guide');
+      }
+
+      const data = await response.json();
+      const generatedGuide = data.guide;
+      
+      setPersonalizedGuide(generatedGuide);
+    } catch (err) {
+      console.error('Error generating guide:', err);
+      setGuideError('Unable to generate your personalized guide.');
+      setPersonalizedGuide(getGenericGuide());
+    } finally {
+      setGuideLoading(false);
+    }
+  };
+
+  const getGenericGuide = (): string => {
+    return `Based on your profile, here's what you need to know:
+
+• As a ${customWorkType || workType}, you'll need to register for Self Assessment with HMRC if you earn over £1,000/year.
+
+• You can claim expenses for items you buy for your content - equipment, products, travel, and more. Keep all receipts!
+
+${receivesGiftedItems ? '• Gifted items count as income! Track their value - HMRC considers them "payment in kind" and they\'re taxable.\n\n' : ''}${hasInternationalIncome ? '• International income needs special attention - you may need to declare it differently and watch for double taxation.\n\n' : ''}• Start tracking everything now. The earlier you build the habit, the easier tax season will be.
+
+Ready to get started? Let's make tax simple.`;
   };
 
   const handleSelection = (value: string, nextScreen?: Screen) => {
@@ -61,20 +134,12 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       setWorkType(value);
     } else if (currentScreen === 'timeCommitment') {
       setTimeCommitment(value);
-    } else if (currentScreen === 'income') {
-      setIncomeRange(value);
     } else if (currentScreen === 'goal') {
       setTrackingGoal(value);
       setTimeout(() => {
-        const data: OnboardingData = {
-          workType,
-          customWorkType: workType === 'other' ? customWorkType : undefined,
-          timeCommitment,
-          incomeRange,
-          trackingGoal: value,
-        };
-        console.log('Completing with data:', data);
-        onComplete(data);
+        setScreenHistory([...screenHistory, currentScreen]);
+        setCurrentScreen('personalizedGuide');
+        generatePersonalizedGuide();
       }, 300);
       return;
     }
@@ -98,9 +163,45 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
     }
   };
 
+  const handleIncomeNext = () => {
+    setIncomeQuestionIndex(1);
+  };
+
+  const handleGiftedItemsAnswer = (answer: boolean) => {
+    setReceivesGiftedItems(answer);
+    setTimeout(() => setIncomeQuestionIndex(2), 300);
+  };
+
+  const handleInternationalAnswer = (answer: boolean) => {
+    setHasInternationalIncome(answer);
+    setTimeout(() => {
+      setScreenHistory([...screenHistory, currentScreen]);
+      setCurrentScreen('goal');
+      setIncomeQuestionIndex(0);
+    }, 300);
+  };
+
+  const handleGuideComplete = () => {
+    const data: OnboardingData = {
+      workType,
+      customWorkType: workType === 'other' ? customWorkType : undefined,
+      timeCommitment,
+      monthlyIncome,
+      receivesGiftedItems: receivesGiftedItems!,
+      hasInternationalIncome: hasInternationalIncome!,
+      trackingGoal,
+    };
+    console.log('Completing with data:', data);
+    onComplete(data);
+  };
+
   const goBack = () => {
+    if (currentScreen === 'income' && incomeQuestionIndex > 0) {
+      setIncomeQuestionIndex(incomeQuestionIndex - 1);
+      return;
+    }
+
     if (screenHistory.length === 0) {
-      // First screen - go back to welcome if handler provided
       if (onBack) {
         onBack();
       }
@@ -115,6 +216,210 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       setShowOtherInput(false);
       setCustomWorkType('');
     }
+    
+    if (previousScreen === 'income') {
+      setIncomeQuestionIndex(0);
+    }
+  };
+
+  const getProgressPercentage = () => {
+    const screens = ['workType', 'timeCommitment', 'income', 'goal', 'personalizedGuide'];
+    let screenIndex = screens.indexOf(currentScreen);
+    
+    if (currentScreen === 'income') {
+      const subProgress = incomeQuestionIndex / 3;
+      return ((screenIndex + subProgress) / screens.length) * 100;
+    }
+    
+    return ((screenIndex + 1) / screens.length) * 100;
+  };
+
+  const renderIncomeQuestions = () => {
+    if (incomeQuestionIndex === 0) {
+      return (
+        <View style={styles.screenContainer}>
+          <Text style={styles.questionText}>
+            How much do you earn roughly per month?
+          </Text>
+          
+          <View style={styles.sliderContainer}>
+            <Text style={styles.incomeDisplay}>{formatCurrency(monthlyIncome)}</Text>
+            <Text style={styles.incomeSubtext}>per month</Text>
+            
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={15000}
+              step={100}
+              value={monthlyIncome}
+              onValueChange={setMonthlyIncome}
+              minimumTrackTintColor="#7C3AED"
+              maximumTrackTintColor="rgba(255,255,255,0.2)"
+              thumbTintColor="#FF6B6B"
+            />
+            
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabel}>£0</Text>
+              <Text style={styles.sliderLabel}>£15k+</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.continueButton} onPress={handleIncomeNext}>
+            <Text style={styles.continueButtonText}>Continue</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (incomeQuestionIndex === 1) {
+      return (
+        <View style={styles.screenContainer}>
+          <Text style={styles.questionText}>
+            Do you receive gifted items?
+          </Text>
+          
+          <Text style={styles.questionSubtext}>
+            Products or services you receive for free in exchange for content
+          </Text>
+
+          <View style={styles.yesNoContainer}>
+            <TouchableOpacity
+              style={[
+                styles.yesNoButton,
+                receivesGiftedItems === true && styles.yesNoButtonSelected,
+              ]}
+              onPress={() => handleGiftedItemsAnswer(true)}
+            >
+              <Text style={[
+                styles.yesNoText,
+                receivesGiftedItems === true && styles.yesNoTextSelected,
+              ]}>
+                Yes
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.yesNoButton,
+                receivesGiftedItems === false && styles.yesNoButtonSelected,
+              ]}
+              onPress={() => handleGiftedItemsAnswer(false)}
+            >
+              <Text style={[
+                styles.yesNoText,
+                receivesGiftedItems === false && styles.yesNoTextSelected,
+              ]}>
+                No
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    if (incomeQuestionIndex === 2) {
+      return (
+        <View style={styles.screenContainer}>
+          <Text style={styles.questionText}>
+            Do you receive income or gifted items from businesses outside the UK?
+          </Text>
+          
+          <Text style={styles.questionSubtext}>
+            Sponsorships, affiliate income, or gifts from international companies
+          </Text>
+
+          <View style={styles.yesNoContainer}>
+            <TouchableOpacity
+              style={[
+                styles.yesNoButton,
+                hasInternationalIncome === true && styles.yesNoButtonSelected,
+              ]}
+              onPress={() => handleInternationalAnswer(true)}
+            >
+              <Text style={[
+                styles.yesNoText,
+                hasInternationalIncome === true && styles.yesNoTextSelected,
+              ]}>
+                Yes
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.yesNoButton,
+                hasInternationalIncome === false && styles.yesNoButtonSelected,
+              ]}
+              onPress={() => handleInternationalAnswer(false)}
+            >
+              <Text style={[
+                styles.yesNoText,
+                hasInternationalIncome === false && styles.yesNoTextSelected,
+              ]}>
+                No
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
+  const renderPersonalizedGuide = () => {
+    if (guideLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7C3AED" />
+          <Text style={styles.loadingText}>
+            Creating your personalized guide...
+          </Text>
+          <Text style={styles.loadingSubtext}>
+            Analyzing your profile to give you relevant tax insights
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView 
+        style={styles.guideScrollView}
+        contentContainerStyle={styles.guideScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.guideHeader}>
+          <Text style={styles.guideEmoji}>✨</Text>
+          <Text style={styles.guideTitle}>Your Personalized Guide</Text>
+          <Text style={styles.guideSubtitle}>
+            Based on what you told us about your content business
+          </Text>
+        </View>
+
+        <View style={styles.guideContainer}>
+          <Text style={styles.guideText}>{personalizedGuide}</Text>
+        </View>
+
+        {guideError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>⚠️ {guideError}</Text>
+          </View>
+        )}
+
+        <TouchableOpacity style={styles.continueButton} onPress={handleGuideComplete}>
+          <Text style={styles.continueButtonText}>Got it! Let's go</Text>
+          <Ionicons name="arrow-forward" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.regenerateButton} 
+          onPress={generatePersonalizedGuide}
+        >
+          <Ionicons name="refresh" size={16} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.regenerateButtonText}>Regenerate guide</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
   };
 
   const renderScreen = () => {
@@ -139,8 +444,8 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
                   onPress={() => handleSelection('freelancing', 'timeCommitment')}
                 />
                 <OptionButton
-                  text="Side hustle"
-                  icon="cash"
+                  text="(Re)selling products"
+                  icon="shirt"
                   onPress={() => handleSelection('side_hustle', 'timeCommitment')}
                 />
                 <OptionButton
@@ -204,33 +509,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
         );
 
       case 'income':
-        return (
-          <View style={styles.screenContainer}>
-            <Text style={styles.questionText}>
-              What's your monthly income from {workTypeLabel()}?
-            </Text>
-            <OptionButton
-              text="Under £500"
-              icon="trending-down"
-              onPress={() => handleSelection('0-500', 'goal')}
-            />
-            <OptionButton
-              text="£500 - £2,000"
-              icon="stats-chart"
-              onPress={() => handleSelection('500-2000', 'goal')}
-            />
-            <OptionButton
-              text="£2,000 - £5,000"
-              icon="trending-up"
-              onPress={() => handleSelection('2000-5000', 'goal')}
-            />
-            <OptionButton
-              text="Over £5,000"
-              icon="rocket"
-              onPress={() => handleSelection('5000+', 'goal')}
-            />
-          </View>
-        );
+        return renderIncomeQuestions();
 
       case 'goal':
         return (
@@ -254,6 +533,9 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
           </View>
         );
 
+      case 'personalizedGuide':
+        return renderPersonalizedGuide();
+
       default:
         return null;
     }
@@ -265,37 +547,32 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        {/* Header with back button - always show */}
         <View style={styles.header}>
           <TouchableOpacity onPress={goBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Progress indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${
-                    ((['workType', 'timeCommitment', 'income', 'goal'].indexOf(
-                      currentScreen
-                    ) +
-                      1) /
-                      4) *
-                    100
-                  }%`,
-                },
-              ]}
-            />
+        {currentScreen !== 'personalizedGuide' && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${getProgressPercentage()}%` },
+                ]}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          {renderScreen()}
-        </ScrollView>
+        {currentScreen === 'personalizedGuide' ? (
+          renderScreen()
+        ) : (
+          <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+            {renderScreen()}
+          </ScrollView>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -382,6 +659,13 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 36,
   },
+  questionSubtext: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.6,
+    marginBottom: 32,
+    lineHeight: 24,
+  },
   optionButton: {
     backgroundColor: '#1F1333',
     borderRadius: 16,
@@ -456,5 +740,161 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     marginRight: 8,
+  },
+  sliderContainer: {
+    alignItems: 'center',
+    marginBottom: 60,
+  },
+  incomeDisplay: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: '#7C3AED',
+    marginBottom: 4,
+  },
+  incomeSubtext: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    opacity: 0.6,
+    marginBottom: 40,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+  },
+  sliderLabel: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.5,
+  },
+  continueButton: {
+    backgroundColor: '#7C3AED',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    marginRight: 8,
+  },
+  yesNoContainer: {
+    gap: 16,
+  },
+  yesNoButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 24,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  yesNoButtonSelected: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#FF6B6B',
+  },
+  yesNoText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+  yesNoTextSelected: {
+    opacity: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 24,
+    textAlign: 'center',
+  },
+  loadingSubtext: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    opacity: 0.6,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  guideScrollView: {
+    flex: 1,
+  },
+  guideScrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  guideHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  guideEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  guideTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  guideSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.7,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  guideContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.3)',
+  },
+  guideText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 26,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  regenerateButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  regenerateButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.6,
   },
 });
