@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   Dimensions,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,6 +17,7 @@ const { width } = Dimensions.get('window');
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => void;
+  onBack?: () => void;
 }
 
 interface OnboardingData {
@@ -29,7 +30,7 @@ interface OnboardingData {
 
 type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal';
 
-export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowProps) {
   const [currentScreen, setCurrentScreen] = useState<Screen>('workType');
   const [screenHistory, setScreenHistory] = useState<Screen[]>([]);
   
@@ -40,10 +41,6 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [incomeRange, setIncomeRange] = useState<string>('');
   const [trackingGoal, setTrackingGoal] = useState<string>('');
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const isTransitioning = useRef(false);
-
   const workTypeLabel = () => {
     if (workType === 'content_creation') return 'content';
     if (workType === 'freelancing') return 'freelance work';
@@ -53,28 +50,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   };
 
   const handleSelection = (value: string, nextScreen?: Screen) => {
-    if (isTransitioning.current) return;
-
-    // Animate selection
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 0.7,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Set the value based on current screen
+    console.log('Selection:', value, 'Next screen:', nextScreen);
+    
     if (currentScreen === 'workType') {
       if (value === 'other') {
         setWorkType(value);
         setShowOtherInput(true);
-        return; // Don't progress yet
+        return;
       }
       setWorkType(value);
     } else if (currentScreen === 'timeCommitment') {
@@ -83,140 +65,66 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       setIncomeRange(value);
     } else if (currentScreen === 'goal') {
       setTrackingGoal(value);
+      setTimeout(() => {
+        const data: OnboardingData = {
+          workType,
+          customWorkType: workType === 'other' ? customWorkType : undefined,
+          timeCommitment,
+          incomeRange,
+          trackingGoal: value,
+        };
+        console.log('Completing with data:', data);
+        onComplete(data);
+      }, 300);
+      return;
     }
 
-    // Auto-progress after delay
     if (nextScreen) {
       setTimeout(() => {
-        goToScreen(nextScreen);
+        console.log('Moving to screen:', nextScreen);
+        setScreenHistory([...screenHistory, currentScreen]);
+        setCurrentScreen(nextScreen);
       }, 300);
     }
   };
 
   const handleOtherSubmit = () => {
-    if (customWorkType.trim() && !isTransitioning.current) {
+    if (customWorkType.trim()) {
       setWorkType('other');
       setTimeout(() => {
-        goToScreen('timeCommitment');
+        setScreenHistory([...screenHistory, currentScreen]);
+        setCurrentScreen('timeCommitment');
       }, 300);
     }
   };
 
-  const goToScreen = (screen: Screen) => {
-    if (isTransitioning.current) return;
-    
-    isTransitioning.current = true;
-    setScreenHistory([...screenHistory, currentScreen]);
-    
-    // Slide out animation
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -width,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentScreen(screen);
-      slideAnim.setValue(width);
-      
-      // Slide in animation
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        isTransitioning.current = false;
-      });
-    });
-  };
-
   const goBack = () => {
-    if (screenHistory.length === 0 || isTransitioning.current) return;
+    if (screenHistory.length === 0) {
+      // First screen - go back to welcome if handler provided
+      if (onBack) {
+        onBack();
+      }
+      return;
+    }
 
-    isTransitioning.current = true;
     const previousScreen = screenHistory[screenHistory.length - 1];
     setScreenHistory(screenHistory.slice(0, -1));
+    setCurrentScreen(previousScreen);
 
-    // Slide back animation (reverse direction)
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: width,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentScreen(previousScreen);
-      slideAnim.setValue(-width);
-      
-      // Slide in from left
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        isTransitioning.current = false;
-      });
-
-      // Reset "other" input state if going back to workType
-      if (previousScreen === 'workType' && workType === 'other') {
-        setShowOtherInput(false);
-        setCustomWorkType('');
-      }
-    });
-  };
-
-  const handleComplete = () => {
-    if (isTransitioning.current) return;
-    
-    const data: OnboardingData = {
-      workType,
-      customWorkType: workType === 'other' ? customWorkType : undefined,
-      timeCommitment,
-      incomeRange,
-      trackingGoal,
-    };
-    onComplete(data);
-  };
-
-  useEffect(() => {
-    if (currentScreen === 'goal' && trackingGoal && !isTransitioning.current) {
-      // Auto-complete after goal selection
-      setTimeout(() => {
-        handleComplete();
-      }, 500);
+    if (previousScreen === 'workType' && workType === 'other') {
+      setShowOtherInput(false);
+      setCustomWorkType('');
     }
-  }, [trackingGoal, currentScreen]);
+  };
 
   const renderScreen = () => {
+    console.log('Rendering screen:', currentScreen);
+    
     switch (currentScreen) {
       case 'workType':
         return (
-          <ScreenContainer>
-            <QuestionText>What brings you to Bopp?</QuestionText>
+          <View style={styles.screenContainer}>
+            <Text style={styles.questionText}>What is your hustle?</Text>
             
             {!showOtherInput ? (
               <>
@@ -224,29 +132,25 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   text="Content creation"
                   icon="videocam"
                   onPress={() => handleSelection('content_creation', 'timeCommitment')}
-                  selected={workType === 'content_creation'}
                 />
                 <OptionButton
                   text="Freelancing"
                   icon="briefcase"
                   onPress={() => handleSelection('freelancing', 'timeCommitment')}
-                  selected={workType === 'freelancing'}
                 />
                 <OptionButton
                   text="Side hustle"
                   icon="cash"
                   onPress={() => handleSelection('side_hustle', 'timeCommitment')}
-                  selected={workType === 'side_hustle'}
                 />
                 <OptionButton
                   text="Other"
                   icon="ellipsis-horizontal"
                   onPress={() => handleSelection('other')}
-                  selected={workType === 'other'}
                 />
               </>
             ) : (
-              <OtherInputContainer>
+              <View style={styles.otherInputContainer}>
                 <Text style={styles.otherLabel}>Tell us what you do:</Text>
                 <TextInput
                   style={styles.otherInput}
@@ -269,101 +173,85 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   <Text style={styles.otherSubmitText}>Continue</Text>
                   <Ionicons name="arrow-forward" size={20} color="#fff" />
                 </TouchableOpacity>
-              </OtherInputContainer>
+              </View>
             )}
-          </ScreenContainer>
+          </View>
         );
 
       case 'timeCommitment':
         return (
-          <ScreenContainer>
-            <QuestionText>How much time do you spend on this?</QuestionText>
+          <View style={styles.screenContainer}>
+            <Text style={styles.questionText}>How much time do you spend on {workTypeLabel()}?</Text>
             <OptionButton
               text="Full-time"
               subtitle="30+ hours/week"
               icon="time"
               onPress={() => handleSelection('full_time', 'income')}
-              selected={timeCommitment === 'full_time'}
             />
             <OptionButton
               text="Part-time"
               subtitle="10-30 hours/week"
               icon="timer"
               onPress={() => handleSelection('part_time', 'income')}
-              selected={timeCommitment === 'part_time'}
             />
             <OptionButton
               text="Side hustle"
               subtitle="Less than 10 hours/week"
               icon="hourglass"
               onPress={() => handleSelection('casual', 'income')}
-              selected={timeCommitment === 'casual'}
             />
-          </ScreenContainer>
+          </View>
         );
 
       case 'income':
         return (
-          <ScreenContainer>
-            <QuestionText>
+          <View style={styles.screenContainer}>
+            <Text style={styles.questionText}>
               What's your monthly income from {workTypeLabel()}?
-            </QuestionText>
+            </Text>
             <OptionButton
               text="Under £500"
               icon="trending-down"
               onPress={() => handleSelection('0-500', 'goal')}
-              selected={incomeRange === '0-500'}
             />
             <OptionButton
               text="£500 - £2,000"
               icon="stats-chart"
               onPress={() => handleSelection('500-2000', 'goal')}
-              selected={incomeRange === '500-2000'}
             />
             <OptionButton
               text="£2,000 - £5,000"
               icon="trending-up"
               onPress={() => handleSelection('2000-5000', 'goal')}
-              selected={incomeRange === '2000-5000'}
             />
             <OptionButton
               text="Over £5,000"
               icon="rocket"
               onPress={() => handleSelection('5000+', 'goal')}
-              selected={incomeRange === '5000+'}
             />
-          </ScreenContainer>
+          </View>
         );
 
       case 'goal':
         return (
-          <ScreenContainer>
-            <QuestionText>What's your main goal with Bopp?</QuestionText>
+          <View style={styles.screenContainer}>
+            <Text style={styles.questionText}>Are you registered?</Text>
             <OptionButton
-              text="Stay HMRC compliant"
-              icon="shield-checkmark"
+              text="Yes - Sole trader"
+              icon="person"
               onPress={() => handleSelection('compliance')}
-              selected={trackingGoal === 'compliance'}
             />
             <OptionButton
-              text="Maximize deductions"
-              icon="wallet"
+              text="Yes - Limited company"
+              icon="home"
               onPress={() => handleSelection('deductions')}
-              selected={trackingGoal === 'deductions'}
             />
             <OptionButton
-              text="Understand my finances"
-              icon="analytics"
-              onPress={() => handleSelection('understanding')}
-              selected={trackingGoal === 'understanding'}
-            />
-            <OptionButton
-              text="Make tax season easier"
-              icon="calendar"
+              text="Not yet (This is okay!)"
+              icon="thumbs-up"
               onPress={() => handleSelection('tax_prep')}
-              selected={trackingGoal === 'tax_prep'}
             />
-          </ScreenContainer>
+          </View>
         );
 
       default:
@@ -377,14 +265,12 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        {/* Header with back button */}
-        {screenHistory.length > 0 && (
-          <View style={styles.header}>
-            <TouchableOpacity onPress={goBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Header with back button - always show */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={goBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
         {/* Progress indicator */}
         <View style={styles.progressContainer}>
@@ -407,37 +293,19 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           </View>
         </View>
 
-        {/* Animated content */}
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              transform: [{ translateX: slideAnim }],
-              opacity: fadeAnim,
-            },
-          ]}
-        >
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {renderScreen()}
-        </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const ScreenContainer: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <View style={styles.screenContainer}>{children}</View>;
-
-const QuestionText: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <Text style={styles.questionText}>{children}</Text>;
 
 interface OptionButtonProps {
   text: string;
   subtitle?: string;
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
-  selected: boolean;
 }
 
 const OptionButton: React.FC<OptionButtonProps> = ({
@@ -445,59 +313,26 @@ const OptionButton: React.FC<OptionButtonProps> = ({
   subtitle,
   icon,
   onPress,
-  selected,
 }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
-  };
-
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={[styles.optionButton, selected && styles.optionButtonSelected]}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.9}
-      >
-        <View style={styles.optionContent}>
-          <View style={styles.optionIconContainer}>
-            <Ionicons
-              name={icon}
-              size={24}
-              color={selected ? '#7C3AED' : '#FF6B6B'}
-            />
-          </View>
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionText}>{text}</Text>
-            {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
-          </View>
+    <TouchableOpacity
+      style={styles.optionButton}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.optionContent}>
+        <View style={styles.optionIconContainer}>
+          <Ionicons name={icon} size={24} color="#FF6B6B" />
         </View>
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={selected ? '#7C3AED' : '#9CA3AF'}
-        />
-      </TouchableOpacity>
-    </Animated.View>
+        <View style={styles.optionTextContainer}>
+          <Text style={styles.optionText}>{text}</Text>
+          {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+    </TouchableOpacity>
   );
 };
-
-const OtherInputContainer: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <View style={styles.otherInputContainer}>{children}</View>;
 
 const styles = StyleSheet.create({
   container: {
@@ -532,11 +367,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    width: width,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   screenContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   questionText: {
     fontSize: 28,
@@ -553,12 +390,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  optionButtonSelected: {
-    borderColor: '#7C3AED',
-    backgroundColor: '#2E1A47',
   },
   optionContent: {
     flexDirection: 'row',

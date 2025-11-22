@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import WelcomeScreen from './screens/onboarding/WelcomeScreen';
 import OnboardingFlow from './screens/onboarding/OnboardingFlow';
 import QuickGuide from './screens/onboarding/QuickGuide';
 import PaymentFlow from './screens/onboarding/PaymentFlow';
@@ -21,12 +22,22 @@ interface OnboardingData {
   trackingGoal: string;
 }
 
-type FlowStep = 'onboarding' | 'guide' | 'payment' | 'complete';
+type FlowStep = 'welcome' | 'onboarding' | 'guide' | 'payment' | 'complete';
 
 export default function App() {
-  const [currentStep, setCurrentStep] = useState<FlowStep>('onboarding');
+  const [currentStep, setCurrentStep] = useState<FlowStep>('welcome');
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleWelcomeContinue = () => {
+    console.log('Welcome screen completed');
+    setCurrentStep('onboarding');
+  };
+
+  const handleOnboardingBack = () => {
+    console.log('Back to welcome from onboarding');
+    setCurrentStep('welcome');
+  };
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     console.log('Onboarding completed with data:', data);
@@ -34,27 +45,8 @@ export default function App() {
     setIsLoading(true);
     
     try {
-      // TODO: Save onboarding data to Supabase
-      // const { user } = await supabase.auth.getUser();
-      // if (user) {
-      //   await supabase
-      //     .from('user_profiles')
-      //     .update({
-      //       work_type: data.workType,
-      //       custom_work_type: data.customWorkType,
-      //       time_commitment: data.timeCommitment,
-      //       income_range: data.incomeRange,
-      //       tracking_goal: data.trackingGoal,
-      //       onboarding_completed: true,
-      //     })
-      //     .eq('id', user.id);
-      // }
-      
       setOnboardingData(data);
-      
-      // Small delay for smooth transition
       await new Promise(resolve => setTimeout(resolve, 300));
-      
       setCurrentStep('guide');
     } catch (error) {
       console.error('Error saving onboarding data:', error);
@@ -74,14 +66,7 @@ export default function App() {
     setIsLoading(true);
     
     try {
-      // TODO: Update user subscription status in Supabase
-      // await supabase
-      //   .from('user_profiles')
-      //   .update({ has_active_subscription: true })
-      //   .eq('id', user.id);
-      
       await new Promise(resolve => setTimeout(resolve, 500));
-      
       setCurrentStep('complete');
     } catch (error) {
       console.error('Error updating subscription:', error);
@@ -96,7 +81,7 @@ export default function App() {
   };
 
   const handleReset = () => {
-    setCurrentStep('onboarding');
+    setCurrentStep('welcome');
     setOnboardingData(null);
   };
 
@@ -115,8 +100,15 @@ export default function App() {
     <>
       <StatusBar barStyle="light-content" backgroundColor="#2E1A47" />
       
+      {currentStep === 'welcome' && (
+        <WelcomeScreen onComplete={handleWelcomeContinue} />
+      )}
+
       {currentStep === 'onboarding' && (
-        <OnboardingFlow onComplete={handleOnboardingComplete} />
+        <OnboardingFlow 
+          onComplete={handleOnboardingComplete}
+          onBack={handleOnboardingBack}
+        />
       )}
 
       {currentStep === 'guide' && (
@@ -132,7 +124,6 @@ export default function App() {
 
       {currentStep === 'complete' && (
         <View style={styles.container}>
-          {/* Temporary Success Screen */}
           <View style={styles.successContainer}>
             <View style={styles.iconCircle}>
               <Ionicons name="checkmark-circle" size={80} color="#7C3AED" />
@@ -143,7 +134,6 @@ export default function App() {
               Ready to start tracking expenses
             </Text>
 
-            {/* Show summary of what they selected */}
             {onboardingData && (
               <View style={styles.summaryContainer}>
                 <Text style={styles.summaryTitle}>Your Profile:</Text>
@@ -192,7 +182,6 @@ export default function App() {
             <TouchableOpacity 
               style={styles.continueButton}
               onPress={() => {
-                // TODO: Navigate to your main app/dashboard
                 console.log('Navigate to dashboard');
                 Alert.alert('Coming Soon', 'Main app coming soon! Tap "Try Again" to test the full flow.');
               }}
@@ -201,7 +190,6 @@ export default function App() {
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </TouchableOpacity>
 
-            {/* Temporary reset button for testing */}
             <TouchableOpacity 
               style={styles.resetButton}
               onPress={handleReset}
