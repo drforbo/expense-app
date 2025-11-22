@@ -64,7 +64,7 @@ export const Step5ConnectBank: React.FC<Step5ConnectBankProps> = ({ onNext }) =>
         <View style={styles.successContainer}>
           <View style={styles.successIconContainer}>
             <LinearGradient
-              colors={['#B8FF3C', '#8FD926']}
+              colors={['#7C3AED', '#FF6B6B']}
               style={styles.successIconGradient}
             >
               <Text style={styles.successIcon}>✓</Text>
@@ -106,7 +106,7 @@ export const Step5ConnectBank: React.FC<Step5ConnectBankProps> = ({ onNext }) =>
       <View style={styles.buttonWrapper}>
         {isConnecting ? (
           <View style={styles.loadingButton}>
-            <ActivityIndicator color="#B8FF3C" size="small" />
+            <ActivityIndicator color="#7C3AED" size="small" />
             <Text style={styles.loadingText}>Connecting securely...</Text>
           </View>
         ) : (
@@ -155,11 +155,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   securityBadge: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
     marginBottom: 32,
   },
   securityText: {
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   loadingButton: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 16,
     paddingVertical: 20,
     flexDirection: 'row',
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0.3)',
+    borderColor: 'rgba(124, 58, 237, 0.3)',
   },
   loadingText: {
     fontFamily: 'Outfit_600SemiBold',
     fontSize: 16,
-    color: '#B8FF3C',
+    color: '#7C3AED',
   },
   skipButton: {
     alignItems: 'center',
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   successIcon: {
     fontSize: 60,
-    color: '#0F1419',
+    color: '#2E1A47',
     fontWeight: 'bold',
   },
   successText: {

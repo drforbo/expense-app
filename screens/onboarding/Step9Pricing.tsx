@@ -25,7 +25,7 @@ export const Step9Pricing: React.FC<Step9PricingProps> = ({ onNext }) => {
       {/* Trial offer card */}
       <View style={styles.offerCard}>
         <LinearGradient
-          colors={['#B8FF3C', '#8FD926']}
+          colors={['#7C3AED', '#FF6B6B']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.offerGradient}
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 32,
-    shadowColor: '#B8FF3C',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,
@@ -118,13 +118,13 @@ const styles = StyleSheet.create({
   offerTitle: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 24,
-    color: '#0F1419',
+    color: '#2E1A47',
     marginBottom: 4,
   },
   offerSubtitle: {
     fontFamily: 'Outfit_500Medium',
     fontSize: 15,
-    color: '#0F1419',
+    color: '#2E1A47',
     opacity: 0.8,
   },
   valueProps: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   price: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 28,
-    color: '#B8FF3C',
+    color: '#7C3AED',
   },
   priceMonthly: {
     fontFamily: 'Outfit_700Bold',
@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   guarantee: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
     marginBottom: 32,
   },
   guaranteeText: {

@@ -58,7 +58,7 @@ export const Step3Income: React.FC<Step3IncomeProps> = ({ onNext }) => {
           {
             borderColor: glowAnim.interpolate({
               inputRange: [0, 1],
-              outputRange: ['rgba(184, 255, 60, 0)', 'rgba(184, 255, 60, 0.5)'],
+              outputRange: ['rgba(124, 58, 237, 0)', 'rgba(124, 58, 237, 0.5)'],
             }),
           },
         ]}
@@ -101,7 +101,7 @@ export const Step3Income: React.FC<Step3IncomeProps> = ({ onNext }) => {
           >
             {selectedRange === range.id && (
               <LinearGradient
-                colors={['rgba(184, 255, 60, 0.2)', 'rgba(143, 217, 38, 0.1)']}
+                colors={['rgba(124, 58, 237, 0.2)', 'rgba(255, 107, 107, 0.1)']}
                 style={StyleSheet.absoluteFill}
               />
             )}
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0)',
+    borderColor: 'rgba(124, 58, 237, 0)',
     padding: 24,
     marginBottom: 32,
   },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontFamily: 'Outfit_600SemiBold',
     fontSize: 32,
-    color: '#B8FF3C',
+    color: '#7C3AED',
     marginRight: 8,
   },
   input: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   rangeChipSelected: {
-    borderColor: '#B8FF3C',
+    borderColor: '#7C3AED',
   },
   rangeEmoji: {
     fontSize: 24,

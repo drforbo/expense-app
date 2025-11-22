@@ -59,7 +59,7 @@ export const Step7FirstCategorization: React.FC<Step7FirstCategorizationProps> =
       {/* Transaction card */}
       <View style={styles.transactionCard}>
         <LinearGradient
-          colors={['rgba(184, 255, 60, 0.1)', 'rgba(143, 217, 38, 0.05)']}
+          colors={['rgba(124, 58, 237, 0.1)', 'rgba(255, 107, 107, 0.05)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   transactionCard: {
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0.3)',
+    borderColor: 'rgba(124, 58, 237, 0.3)',
     padding: 20,
     marginBottom: 20,
     overflow: 'hidden',
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 24,
-    color: '#B8FF3C',
+    color: '#7C3AED',
   },
   transactionDate: {
     fontFamily: 'Outfit_400Regular',
@@ -143,12 +143,12 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
   },
   instructionBox: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
   },
   instructionText: {
     fontFamily: 'Outfit_600SemiBold',

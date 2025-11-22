@@ -7,6 +7,8 @@ import {
   Dimensions,
   TouchableOpacity,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -33,7 +35,6 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -48,7 +49,6 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
       }),
     ]).start();
 
-    // Progress bar animation
     Animated.timing(progressAnim, {
       toValue: step / totalSteps,
       duration: 800,
@@ -58,15 +58,15 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Animated gradient background */}
+      {/* Background gradient - DEEP PURPLE */}
       <LinearGradient
-        colors={['#0F1419', '#1A2332', '#0F1419']}
+        colors={['#2E1A47', '#1F0F2E', '#2E1A47']}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
 
-      {/* Progress bar at top */}
+      {/* Progress bar - ELECTRIC VIOLET & CORAL */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBackground}>
           <Animated.View
@@ -81,7 +81,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
             ]}
           >
             <LinearGradient
-              colors={['#B8FF3C', '#8FD926']}
+              colors={['#7C3AED', '#FF6B6B']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFill}
@@ -93,28 +93,37 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
         </Text>
       </View>
 
-      {/* Content - 1/3 spacing */}
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
+      {/* Scrollable content */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
       >
-        {/* Header section - 1/3 */}
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.header}>
+              <Text style={styles.title}>{title}</Text>
+              {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            </View>
 
-        {/* Main content - 1/3 */}
-        <View style={styles.mainSection}>{children}</View>
-
-        {/* Footer space - 1/3 */}
-        <View style={styles.footerSection} />
-      </Animated.View>
+            <View style={styles.mainContent}>
+              {children}
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -190,7 +199,7 @@ export const OptionCard: React.FC<OptionCardProps> = ({
             transform: [{ scale: scaleAnim }],
             borderColor: glowAnim.interpolate({
               inputRange: [0, 1],
-              outputRange: ['rgba(184, 255, 60, 0)', 'rgba(184, 255, 60, 1)'],
+              outputRange: ['rgba(124, 58, 237, 0)', 'rgba(124, 58, 237, 1)'],
             }),
             shadowOpacity: glowAnim.interpolate({
               inputRange: [0, 1],
@@ -201,7 +210,7 @@ export const OptionCard: React.FC<OptionCardProps> = ({
       >
         {selected && (
           <LinearGradient
-            colors={['rgba(184, 255, 60, 0.1)', 'rgba(143, 217, 38, 0.05)']}
+            colors={['rgba(124, 58, 237, 0.15)', 'rgba(255, 107, 107, 0.1)']}
             style={StyleSheet.absoluteFill}
           />
         )}
@@ -294,7 +303,7 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
         ]}
       >
         <LinearGradient
-          colors={disabled ? ['#2A2A2A', '#1A1A1A'] : ['#B8FF3C', '#8FD926']}
+          colors={disabled ? ['#2A2A2A', '#1A1A1A'] : ['#7C3AED', '#FF6B6B']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.buttonGradient}
@@ -311,12 +320,13 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1419',
+    backgroundColor: '#2E1A47',
   },
   progressContainer: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingHorizontal: 24,
     paddingBottom: 20,
+    backgroundColor: '#2E1A47',
   },
   progressBackground: {
     height: 4,
@@ -335,14 +345,23 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
   },
-  headerSection: {
-    flex: 1,
-    justifyContent: 'center',
+  header: {
     paddingTop: 20,
+    paddingBottom: 32,
   },
   title: {
     fontFamily: 'Outfit_700Bold',
@@ -357,23 +376,17 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     lineHeight: 26,
   },
-  mainSection: {
+  mainContent: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  footerSection: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0)',
+    borderColor: 'rgba(124, 58, 237, 0)',
     marginBottom: 16,
     overflow: 'hidden',
-    shadowColor: '#B8FF3C',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
   },
@@ -408,22 +421,23 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#B8FF3C',
+    backgroundColor: '#FF6B6B',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmarkText: {
     fontSize: 16,
-    color: '#0F1419',
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   buttonContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 0 : 0,
+    marginTop: 32,
+    marginBottom: 16,
   },
   button: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#B8FF3C',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -440,7 +454,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 18,
-    color: '#0F1419',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },

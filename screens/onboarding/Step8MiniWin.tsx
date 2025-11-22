@@ -73,7 +73,7 @@ export const Step8MiniWin: React.FC<Step8MiniWinProps> = ({ onNext }) => {
       >
         <View style={styles.successIconWrapper}>
           <LinearGradient
-            colors={['#B8FF3C', '#8FD926']}
+            colors={['#7C3AED', '#FF6B6B']}
             style={styles.successIconGradient}
           >
             <Animated.Text
@@ -95,7 +95,7 @@ export const Step8MiniWin: React.FC<Step8MiniWinProps> = ({ onNext }) => {
         {stats.map((stat, index) => (
           <View key={index} style={styles.statCard}>
             <LinearGradient
-              colors={['rgba(184, 255, 60, 0.1)', 'rgba(143, 217, 38, 0.05)']}
+              colors={['rgba(124, 58, 237, 0.1)', 'rgba(255, 107, 107, 0.05)']}
               style={StyleSheet.absoluteFill}
             />
             <Text style={styles.statEmoji}>{stat.emoji}</Text>
@@ -107,7 +107,7 @@ export const Step8MiniWin: React.FC<Step8MiniWinProps> = ({ onNext }) => {
 
       {/* Encouragement message */}
       <View style={styles.messageCard}>
-        <Text style={styles.messageTitle}>Here's what you just did:</Text>
+        <Text style={styles.messageTitle}>Here is what you just did:</Text>
         <View style={styles.achievementsList}>
           <View style={styles.achievementRow}>
             <Text style={styles.achievementIcon}>✨</Text>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     overflow: 'hidden',
-    shadowColor: '#B8FF3C',
+    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   successIcon: {
     fontSize: 64,
-    color: '#0F1419',
+    color: '#2E1A47',
     fontWeight: 'bold',
   },
   statsGrid: {
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
     padding: 16,
     alignItems: 'center',
     overflow: 'hidden',
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: 'Outfit_700Bold',
     fontSize: 20,
-    color: '#B8FF3C',
+    color: '#7C3AED',
     marginBottom: 4,
   },
   statLabel: {

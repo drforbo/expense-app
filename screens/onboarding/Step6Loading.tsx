@@ -103,7 +103,7 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0F1419', '#1A2332', '#0F1419']}
+        colors={['#2E1A47', '#1F0F2E', '#2E1A47']}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -120,7 +120,7 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
           ]}
         >
           <LinearGradient
-            colors={['#B8FF3C', '#8FD926', '#B8FF3C']}
+            colors={['#7C3AED', '#FF6B6B', '#7C3AED']}
             style={styles.spinnerGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -158,7 +158,7 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
               ]}
             >
               <LinearGradient
-                colors={['#B8FF3C', '#8FD926']}
+                colors={['#7C3AED', '#FF6B6B']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
@@ -171,7 +171,7 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
         <View style={styles.tipContainer}>
           <Text style={styles.tipLabel}>💡 Pro tip</Text>
           <Text style={styles.tipText}>
-            Most creators miss £2,000+ in deductions. We'll find them all.
+            Most creators miss £2,000+ in deductions. We will find them all.
           </Text>
         </View>
       </View>
@@ -182,7 +182,7 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1419',
+    backgroundColor: '#2E1A47',
   },
   content: {
     flex: 1,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#0F1419',
+    backgroundColor: '#2E1A47',
   },
   messageContainer: {
     alignItems: 'center',
@@ -237,17 +237,17 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   tipContainer: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
     alignItems: 'center',
   },
   tipLabel: {
     fontFamily: 'Outfit_600SemiBold',
     fontSize: 14,
-    color: '#B8FF3C',
+    color: '#7C3AED',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,

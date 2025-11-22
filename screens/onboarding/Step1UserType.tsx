@@ -26,13 +26,13 @@ export const Step1UserType: React.FC<Step1UserTypeProps> = ({ onNext }) => {
       id: 'just_started',
       icon: '🚀',
       title: 'Just Getting Started',
-      description: "I'm building my following and trying things out",
+      description: 'I am building my following and trying things out',
     },
     {
       id: 'other',
       icon: '💼',
       title: 'Other',
-      description: 'Something else - I'll explain later',
+      description: 'Something else',
     },
   ];
 
@@ -43,6 +43,7 @@ export const Step1UserType: React.FC<Step1UserTypeProps> = ({ onNext }) => {
       title="What do you do?"
       subtitle="Help us understand your situation"
     >
+      {/* Options */}
       <View style={styles.optionsContainer}>
         {options.map((option) => (
           <OptionCard
@@ -56,21 +57,17 @@ export const Step1UserType: React.FC<Step1UserTypeProps> = ({ onNext }) => {
         ))}
       </View>
 
-      <View style={styles.buttonWrapper}>
-        <ContinueButton
-          onPress={() => selectedType && onNext(selectedType)}
-          disabled={!selectedType}
-        />
-      </View>
+      {/* Button */}
+      <ContinueButton
+        onPress={() => selectedType && onNext(selectedType)}
+        disabled={!selectedType}
+      />
     </OnboardingStep>
   );
 };
 
 const styles = StyleSheet.create({
   optionsContainer: {
-    marginBottom: 32,
-  },
-  buttonWrapper: {
-    marginTop: 'auto',
+    marginBottom: 8,
   },
 });

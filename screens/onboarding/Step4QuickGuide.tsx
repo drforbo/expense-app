@@ -42,7 +42,7 @@ export const Step4QuickGuide: React.FC<Step4QuickGuideProps> = ({ onNext }) => {
         {features.map((feature, index) => (
           <View key={index} style={styles.featureCard}>
             <LinearGradient
-              colors={['rgba(184, 255, 60, 0.08)', 'rgba(143, 217, 38, 0.04)']}
+              colors={['rgba(124, 58, 237, 0.08)', 'rgba(255, 107, 107, 0.04)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   featureCard: {
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(184, 255, 60, 0.2)',
+    borderColor: 'rgba(124, 58, 237, 0.2)',
     overflow: 'hidden',
   },
   featureContent: {
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(184, 255, 60, 0.15)',
+    backgroundColor: 'rgba(124, 58, 237, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -117,11 +117,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   calloutBox: {
-    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(184, 255, 60, 0.3)',
+    borderColor: 'rgba(124, 58, 237, 0.3)',
     marginBottom: 32,
   },
   calloutText: {
