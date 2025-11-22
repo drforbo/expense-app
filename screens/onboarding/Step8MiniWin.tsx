@@ -1,148 +1,231 @@
-import React from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
-import {
-  GradientContainer,
-  GlassButton,
-  DecorativeBlobs,
-} from '../../lib/components';
-import { colors, spacing, borderRadius } from '../../lib/theme';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, Animated } from 'react-native';
+import { OnboardingStep, ContinueButton } from './OnboardingStep';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 interface Step8MiniWinProps {
-  totalSorted: number;
-  remainingCount: number;
   onNext: () => void;
 }
 
-export const Step8MiniWin: React.FC<Step8MiniWinProps> = ({
-  totalSorted,
-  remainingCount,
-  onNext,
-}) => {
+export const Step8MiniWin: React.FC<Step8MiniWinProps> = ({ onNext }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Celebration haptic
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Entrance animation
+    Animated.sequence([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Pulse animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const stats = [
+    { label: 'Tax Saved', value: '£25.60', emoji: '💰' },
+    { label: 'Time Saved', value: '5 min', emoji: '⏱️' },
+    { label: 'Streak', value: '1 day', emoji: '🔥' },
+  ];
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <GradientContainer>
-        <DecorativeBlobs />
-        
-        <View style={styles.content}>
-          <View style={styles.fireIcon}>
-            <Text style={styles.fire}>🔥</Text>
+    <OnboardingStep
+      step={8}
+      totalSteps={9}
+      title="You're a natural! 🎉"
+      subtitle="That's how easy Bopp makes bookkeeping"
+    >
+      {/* Success icon */}
+      <Animated.View
+        style={[
+          styles.successIconContainer,
+          {
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <View style={styles.successIconWrapper}>
+          <LinearGradient
+            colors={['#B8FF3C', '#8FD926']}
+            style={styles.successIconGradient}
+          >
+            <Animated.Text
+              style={[
+                styles.successIcon,
+                {
+                  transform: [{ scale: pulseAnim }],
+                },
+              ]}
+            >
+              ✓
+            </Animated.Text>
+          </LinearGradient>
+        </View>
+      </Animated.View>
+
+      {/* Stats grid */}
+      <Animated.View style={[styles.statsGrid, { opacity: fadeAnim }]}>
+        {stats.map((stat, index) => (
+          <View key={index} style={styles.statCard}>
+            <LinearGradient
+              colors={['rgba(184, 255, 60, 0.1)', 'rgba(143, 217, 38, 0.05)']}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.statEmoji}>{stat.emoji}</Text>
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
           </View>
-          
-          <Text style={styles.header}>Day 1 complete!</Text>
-          
-          <View style={styles.statsCard}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>£{totalSorted.toFixed(2)}</Text>
-              <Text style={styles.statLabel}>expenses sorted</Text>
-            </View>
-            
-            <View style={styles.divider} />
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{remainingCount}</Text>
-              <Text style={styles.statLabel}>more ready to go</Text>
-            </View>
-          </View>
-          
-          <View style={styles.streakCard}>
-            <Text style={styles.streakEmoji}>⚡</Text>
-            <Text style={styles.streakText}>
-              Keep going to build your streak
+        ))}
+      </Animated.View>
+
+      {/* Encouragement message */}
+      <View style={styles.messageCard}>
+        <Text style={styles.messageTitle}>Here's what you just did:</Text>
+        <View style={styles.achievementsList}>
+          <View style={styles.achievementRow}>
+            <Text style={styles.achievementIcon}>✨</Text>
+            <Text style={styles.achievementText}>
+              Correctly categorized a business expense
             </Text>
           </View>
-          
-          <View style={styles.buttonContainer}>
-            <GlassButton
-              title="Keep going →"
-              onPress={onNext}
-              variant="primary"
-            />
+          <View style={styles.achievementRow}>
+            <Text style={styles.achievementIcon}>💷</Text>
+            <Text style={styles.achievementText}>
+              Unlocked £25.60 in tax deductions
+            </Text>
+          </View>
+          <View style={styles.achievementRow}>
+            <Text style={styles.achievementIcon}>🎯</Text>
+            <Text style={styles.achievementText}>
+              Started building your HMRC-compliant records
+            </Text>
           </View>
         </View>
-      </GradientContainer>
-    </View>
+      </View>
+
+      <View style={styles.buttonWrapper}>
+        <ContinueButton onPress={onNext} text="Let's Keep Going!" />
+      </View>
+    </OnboardingStep>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.deepPurple,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'space-evenly',
+  successIconContainer: {
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
+    marginBottom: 32,
   },
-  fireIcon: {
+  successIconWrapper: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.glassWhite,
-    borderWidth: 3,
-    borderColor: colors.coral,
+    overflow: 'hidden',
+    shadowColor: '#B8FF3C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+  },
+  successIconGradient: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  fire: {
-    fontSize: 60,
+  successIcon: {
+    fontSize: 64,
+    color: '#0F1419',
+    fontWeight: 'bold',
   },
-  header: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  statsCard: {
+  statsGrid: {
     flexDirection: 'row',
-    backgroundColor: colors.deepPurple,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.glassBorder,
-    padding: spacing.lg,
-    width: '100%',
+    gap: 12,
+    marginBottom: 24,
   },
-  statItem: {
+  statCard: {
     flex: 1,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(184, 255, 60, 0.2)',
+    padding: 16,
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  statEmoji: {
+    fontSize: 28,
+    marginBottom: 8,
   },
   statValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.coral,
-    marginBottom: spacing.xs,
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 20,
+    color: '#B8FF3C',
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
-    color: colors.mediumGray,
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
   },
-  divider: {
-    width: 1,
-    backgroundColor: colors.glassBorder,
-    marginHorizontal: spacing.md,
-  },
-  streakCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.glassWhite,
-    borderRadius: borderRadius.lg,
+  messageCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.electricViolet,
-    padding: spacing.md,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 24,
+    marginBottom: 32,
   },
-  streakEmoji: {
-    fontSize: 24,
-    marginRight: spacing.sm,
+  messageTitle: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 18,
+    color: '#FFFFFF',
+    marginBottom: 16,
   },
-  streakText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.white,
+  achievementsList: {
+    gap: 12,
+  },
+  achievementRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  achievementIcon: {
+    fontSize: 20,
+    marginRight: 12,
+    marginTop: 2,
+  },
+  achievementText: {
     flex: 1,
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.8)',
+    lineHeight: 22,
   },
-  buttonContainer: {
-    width: '100%',
+  buttonWrapper: {
+    marginTop: 'auto',
   },
 });

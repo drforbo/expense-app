@@ -1,55 +1,180 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, StatusBar, Animated } from 'react-native';
-import { GradientContainer, DecorativeBlobs } from '../../lib/components';
-import { colors, spacing } from '../../lib/theme';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Text, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 interface Step6LoadingProps {
   onComplete: () => void;
 }
 
+const messages = [
+  { emoji: '🔍', text: 'Scanning your transactions...' },
+  { emoji: '🧠', text: 'Teaching AI about your spending...' },
+  { emoji: '✨', text: 'Finding tax-deductible expenses...' },
+  { emoji: '🎯', text: 'Categorizing like a boss...' },
+  { emoji: '💪', text: 'Almost done...' },
+];
+
 export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
-  const spinValue = React.useRef(new Animated.Value(0)).current;
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Start loading animation
     Animated.loop(
-      Animated.timing(spinValue, {
+      Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: 2000,
         useNativeDriver: true,
       })
     ).start();
 
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 2000);
+    // Progress bar
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 5000,
+      useNativeDriver: false,
+    }).start();
 
-    return () => clearTimeout(timer);
+    // Message rotation
+    const messageInterval = setInterval(() => {
+      setCurrentMessageIndex((prev) => {
+        if (prev < messages.length - 1) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 1000);
+
+    // Complete after 5 seconds
+    const completeTimer = setTimeout(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onComplete();
+    }, 5000);
+
+    return () => {
+      clearInterval(messageInterval);
+      clearTimeout(completeTimer);
+    };
   }, []);
 
-  const spin = spinValue.interpolate({
+  useEffect(() => {
+    // Animate message changes
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 5,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.95,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [currentMessageIndex]);
+
+  const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
 
+  const currentMessage = messages[currentMessageIndex];
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <GradientContainer>
-        <DecorativeBlobs />
-        
-        <View style={styles.content}>
-          <Text style={styles.loadingText}>Finding your{'\n'}expenses...</Text>
-          
-          <Animated.View style={[styles.spinner, { transform: [{ rotate: spin }] }]}>
-            <View style={styles.spinnerOuter} />
+      <LinearGradient
+        colors={['#0F1419', '#1A2332', '#0F1419']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      <View style={styles.content}>
+        {/* Animated spinner */}
+        <Animated.View
+          style={[
+            styles.spinner,
+            {
+              transform: [{ rotate: spin }],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['#B8FF3C', '#8FD926', '#B8FF3C']}
+            style={styles.spinnerGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <View style={styles.spinnerInner} />
-          </Animated.View>
-          
-          <Text style={styles.subtext}>
-            Analyzing your transactions with AI
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Message */}
+        <Animated.View
+          style={[
+            styles.messageContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.emoji}>{currentMessage.emoji}</Text>
+          <Text style={styles.message}>{currentMessage.text}</Text>
+        </Animated.View>
+
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBackground}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  width: progressAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={['#B8FF3C', '#8FD926']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          </View>
+        </View>
+
+        {/* Fun facts */}
+        <View style={styles.tipContainer}>
+          <Text style={styles.tipLabel}>💡 Pro tip</Text>
+          <Text style={styles.tipText}>
+            Most creators miss £2,000+ in deductions. We'll find them all.
           </Text>
         </View>
-      </GradientContainer>
+      </View>
     </View>
   );
 };
@@ -57,46 +182,81 @@ export const Step6Loading: React.FC<Step6LoadingProps> = ({ onComplete }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.deepPurple,
+    backgroundColor: '#0F1419',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.white,
-    textAlign: 'center',
-    marginBottom: spacing.xxl,
-    lineHeight: 36,
+    paddingHorizontal: 32,
   },
   spinner: {
-    width: 80,
-    height: 80,
-    marginBottom: spacing.xl,
-    position: 'relative',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 48,
   },
-  spinnerOuter: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 6,
-    borderColor: colors.glassWhite,
-    borderTopColor: colors.coral,
-    borderRightColor: colors.electricViolet,
+  spinnerGradient: {
+    flex: 1,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   spinnerInner: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#0F1419',
   },
-  subtext: {
-    fontSize: 14,
-    color: colors.mediumGray,
+  messageContainer: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  emoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  message: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 20,
+    color: '#FFFFFF',
     textAlign: 'center',
+  },
+  progressContainer: {
+    width: '100%',
+    marginBottom: 48,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  tipContainer: {
+    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 255, 60, 0.2)',
+    alignItems: 'center',
+  },
+  tipLabel: {
+    fontFamily: 'Outfit_600SemiBold',
+    fontSize: 14,
+    color: '#B8FF3C',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  tipText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

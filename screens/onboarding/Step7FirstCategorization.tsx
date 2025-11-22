@@ -1,231 +1,165 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
-import { GradientContainer, GlassButton, DecorativeBlobs } from '../../lib/components';
-import { colors, spacing, borderRadius } from '../../lib/theme';
-
-interface Transaction {
-  name: string;
-  amount: number;
-  date: string;
-}
+import { View, StyleSheet, Text } from 'react-native';
+import { OnboardingStep, OptionCard, ContinueButton } from './OnboardingStep';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Step7FirstCategorizationProps {
-  transaction: Transaction;
-  onNext: () => void;
+  onNext: (categorized: boolean) => void;
 }
 
-export const Step7FirstCategorization: React.FC<Step7FirstCategorizationProps> = ({
-  transaction,
-  onNext,
-}) => {
-  const [answered, setAnswered] = useState(false);
-  const [result, setResult] = useState<'allowable' | 'personal' | null>(null);
+export const Step7FirstCategorization: React.FC<Step7FirstCategorizationProps> = ({ onNext }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const handleAnswer = (answer: 'yes' | 'no') => {
-    setAnswered(true);
-    setResult(answer === 'yes' ? 'allowable' : 'personal');
-    
-    setTimeout(() => {
-      onNext();
-    }, 2000);
+  // This would be a real transaction from their bank
+  const sampleTransaction = {
+    merchant: 'Amazon',
+    amount: '£127.99',
+    date: 'Nov 15, 2024',
+    description: 'Ring Light & Microphone',
   };
 
+  const categories = [
+    {
+      id: 'equipment',
+      icon: '📸',
+      title: 'Equipment',
+      description: 'Cameras, lights, props - tools for content creation',
+      isCorrect: true,
+    },
+    {
+      id: 'marketing',
+      icon: '📢',
+      title: 'Marketing',
+      description: 'Ads, promotions, brand building expenses',
+      isCorrect: false,
+    },
+    {
+      id: 'personal',
+      icon: '🏠',
+      title: 'Personal',
+      description: 'Not business-related, not tax deductible',
+      isCorrect: false,
+    },
+    {
+      id: 'office',
+      icon: '💼',
+      title: 'Office Supplies',
+      description: 'Stationery, software, workspace items',
+      isCorrect: false,
+    },
+  ];
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <GradientContainer>
-        <DecorativeBlobs />
-        
-        <View style={styles.content}>
-          {!answered ? (
-            <>
-              <View style={styles.topSection}>
-                <Text style={styles.header}>Let's sort your{'\n'}first expense</Text>
-                
-                <View style={styles.transactionCard}>
-                  <View style={styles.transactionHeader}>
-                    <Text style={styles.merchantName}>{transaction.name}</Text>
-                    <Text style={styles.amount}>£{transaction.amount.toFixed(2)}</Text>
-                  </View>
-                  <Text style={styles.date}>{transaction.date}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.bottomSection}>
-                <Text style={styles.question}>
-                  Will this product appear{'\n'}in your content?
-                </Text>
-                
-                <View style={styles.buttonGroup}>
-                  <GlassButton
-                    title="Yes, it will"
-                    onPress={() => handleAnswer('yes')}
-                    variant="primary"
-                  />
-                  <GlassButton
-                    title="No, personal purchase"
-                    onPress={() => handleAnswer('no')}
-                  />
-                </View>
-              </View>
-            </>
-          ) : (
-            <View style={styles.resultContainer}>
-              <View style={[
-                styles.resultIcon,
-                result === 'allowable' ? styles.successIcon : styles.personalIcon
-              ]}>
-                <Text style={styles.resultEmoji}>
-                  {result === 'allowable' ? '✓' : '👤'}
-                </Text>
-              </View>
-              
-              <Text style={styles.resultHeader}>
-                {result === 'allowable' ? 'Sorted!' : 'Got it!'}
-              </Text>
-              
-              <Text style={styles.resultText}>
-                This is{' '}
-                <Text style={styles.resultBold}>
-                  {result === 'allowable' 
-                    ? 'allowable (business expense)' 
-                    : 'personal (not allowable)'}
-                </Text>
-              </Text>
-              
-              {result === 'allowable' && (
-                <View style={styles.savingsCard}>
-                  <Text style={styles.savingsText}>
-                    You'll save ~£{(transaction.amount * 0.2).toFixed(2)} in tax 💰
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
+    <OnboardingStep
+      step={7}
+      totalSteps={9}
+      title="Let's categorize your first expense"
+      subtitle="This is how Bopp learns your spending patterns"
+    >
+      {/* Transaction card */}
+      <View style={styles.transactionCard}>
+        <LinearGradient
+          colors={['rgba(184, 255, 60, 0.1)', 'rgba(143, 217, 38, 0.05)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.transactionHeader}>
+          <View>
+            <Text style={styles.transactionMerchant}>{sampleTransaction.merchant}</Text>
+            <Text style={styles.transactionDescription}>{sampleTransaction.description}</Text>
+          </View>
+          <Text style={styles.transactionAmount}>{sampleTransaction.amount}</Text>
         </View>
-      </GradientContainer>
-    </View>
+        <Text style={styles.transactionDate}>{sampleTransaction.date}</Text>
+      </View>
+
+      {/* Instruction */}
+      <View style={styles.instructionBox}>
+        <Text style={styles.instructionText}>
+          👆 What did you buy this for?
+        </Text>
+      </View>
+
+      {/* Category options */}
+      <View style={styles.categoriesContainer}>
+        {categories.map((category) => (
+          <OptionCard
+            key={category.id}
+            icon={category.icon}
+            title={category.title}
+            description={category.description}
+            selected={selectedCategory === category.id}
+            onSelect={() => setSelectedCategory(category.id)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.buttonWrapper}>
+        <ContinueButton
+          onPress={() => selectedCategory && onNext(true)}
+          disabled={!selectedCategory}
+          text="Check Answer"
+        />
+      </View>
+    </OnboardingStep>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.deepPurple,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'space-evenly',
-    paddingVertical: spacing.xl,
-  },
-  topSection: {
-    alignItems: 'center',
-  },
-  bottomSection: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.white,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    lineHeight: 36,
-  },
   transactionCard: {
-    backgroundColor: colors.deepPurple,
-    borderRadius: borderRadius.lg,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.glassBorder,
-    padding: spacing.lg,
-    width: '100%',
+    borderColor: 'rgba(184, 255, 60, 0.3)',
+    padding: 20,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
   transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
-  merchantName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.white,
-    flex: 1,
-  },
-  amount: {
+  transactionMerchant: {
+    fontFamily: 'Outfit_700Bold',
     fontSize: 20,
-    fontWeight: '700',
-    color: colors.coral,
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
-  date: {
+  transactionDescription: {
+    fontFamily: 'Outfit_400Regular',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  transactionAmount: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 24,
+    color: '#B8FF3C',
+  },
+  transactionDate: {
+    fontFamily: 'Outfit_400Regular',
     fontSize: 13,
-    color: colors.mediumGray,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
-  question: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.white,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    lineHeight: 30,
+  instructionBox: {
+    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 255, 60, 0.2)',
   },
-  buttonGroup: {
-    marginTop: spacing.md,
-  },
-  resultContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resultIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  successIcon: {
-    backgroundColor: colors.success,
-  },
-  personalIcon: {
-    backgroundColor: colors.mediumGray,
-  },
-  resultEmoji: {
-    fontSize: 50,
-    color: colors.white,
-  },
-  resultHeader: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.white,
-    marginBottom: spacing.sm,
-  },
-  resultText: {
+  instructionText: {
+    fontFamily: 'Outfit_600SemiBold',
     fontSize: 16,
-    color: colors.white,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.xl,
   },
-  resultBold: {
-    fontWeight: '700',
-    color: colors.coral,
+  categoriesContainer: {
+    marginBottom: 32,
   },
-  savingsCard: {
-    backgroundColor: colors.glassWhite,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.glassBorder,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.xl,
-  },
-  savingsText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.white,
-    textAlign: 'center',
+  buttonWrapper: {
+    marginTop: 'auto',
   },
 });

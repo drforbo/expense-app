@@ -1,246 +1,217 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
-import {
-  GradientContainer,
-  GlassButton,
-  DecorativeBlobs,
-} from '../../lib/components';
-import { colors, spacing, borderRadius } from '../../lib/theme';
+import React from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { OnboardingStep, ContinueButton } from './OnboardingStep';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Step9PricingProps {
-  onSelectPlan: (plan: 'week' | 'quarter' | 'year') => void;
+  onNext: (plan: string) => void;
 }
 
-export const Step9Pricing: React.FC<Step9PricingProps> = ({ onSelectPlan }) => {
-  const [selectedPlan, setSelectedPlan] = useState<'week' | 'quarter' | 'year' | null>(null);
-
-  const plans = [
-    {
-      id: 'week' as const,
-      name: 'Try for a week',
-      price: '£3.99',
-      period: 'one-time payment',
-      duration: '7 days access',
-      highlight: false,
-      subtext: 'Perfect for panic mode before tax deadline',
-    },
-    {
-      id: 'quarter' as const,
-      name: 'Quarterly',
-      price: '£32',
-      period: 'every 3 months',
-      duration: '~£2.50/week',
-      highlight: false,
-      subtext: 'Build the habit, save 20%',
-    },
-    {
-      id: 'year' as const,
-      name: 'Annual',
-      price: '£99',
-      period: 'per year',
-      duration: '~£1.90/week',
-      highlight: true,
-      badge: 'Save 25%',
-      subtext: 'Best value for committed hustlers',
-    },
+export const Step9Pricing: React.FC<Step9PricingProps> = ({ onNext }) => {
+  const valueProps = [
+    { icon: '✨', text: 'AI-powered expense categorization' },
+    { icon: '🎮', text: 'Duolingo-style gamification' },
+    { icon: '📊', text: 'HMRC-compliant reports' },
+    { icon: '💾', text: 'Keep all your data forever' },
   ];
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <GradientContainer>
-        <DecorativeBlobs />
-        
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+    <OnboardingStep
+      step={9}
+      totalSteps={9}
+      title="Try Bopp free for 7 days"
+      subtitle="Then £3.99 to keep your data"
+    >
+      {/* Trial offer card */}
+      <View style={styles.offerCard}>
+        <LinearGradient
+          colors={['#B8FF3C', '#8FD926']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.offerGradient}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>Keep your{'\n'}streak going</Text>
-            <Text style={styles.subtitle}>
-              Tax fines often exceed £500 if you're late
-            </Text>
+          <View style={styles.offerContent}>
+            <Text style={styles.offerEmoji}>🎉</Text>
+            <View style={styles.offerText}>
+              <Text style={styles.offerTitle}>7 days completely free</Text>
+              <Text style={styles.offerSubtitle}>
+                No payment required. Cancel anytime.
+              </Text>
+            </View>
           </View>
-          
-          <View style={styles.plansContainer}>
-            {plans.map((plan) => (
-              <TouchableOpacity
-                key={plan.id}
-                onPress={() => setSelectedPlan(plan.id)}
-                activeOpacity={0.8}
-                style={[
-                  styles.planCard,
-                  selectedPlan === plan.id && styles.planCardSelected,
-                  plan.highlight && styles.planCardHighlight,
-                ]}
-              >
-                {plan.badge && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{plan.badge}</Text>
-                  </View>
-                )}
-                
-                <View style={styles.planHeader}>
-                  <Text style={styles.planName}>{plan.name}</Text>
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.planPrice}>{plan.price}</Text>
-                    <Text style={styles.planPeriod}>{plan.period}</Text>
-                  </View>
-                </View>
-                
-                <Text style={styles.planDuration}>{plan.duration}</Text>
-                <Text style={styles.planSubtext}>{plan.subtext}</Text>
-                
-                {selectedPlan === plan.id && (
-                  <View style={styles.selectedIndicator}>
-                    <Text style={styles.selectedCheck}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+        </LinearGradient>
+      </View>
+
+      {/* Value props */}
+      <View style={styles.valueProps}>
+        {valueProps.map((prop, index) => (
+          <View key={index} style={styles.valueProp}>
+            <Text style={styles.valuePropIcon}>{prop.icon}</Text>
+            <Text style={styles.valuePropText}>{prop.text}</Text>
           </View>
-          
-          <View style={styles.buttonContainer}>
-            <GlassButton
-              title={selectedPlan ? 'Continue' : 'Select a plan'}
-              onPress={() => selectedPlan && onSelectPlan(selectedPlan)}
-              variant="primary"
-              disabled={!selectedPlan}
-            />
-            
-            <Text style={styles.disclaimer}>
-              {selectedPlan === 'week' 
-                ? 'One-time payment. Access expires after 7 days.'
-                : 'Subscription renews automatically. Cancel anytime.'}
-            </Text>
+        ))}
+      </View>
+
+      {/* Pricing breakdown */}
+      <View style={styles.pricingCard}>
+        <View style={styles.pricingRow}>
+          <Text style={styles.pricingLabel}>After 7-day trial</Text>
+          <View style={styles.priceContainer}>
+            <Text style={styles.price}>£3.99</Text>
+            <Text style={styles.priceSubtext}>one-time</Text>
           </View>
-        </ScrollView>
-      </GradientContainer>
-    </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.pricingRow}>
+          <Text style={styles.pricingLabel}>Then monthly</Text>
+          <View style={styles.priceContainer}>
+            <Text style={styles.priceMonthly}>£4.99</Text>
+            <Text style={styles.priceSubtext}>/month</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Guarantee */}
+      <View style={styles.guarantee}>
+        <Text style={styles.guaranteeText}>
+          💯 Love it or leave it - cancel anytime during your trial
+        </Text>
+      </View>
+
+      <View style={styles.buttonWrapper}>
+        <ContinueButton onPress={() => onNext('trial')} text="Start Free Trial" />
+
+        <TouchableOpacity style={styles.skipButton} onPress={() => onNext('skip')}>
+          <Text style={styles.skipText}>Maybe later</Text>
+        </TouchableOpacity>
+      </View>
+    </OnboardingStep>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.deepPurple,
+  offerCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 32,
+    shadowColor: '#B8FF3C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
   },
-  scrollView: {
-    flex: 1,
+  offerGradient: {
+    padding: 24,
   },
-  scrollContent: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
-  header: {
+  offerContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xl,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.white,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-    lineHeight: 40,
+  offerEmoji: {
+    fontSize: 48,
+    marginRight: 20,
   },
-  subtitle: {
+  offerText: {
+    flex: 1,
+  },
+  offerTitle: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 24,
+    color: '#0F1419',
+    marginBottom: 4,
+  },
+  offerSubtitle: {
+    fontFamily: 'Outfit_500Medium',
     fontSize: 15,
-    color: colors.mediumGray,
-    textAlign: 'center',
+    color: '#0F1419',
+    opacity: 0.8,
   },
-  plansContainer: {
-    marginBottom: spacing.xl,
+  valueProps: {
+    gap: 16,
+    marginBottom: 32,
   },
-  planCard: {
-    backgroundColor: colors.deepPurple,
-    borderRadius: borderRadius.lg,
+  valueProp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  valuePropIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  valuePropText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  pricingCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.glassBorder,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    position: 'relative',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 24,
+    marginBottom: 24,
   },
-  planCardSelected: {
-    borderColor: colors.electricViolet,
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
-  },
-  planCardHighlight: {
-    borderColor: colors.coral,
-  },
-  badge: {
-    position: 'absolute',
-    top: -10,
-    right: spacing.md,
-    backgroundColor: colors.coral,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  planHeader: {
+  pricingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xs,
+    alignItems: 'center',
   },
-  planName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.white,
+  pricingLabel: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
-  planPrice: {
+  price: {
+    fontFamily: 'Outfit_700Bold',
+    fontSize: 28,
+    color: '#B8FF3C',
+  },
+  priceMonthly: {
+    fontFamily: 'Outfit_700Bold',
     fontSize: 24,
-    fontWeight: '700',
-    color: colors.coral,
+    color: '#FFFFFF',
   },
-  planPeriod: {
-    fontSize: 12,
-    color: colors.mediumGray,
-  },
-  planDuration: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.white,
-    marginBottom: spacing.xs,
-  },
-  planSubtext: {
+  priceSubtext: {
+    fontFamily: 'Outfit_400Regular',
     fontSize: 13,
-    color: colors.mediumGray,
-    lineHeight: 18,
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 2,
   },
-  selectedIndicator: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.electricViolet,
-    justifyContent: 'center',
-    alignItems: 'center',
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 20,
   },
-  selectedCheck: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '700',
+  guarantee: {
+    backgroundColor: 'rgba(184, 255, 60, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 255, 60, 0.2)',
+    marginBottom: 32,
   },
-  buttonContainer: {
-    marginTop: spacing.md,
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: colors.mediumGray,
+  guaranteeText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg,
+    lineHeight: 20,
+  },
+  buttonWrapper: {
+    marginTop: 'auto',
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 12,
+  },
+  skipText: {
+    fontFamily: 'Outfit_500Medium',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 });
