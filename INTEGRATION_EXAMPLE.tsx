@@ -8,7 +8,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-goog
 import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from './lib/supabase';
 import { OnboardingFlow } from './screens/OnboardingFlow';
-import { DashboardScreen } from './screens/DashboardScreen';
+import { DashboardScreen } from './archive/DashboardScreen';
 
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();

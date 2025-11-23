@@ -6,12 +6,11 @@ import {
   StatusBar,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import WelcomeScreen from './screens/onboarding/WelcomeScreen';
-import OnboardingFlow from './screens/onboarding/OnboardingFlow';
-import PaymentFlow from './screens/onboarding/PaymentFlow';
+import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
+import OnboardingFlow from '../screens/onboarding/OnboardingFlow';
+import PaymentFlow from '../screens/onboarding/PaymentFlow';
 
 interface OnboardingData {
   workType: string;
@@ -25,7 +24,11 @@ interface OnboardingData {
 
 type FlowStep = 'welcome' | 'onboarding' | 'payment' | 'complete';
 
-export default function App() {
+interface OnboardingFlowScreenProps {
+  onComplete: () => void;
+}
+
+export default function OnboardingFlowScreen({ onComplete }: OnboardingFlowScreenProps) {
   const [currentStep, setCurrentStep] = useState<FlowStep>('welcome');
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,9 +74,9 @@ export default function App() {
     }
   };
 
-  const handleReset = () => {
-    setCurrentStep('welcome');
-    setOnboardingData(null);
+  const handleFinalComplete = () => {
+    // Navigate to main app
+    onComplete();
   };
 
   if (isLoading) {
@@ -178,20 +181,10 @@ export default function App() {
 
             <TouchableOpacity 
               style={styles.continueButton}
-              onPress={() => {
-                console.log('Navigate to dashboard');
-                Alert.alert('Coming Soon', 'Main app coming soon! Tap "Try Again" to test the full flow.');
-              }}
+              onPress={handleFinalComplete}
             >
               <Text style={styles.continueButtonText}>Start Tracking</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.resetButton}
-              onPress={handleReset}
-            >
-              <Text style={styles.resetButtonText}>Try Full Flow Again</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -276,21 +269,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginBottom: 16,
   },
   continueButtonText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
     marginRight: 8,
-  },
-  resetButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  resetButtonText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textDecorationLine: 'underline',
   },
 });
