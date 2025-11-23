@@ -91,7 +91,7 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>
-            Start your 7-day free trial
+            Get started for just £2.99
           </Text>
         </View>
 
@@ -110,7 +110,9 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoComplete="email"
+                autoComplete="off"
+                textContentType="none"
+                importantForAutofill="no"
                 editable={!isLoading}
               />
             </View>
@@ -129,7 +131,8 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete="password-new"
+                autoComplete="off"
+                textContentType="none"
                 editable={!isLoading}
               />
               <TouchableOpacity 
@@ -158,7 +161,9 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete="password-new"
+                autoComplete="off"
+                textContentType="none"
+                importantForAutofill="no"
                 editable={!isLoading}
               />
             </View>

@@ -30,15 +30,6 @@ export default function PaymentInfoScreen({
   const [cvv, setCvv] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate trial end date
-  const trialEndDate = new Date();
-  trialEndDate.setDate(trialEndDate.getDate() + 7);
-  const formattedDate = trialEndDate.toLocaleDateString('en-GB', { 
-    day: 'numeric', 
-    month: 'long',
-    year: 'numeric'
-  });
-
   const formatCardNumber = (text: string) => {
     // Remove all non-digits
     const cleaned = text.replace(/\D/g, '');
@@ -104,11 +95,11 @@ export default function PaymentInfoScreen({
       // In production, you would:
       // 1. Create Stripe customer
       // 2. Attach payment method
-      // 3. Create subscription with trial
+      // 3. Create subscription with £2.99 first month, then £12.99/month
       // 4. Save subscription ID to Supabase
       
-      console.log('Payment method collected for user:', userId);
-      console.log('Trial will end on:', formattedDate);
+      console.log('Payment collected for user:', userId);
+      console.log('Charged: £2.99 for first month');
       
       onComplete();
     } catch (error: any) {
@@ -139,17 +130,17 @@ export default function PaymentInfoScreen({
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Start Your Free Trial</Text>
+          <Text style={styles.title}>Complete Your Purchase</Text>
           <Text style={styles.subtitle}>
-            You won't be charged until {formattedDate}
+            You'll be charged £2.99 today
           </Text>
         </View>
 
         {/* Trial Info Card */}
         <View style={styles.trialCard}>
           <View style={styles.trialRow}>
-            <Text style={styles.trialLabel}>Free trial</Text>
-            <Text style={styles.trialValue}>7 days</Text>
+            <Text style={styles.trialLabel}>First month</Text>
+            <Text style={styles.trialValue}>£2.99</Text>
           </View>
           <View style={styles.trialRow}>
             <Text style={styles.trialLabel}>Then</Text>
@@ -157,7 +148,7 @@ export default function PaymentInfoScreen({
           </View>
           <View style={styles.divider} />
           <Text style={styles.trialNote}>
-            Cancel anytime before {formattedDate} and you won't be charged
+            Cancel anytime. No long-term commitment.
           </Text>
         </View>
 
@@ -191,6 +182,9 @@ export default function PaymentInfoScreen({
                 onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                 keyboardType="numeric"
                 maxLength={19}
+                autoComplete="off"
+                textContentType="none"
+                importantForAutofill="no"
                 editable={!isLoading}
               />
             </View>
@@ -210,6 +204,9 @@ export default function PaymentInfoScreen({
                   onChangeText={(text) => setExpiry(formatExpiry(text))}
                   keyboardType="numeric"
                   maxLength={5}
+                  autoComplete="off"
+                  textContentType="none"
+                  importantForAutofill="no"
                   editable={!isLoading}
                 />
               </View>
@@ -228,6 +225,9 @@ export default function PaymentInfoScreen({
                   keyboardType="numeric"
                   maxLength={4}
                   secureTextEntry
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  textContentType="none"
                   editable={!isLoading}
                 />
               </View>
@@ -253,7 +253,7 @@ export default function PaymentInfoScreen({
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Text style={styles.continueButtonText}>Start Free Trial</Text>
+              <Text style={styles.continueButtonText}>Pay £2.99</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </>
           )}
@@ -261,7 +261,7 @@ export default function PaymentInfoScreen({
 
         {/* Footer */}
         <Text style={styles.footer}>
-          By continuing, you'll be charged £12.99/month after your free trial ends on {formattedDate}. Cancel anytime.
+          You'll be charged £2.99 today, then £12.99/month starting next month. Cancel anytime.
         </Text>
       </View>
     </KeyboardAvoidingView>

@@ -144,7 +144,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
         setTimeout(() => {
           guideScrollRef.current?.scrollTo({ y: 0, animated: true });
         }, 100);
-      }, 1200);
+      }, 1700);
 
     } catch (err) {
       console.error('Error generating guide:', err);
@@ -576,14 +576,14 @@ Ready to get started? Let's make tax simple.`;
           </View>
 
           {businessStructure === 'limited_company' && (
-            <View style={styles.boppFeatureCard}>
-              <Text style={styles.featureEmoji}>💼</Text>
-              <Text style={styles.featureTitle}>Limited Company Ready</Text>
-              <Text style={styles.featureText}>
-                Track personal expenses and income for your Self Assessment while your accountant handles company accounts.
-              </Text>
-            </View>
-          )}
+  <View style={styles.boppFeatureCard}>
+    <Text style={styles.featureEmoji}>💼</Text>
+    <Text style={styles.featureTitle}>Limited Company & Personal Tax</Text>
+    <Text style={styles.featureText}>
+      Bopp helps you track both your company expenses AND your personal income for Self Assessment. Get the full picture.
+    </Text>
+  </View>
+)}
 
           <View style={styles.boppFeatureCard}>
             <Text style={styles.featureEmoji}>📊</Text>
@@ -608,12 +608,7 @@ Ready to get started? Let's make tax simple.`;
             <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.skipButton} 
-            onPress={handleBoppComplete}
-          >
-            <Text style={styles.skipButtonText}>I'll do this later</Text>
-          </TouchableOpacity>
+          
         </ScrollView>
       </Animated.View>
     );

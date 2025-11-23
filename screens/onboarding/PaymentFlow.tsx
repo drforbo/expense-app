@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SignUpScreen from './SignUpScreen';
 import PaymentInfoScreen from './PaymentInfoScreen';
 
 interface PaymentFlowProps {
   onComplete: () => void;
-  onSkip: () => void;
+  onBack: () => void;
 }
 
 type PaymentStep = 'intro' | 'signup' | 'payment';
 
-export default function PaymentFlow({ onComplete, onSkip }: PaymentFlowProps) {
+export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStep>('intro');
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState('');
@@ -48,16 +48,21 @@ export default function PaymentFlow({ onComplete, onSkip }: PaymentFlowProps) {
 
   // Intro screen
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        {/* Back button */}
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.iconCircle}>
-            <Ionicons name="rocket" size={48} color="#7C3AED" />
+            <Ionicons name="rocket" size={36} color="#7C3AED" />
           </View>
-          <Text style={styles.title}>Ready to try Bopp?</Text>
+          <Text style={styles.title}>Ready to start?</Text>
           <Text style={styles.subtitle}>
-            Start your 7-day free trial and experience stress-free bookkeeping
+            Try Bopp for just £2.99 your first month
           </Text>
         </View>
 
@@ -94,13 +99,13 @@ export default function PaymentFlow({ onComplete, onSkip }: PaymentFlowProps) {
 
         {/* Pricing */}
         <View style={styles.pricingCard}>
-          <Text style={styles.pricingTitle}>After your free trial:</Text>
+          <Text style={styles.pricingTitle}>Special intro offer:</Text>
           <View style={styles.pricingRow}>
-            <Text style={styles.price}>£12.99</Text>
-            <Text style={styles.period}>/month</Text>
+            <Text style={styles.price}>£2.99</Text>
+            <Text style={styles.period}> first month</Text>
           </View>
           <Text style={styles.pricingNote}>
-            Cancel anytime. No long-term contracts.
+            Then £12.99/month. Cancel anytime.
           </Text>
         </View>
 
@@ -109,16 +114,8 @@ export default function PaymentFlow({ onComplete, onSkip }: PaymentFlowProps) {
           style={styles.ctaButton}
           onPress={() => setCurrentStep('signup')}
         >
-          <Text style={styles.ctaButtonText}>Start Free Trial</Text>
+          <Text style={styles.ctaButtonText}>Get Started</Text>
           <Ionicons name="arrow-forward" size={20} color="#fff" />
-        </TouchableOpacity>
-
-        {/* Skip option */}
-        <TouchableOpacity 
-          style={styles.skipButton}
-          onPress={onSkip}
-        >
-          <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity>
 
         {/* Footer */}
@@ -126,7 +123,7 @@ export default function PaymentFlow({ onComplete, onSkip }: PaymentFlowProps) {
           By continuing, you agree to our Terms & Privacy Policy
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -135,90 +132,100 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E1A47',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 40,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#1F1333',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 10,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
+    justifyContent: 'space-between',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#1F1333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#9CA3AF',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   features: {
-    marginBottom: 32,
+    marginBottom: 14,
   },
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 11,
   },
   featureIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#1F1333',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   featureText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#fff',
     flex: 1,
   },
   pricingCard: {
     backgroundColor: '#1F1333',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
+    padding: 20,
+    marginBottom: 14,
     borderWidth: 2,
     borderColor: '#7C3AED',
   },
   pricingTitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#9CA3AF',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   pricingRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   price: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '700',
     color: '#fff',
   },
   period: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#9CA3AF',
     marginLeft: 4,
   },
   pricingNote: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#10B981',
   },
   ctaButton: {
@@ -228,28 +235,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   ctaButtonText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     color: '#fff',
     marginRight: 8,
   },
-  skipButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    textDecorationLine: 'underline',
-  },
   footer: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 15,
   },
 });

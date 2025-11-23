@@ -14,6 +14,7 @@ const { width } = Dimensions.get('window');
 
 interface QuickGuideProps {
   onComplete: () => void;
+  onBack: () => void;
 }
 
 const GUIDE_STEPS = [
@@ -43,7 +44,7 @@ const GUIDE_STEPS = [
   },
 ];
 
-export default function QuickGuide({ onComplete }: QuickGuideProps) {
+export default function QuickGuide({ onComplete, onBack }: QuickGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -60,10 +61,6 @@ export default function QuickGuide({ onComplete }: QuickGuideProps) {
     }
   };
 
-  const handleSkip = () => {
-    onComplete();
-  };
-
   const handleDotPress = (index: number) => {
     setCurrentStep(index);
     scrollViewRef.current?.scrollTo({
@@ -74,10 +71,10 @@ export default function QuickGuide({ onComplete }: QuickGuideProps) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Skip button */}
+      {/* Back button */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-          <Text style={styles.skipText}>Skip</Text>
+        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -136,16 +133,15 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
-  skipButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  skipText: {
-    color: '#9CA3AF',
-    fontSize: 16,
-    fontWeight: '600',
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1F1333',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

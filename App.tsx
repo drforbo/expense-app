@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import WelcomeScreen from './screens/onboarding/WelcomeScreen';
 import OnboardingFlow from './screens/onboarding/OnboardingFlow';
-import QuickGuide from './screens/onboarding/QuickGuide';
 import PaymentFlow from './screens/onboarding/PaymentFlow';
 
 interface OnboardingData {
@@ -24,7 +23,7 @@ interface OnboardingData {
   trackingGoal: string;
 }
 
-type FlowStep = 'welcome' | 'onboarding' | 'guide' | 'payment' | 'complete';
+type FlowStep = 'welcome' | 'onboarding' | 'payment' | 'complete';
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState<FlowStep>('welcome');
@@ -41,25 +40,20 @@ export default function App() {
     setCurrentStep('welcome');
   };
 
-const handleOnboardingComplete = async (data: OnboardingData) => {
-  console.log('Onboarding completed with data:', data);
-  
-  setIsLoading(true);
-  
-  try {
-    setOnboardingData(data);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    setCurrentStep('payment');  // ← Go straight to payment!
-  } catch (error) {
-    console.error('Error saving onboarding data:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  const handleGuideComplete = () => {
-    console.log('Quick guide completed');
-    setCurrentStep('payment');
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    console.log('Onboarding completed with data:', data);
+    
+    setIsLoading(true);
+    
+    try {
+      setOnboardingData(data);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setCurrentStep('payment');
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePaymentComplete = async () => {
@@ -75,11 +69,6 @@ const handleOnboardingComplete = async (data: OnboardingData) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handlePaymentSkip = () => {
-    console.log('Payment skipped - entering trial mode');
-    setCurrentStep('complete');
   };
 
   const handleReset = () => {
@@ -113,14 +102,10 @@ const handleOnboardingComplete = async (data: OnboardingData) => {
         />
       )}
 
-      {currentStep === 'guide' && (
-        <QuickGuide onComplete={handleGuideComplete} />
-      )}
-
       {currentStep === 'payment' && (
         <PaymentFlow 
           onComplete={handlePaymentComplete}
-          onSkip={handlePaymentSkip}
+          onBack={() => setCurrentStep('onboarding')}
         />
       )}
 
