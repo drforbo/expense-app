@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
@@ -33,7 +34,7 @@ interface OnboardingData {
   trackingGoal: string;
 }
 
-type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal' | 'personalizedGuide';
+type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal' | 'personalizedGuide' | 'howBoppHelps';
 
 export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowProps) {
   const [currentScreen, setCurrentScreen] = useState<Screen>('workType');
@@ -55,6 +56,17 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
   const [personalizedGuide, setPersonalizedGuide] = useState('');
   const [guideLoading, setGuideLoading] = useState(false);
   const [guideError, setGuideError] = useState<string | null>(null);
+  
+  // bopp helps screen loading
+  const [boppScreenLoading, setBoppScreenLoading] = useState(false);
+  
+  // Scroll refs
+  const guideScrollRef = useRef<ScrollView>(null);
+  const boppScrollRef = useRef<ScrollView>(null);
+  
+  // Animation refs
+  const guideFadeAnim = useRef(new Animated.Value(0)).current;
+  const boppFadeAnim = useRef(new Animated.Value(0)).current;
 
   const workTypeLabel = () => {
     if (workType === 'content_creation') return 'content';
@@ -75,6 +87,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
     try {
       setGuideLoading(true);
       setGuideError(null);
+      guideFadeAnim.setValue(0); // Reset animation
 
       console.log('🔍 FRONTEND - About to send:');
       console.log('   goalValue parameter:', goalValue);
@@ -114,13 +127,37 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       const generatedGuide = data.guide;
       
       console.log('✅ FRONTEND - Received guide');
-      setPersonalizedGuide(generatedGuide);
+
+      // Add artificial delay to show loading state
+      setTimeout(() => {
+        setPersonalizedGuide(generatedGuide);
+        setGuideLoading(false);
+        
+        // Start fade-in animation
+        Animated.timing(guideFadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }).start();
+        
+        // Scroll to top when guide is loaded
+        setTimeout(() => {
+          guideScrollRef.current?.scrollTo({ y: 0, animated: true });
+        }, 100);
+      }, 1200);
+
     } catch (err) {
       console.error('Error generating guide:', err);
       setGuideError('Unable to generate your personalized guide.');
       setPersonalizedGuide(getGenericGuide());
-    } finally {
       setGuideLoading(false);
+      
+      // Fade in even on error
+      Animated.timing(guideFadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -198,6 +235,30 @@ Ready to get started? Let's make tax simple.`;
   };
 
   const handleGuideComplete = () => {
+    setBoppScreenLoading(true);
+    boppFadeAnim.setValue(0); // Reset animation
+    setScreenHistory([...screenHistory, currentScreen]);
+    setCurrentScreen('howBoppHelps');
+    
+    // Simulate loading
+    setTimeout(() => {
+      setBoppScreenLoading(false);
+      
+      // Start fade-in animation
+      Animated.timing(boppFadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
+      
+      // Scroll to top when loaded
+      setTimeout(() => {
+        boppScrollRef.current?.scrollTo({ y: 0, animated: true });
+      }, 100);
+    }, 1500);
+  };
+
+  const handleBoppComplete = () => {
     const data: OnboardingData = {
       workType,
       customWorkType: workType === 'other' ? customWorkType : undefined,
@@ -239,7 +300,7 @@ Ready to get started? Let's make tax simple.`;
   };
 
   const getProgressPercentage = () => {
-    const screens = ['workType', 'timeCommitment', 'income', 'goal', 'personalizedGuide'];
+    const screens = ['workType', 'timeCommitment', 'income', 'goal', 'personalizedGuide', 'howBoppHelps'];
     let screenIndex = screens.indexOf(currentScreen);
     
     if (currentScreen === 'income') {
@@ -399,44 +460,162 @@ Ready to get started? Let's make tax simple.`;
     }
 
     return (
-      <ScrollView 
-        style={styles.guideScrollView}
-        contentContainerStyle={styles.guideScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.guideHeader}>
-          <Text style={styles.guideEmoji}>✨</Text>
-          <Text style={styles.guideTitle}>Your Personalized Guide</Text>
-          <Text style={styles.guideSubtitle}>
-            Based on what you told us about your content business
+      <Animated.View style={{ flex: 1, opacity: guideFadeAnim }}>
+        <ScrollView 
+          ref={guideScrollRef}
+          style={styles.guideScrollView}
+          contentContainerStyle={styles.guideScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.guideHeader}>
+            <Text style={styles.guideEmoji}>✨</Text>
+            <Text style={styles.guideTitle}>Your Personalized Guide</Text>
+            <Text style={styles.guideSubtitle}>
+              Based on what you told us about your content business
+            </Text>
+          </View>
+
+          <View style={styles.guideContainer}>
+            <Markdown style={markdownStyles}>
+              {personalizedGuide}
+            </Markdown>
+          </View>
+
+          {guideError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>⚠️ {guideError}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.continueButton} onPress={handleGuideComplete}>
+            <Text style={styles.continueButtonText}>How can bopp help?</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.regenerateButton} 
+            onPress={() => generatePersonalizedGuide(trackingGoal)}
+          >
+            <Ionicons name="refresh" size={16} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.regenerateButtonText}>Regenerate guide</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
+    );
+  };
+
+  const renderHowBoppHelps = () => {
+    if (boppScreenLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7C3AED" />
+          <Text style={styles.loadingText}>
+            Personalizing your experience...
           </Text>
         </View>
+      );
+    }
 
-        <View style={styles.guideContainer}>
-          <Markdown style={markdownStyles}>
-            {personalizedGuide}
-          </Markdown>
-        </View>
+    const businessStructure = 
+      trackingGoal === 'compliance' ? 'sole_trader'
+      : trackingGoal === 'deductions' ? 'limited_company'
+      : 'not_registered';
 
-        {guideError && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>⚠️ {guideError}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.continueButton} onPress={handleGuideComplete}>
-          <Text style={styles.continueButtonText}>Got it! Let's go</Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.regenerateButton} 
-          onPress={() => generatePersonalizedGuide(trackingGoal)}
+    return (
+      <Animated.View style={{ flex: 1, opacity: boppFadeAnim }}>
+        <ScrollView 
+          ref={boppScrollRef}
+          style={styles.guideScrollView}
+          contentContainerStyle={styles.guideScrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="refresh" size={16} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.regenerateButtonText}>Regenerate guide</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <View style={styles.guideHeader}>
+            <Text style={styles.guideEmoji}>🚀</Text>
+            <Text style={styles.guideTitle}>How bopp Helps You</Text>
+            <Text style={styles.guideSubtitle}>
+              Built specifically for {workType === 'content_creation' ? 'content creators' : 'people'} like you
+            </Text>
+          </View>
+
+          <View style={styles.boppFeatureCard}>
+            <Text style={styles.featureEmoji}>✨</Text>
+            <Text style={styles.featureTitle}>Personalized for Your Work</Text>
+            <Text style={styles.featureText}>
+              {workType === 'content_creation' 
+                ? 'We know the difference between a Ring Light and a night out. bopp asks "what did you film?" not boring tax questions.'
+                : 'bopp learns what you do and categorizes expenses automatically - no tax jargon required.'}
+            </Text>
+          </View>
+
+          {receivesGiftedItems && (
+            <View style={styles.boppFeatureCard}>
+              <Text style={styles.featureEmoji}>🎁</Text>
+              <Text style={styles.featureTitle}>Gifted Items Tracking</Text>
+              <Text style={styles.featureText}>
+                Track PR packages at retail value, then claim them back as expenses. We handle the math so you don't pay extra tax.
+              </Text>
+            </View>
+          )}
+
+          {hasInternationalIncome && (
+            <View style={styles.boppFeatureCard}>
+              <Text style={styles.featureEmoji}>🌍</Text>
+              <Text style={styles.featureTitle}>International Income</Text>
+              <Text style={styles.featureText}>
+                Get paid by brands worldwide? We track it all and flag what needs declaring to HMRC.
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.boppFeatureCard}>
+            <Text style={styles.featureEmoji}>⚡</Text>
+            <Text style={styles.featureTitle}>Connect Once, Done Forever</Text>
+            <Text style={styles.featureText}>
+              Link your bank and we automatically categorize every transaction. No more receipt shoebox hell.
+            </Text>
+          </View>
+
+          {businessStructure === 'limited_company' && (
+            <View style={styles.boppFeatureCard}>
+              <Text style={styles.featureEmoji}>💼</Text>
+              <Text style={styles.featureTitle}>Limited Company Ready</Text>
+              <Text style={styles.featureText}>
+                Track personal expenses and income for your Self Assessment while your accountant handles company accounts.
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.boppFeatureCard}>
+            <Text style={styles.featureEmoji}>📊</Text>
+            <Text style={styles.featureTitle}>Know Your Numbers</Text>
+            <Text style={styles.featureText}>
+              See exactly how much to set aside for tax. No surprises in January.
+            </Text>
+          </View>
+
+          <View style={styles.highlightBox}>
+            <Text style={styles.highlightText}>
+              {monthlyIncome < 2000 
+                ? '⚠️ Creators earning under £2k have been fined up to £1,200 for late filing'
+                : monthlyIncome < 5000
+                ? '⚠️ Creators earning £2-5k have been fined up to £3,000 for incorrect returns'
+                : '⚠️ High earners have been fined over £10,000 for tax mistakes'}
+            </Text>
+          </View>
+
+          <TouchableOpacity style={styles.continueButton} onPress={handleBoppComplete}>
+            <Text style={styles.continueButtonText}>Try bopp</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.skipButton} 
+            onPress={handleBoppComplete}
+          >
+            <Text style={styles.skipButtonText}>I'll do this later</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
     );
   };
 
@@ -544,7 +723,7 @@ Ready to get started? Let's make tax simple.`;
               onPress={() => handleSelection('deductions')}
             />
             <OptionButton
-              text="Not yet (This is okay!)"
+              text="Not yet"
               icon="thumbs-up"
               onPress={() => handleSelection('tax_prep')}
             />
@@ -553,6 +732,9 @@ Ready to get started? Let's make tax simple.`;
 
       case 'personalizedGuide':
         return renderPersonalizedGuide();
+
+      case 'howBoppHelps':
+        return renderHowBoppHelps();
 
       default:
         return null;
@@ -571,7 +753,7 @@ Ready to get started? Let's make tax simple.`;
           </TouchableOpacity>
         </View>
 
-        {currentScreen !== 'personalizedGuide' && (
+        {currentScreen !== 'personalizedGuide' && currentScreen !== 'howBoppHelps' && (
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
               <View
@@ -584,7 +766,7 @@ Ready to get started? Let's make tax simple.`;
           </View>
         )}
 
-        {currentScreen === 'personalizedGuide' ? (
+        {currentScreen === 'personalizedGuide' || currentScreen === 'howBoppHelps' ? (
           renderScreen()
         ) : (
           <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -629,7 +811,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
   );
 };
 
-// Markdown styles - THIS IS THE FIXED VERSION
+// Markdown styles
 const markdownStyles: any = {
   body: {
     color: '#FFFFFF',
@@ -981,5 +1163,55 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     opacity: 0.6,
+  },
+  boppFeatureCard: {
+    backgroundColor: 'rgba(124, 58, 237, 0.15)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.3)',
+  },
+  featureEmoji: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  featureText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    lineHeight: 22,
+    opacity: 0.9,
+  },
+  highlightBox: {
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.4)',
+  },
+  highlightText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  skipButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  skipButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.5,
   },
 });
