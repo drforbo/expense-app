@@ -41,21 +41,21 @@ export default function App() {
     setCurrentStep('welcome');
   };
 
-  const handleOnboardingComplete = async (data: OnboardingData) => {
-    console.log('Onboarding completed with data:', data);
-    
-    setIsLoading(true);
-    
-    try {
-      setOnboardingData(data);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setCurrentStep('guide');
-    } catch (error) {
-      console.error('Error saving onboarding data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const handleOnboardingComplete = async (data: OnboardingData) => {
+  console.log('Onboarding completed with data:', data);
+  
+  setIsLoading(true);
+  
+  try {
+    setOnboardingData(data);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setCurrentStep('payment');  // ← Go straight to payment!
+  } catch (error) {
+    console.error('Error saving onboarding data:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleGuideComplete = () => {
     console.log('Quick guide completed');
