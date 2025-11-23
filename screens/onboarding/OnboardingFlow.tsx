@@ -70,27 +70,39 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
     return `£${value.toLocaleString()}`;
   };
 
-  const generatePersonalizedGuide = async () => {
+  const generatePersonalizedGuide = async (goalValue: string) => {
     try {
       setGuideLoading(true);
       setGuideError(null);
 
+      console.log('🔍 FRONTEND - About to send:');
+      console.log('   goalValue parameter:', goalValue);
+      console.log('   workType:', customWorkType || workType);
+      console.log('   timeCommitment:', timeCommitment);
+      console.log('   monthlyIncome:', monthlyIncome);
+      console.log('   receivesGiftedItems:', receivesGiftedItems);
+      console.log('   hasInternationalIncome:', hasInternationalIncome);
+
       // Call your backend server
       const API_URL = 'http://192.168.1.129:3000';
+      
+      const payload = {
+        workType: customWorkType || workType,
+        timeCommitment,
+        monthlyIncome,
+        receivesGiftedItems,
+        hasInternationalIncome,
+        trackingGoal: goalValue,
+      };
+
+      console.log('📤 FRONTEND - Full payload:', JSON.stringify(payload, null, 2));
       
       const response = await fetch(`${API_URL}/api/generate-guide`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          workType: customWorkType || workType,
-          timeCommitment,
-          monthlyIncome,
-          receivesGiftedItems,
-          hasInternationalIncome,
-          trackingGoal,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -100,6 +112,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       const data = await response.json();
       const generatedGuide = data.guide;
       
+      console.log('✅ FRONTEND - Received guide');
       setPersonalizedGuide(generatedGuide);
     } catch (err) {
       console.error('Error generating guide:', err);
@@ -113,9 +126,9 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
   const getGenericGuide = (): string => {
     return `Based on your profile, here's what you need to know:
 
-• As a ${customWorkType || workType}, you'll need to register for Self Assessment with HMRC if you earn over £1,000/year.
+- As a ${customWorkType || workType}, you'll need to register for Self Assessment with HMRC if you earn over £1,000/year.
 
-• You can claim expenses for items you buy for your content - equipment, products, travel, and more. Keep all receipts!
+- You can claim expenses for items you buy for your content - equipment, products, travel, and more. Keep all receipts!
 
 ${receivesGiftedItems ? '• Gifted items count as income! Track their value - HMRC considers them "payment in kind" and they\'re taxable.\n\n' : ''}${hasInternationalIncome ? '• International income needs special attention - you may need to declare it differently and watch for double taxation.\n\n' : ''}• Start tracking everything now. The earlier you build the habit, the easier tax season will be.
 
@@ -135,11 +148,13 @@ Ready to get started? Let's make tax simple.`;
     } else if (currentScreen === 'timeCommitment') {
       setTimeCommitment(value);
     } else if (currentScreen === 'goal') {
+      console.log('🎯 GOAL SELECTED:', value);
       setTrackingGoal(value);
       setTimeout(() => {
         setScreenHistory([...screenHistory, currentScreen]);
         setCurrentScreen('personalizedGuide');
-        generatePersonalizedGuide();
+        console.log('🚀 Calling generatePersonalizedGuide with:', value);
+        generatePersonalizedGuide(value);
       }, 300);
       return;
     }
@@ -413,7 +428,7 @@ Ready to get started? Let's make tax simple.`;
 
         <TouchableOpacity 
           style={styles.regenerateButton} 
-          onPress={generatePersonalizedGuide}
+          onPress={() => generatePersonalizedGuide(trackingGoal)}
         >
           <Ionicons name="refresh" size={16} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.regenerateButtonText}>Regenerate guide</Text>
@@ -526,7 +541,7 @@ Ready to get started? Let's make tax simple.`;
               onPress={() => handleSelection('deductions')}
             />
             <OptionButton
-              text="Not yet (This is okay!)"
+              text="Not yet"
               icon="thumbs-up"
               onPress={() => handleSelection('tax_prep')}
             />
