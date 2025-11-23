@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import Markdown from 'react-native-markdown-display';
 
 const { width } = Dimensions.get('window');
 
@@ -412,7 +413,9 @@ Ready to get started? Let's make tax simple.`;
         </View>
 
         <View style={styles.guideContainer}>
-          <Text style={styles.guideText}>{personalizedGuide}</Text>
+          <Markdown style={markdownStyles}>
+            {personalizedGuide}
+          </Markdown>
         </View>
 
         {guideError && (
@@ -541,7 +544,7 @@ Ready to get started? Let's make tax simple.`;
               onPress={() => handleSelection('deductions')}
             />
             <OptionButton
-              text="Not yet"
+              text="Not yet (This is okay!)"
               icon="thumbs-up"
               onPress={() => handleSelection('tax_prep')}
             />
@@ -624,6 +627,78 @@ const OptionButton: React.FC<OptionButtonProps> = ({
       <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
     </TouchableOpacity>
   );
+};
+
+// Markdown styles - THIS IS THE FIXED VERSION
+const markdownStyles: any = {
+  body: {
+    color: '#FFFFFF',
+  },
+  heading1: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700' as '700',
+    marginTop: 0,
+    marginBottom: 16,
+  },
+  heading2: {
+    color: '#FF6B6B',
+    fontSize: 18,
+    fontWeight: '700' as '700',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  paragraph: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  bullet_list: {
+    marginBottom: 12,
+  },
+  ordered_list: {
+    marginBottom: 12,
+  },
+  list_item: {
+    flexDirection: 'row' as 'row',
+    marginBottom: 8,
+  },
+  bullet_list_icon: {
+    color: '#7C3AED',
+    fontSize: 16,
+    marginRight: 8,
+  },
+  ordered_list_icon: {
+    color: '#7C3AED',
+    fontSize: 16,
+    marginRight: 8,
+  },
+  bullet_list_content: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+    flex: 1,
+  },
+  ordered_list_content: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+    flex: 1,
+  },
+  strong: {
+    fontWeight: '700' as '700',
+    color: '#FF6B6B',
+  },
+  em: {
+    fontStyle: 'italic' as 'italic',
+    color: '#FFFFFF',
+  },
+  text: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+  },
 };
 
 const styles = StyleSheet.create({
@@ -884,11 +959,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 1,
     borderColor: 'rgba(124, 58, 237, 0.3)',
-  },
-  guideText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 26,
   },
   errorContainer: {
     backgroundColor: 'rgba(255, 107, 107, 0.2)',
