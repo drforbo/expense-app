@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
@@ -56,22 +57,44 @@ export default function TransactionCategorizationScreen({
   const [userProfile, setUserProfile] = useState<any>(null);
   const [customAnswer, setCustomAnswer] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [recategorizing, setRecategorizing] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
+  const feedbackInputRef = useRef<TextInput>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
+
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   useEffect(() => {
-    // Scroll to bottom when custom input is shown
-    if (showCustomInput) {
+    // Smart scroll when custom input is shown OR keyboard appears
+    if ((showCustomInput || showFeedback || keyboardVisible) && scrollViewRef.current) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 300);
+      }, 100);
     }
-  }, [showCustomInput]);
+  }, [showCustomInput, showFeedback, keyboardVisible]);
+
+
 
   const loadUserProfile = async () => {
     try {
@@ -259,6 +282,17 @@ export default function TransactionCategorizationScreen({
     setCustomAnswer('');
     setShowCustomInput(false);
 
+    // Check if this was a text input question (options array is empty)
+    const currentQuestion = questions[questionIndex];
+    const isTextInputQuestion = currentQuestion.options.length === 0;
+
+    // If it's a text input question (like split details), we're done - categorize immediately
+    if (isTextInputQuestion) {
+      console.log('✅ Text input answered, categorizing...');
+      await categorizeTransaction(newAnswers);
+      return;
+    }
+
     // LIMIT: Max 4 questions total
     const MAX_QUESTIONS = 4;
 
@@ -351,7 +385,7 @@ export default function TransactionCategorizationScreen({
 
       // Check if this is a split transaction
       if ((categorization as any).isSplit && (categorization as any).splits) {
-        // Save both split portions
+        // Save both split portions as separate transactions
         const splits = (categorization as any).splits;
 
         for (let i = 0; i < splits.length; i++) {
@@ -361,7 +395,7 @@ export default function TransactionCategorizationScreen({
             .upsert({
               user_id: user.id,
               plaid_transaction_id: `${transactions[currentIndex].transaction_id}_split_${i}`,
-              merchant_name: transactions[currentIndex].merchant_name || transactions[currentIndex].name,
+              merchant_name: `${transactions[currentIndex].merchant_name || transactions[currentIndex].name} (${split.description})`,
               amount: split.amount,
               transaction_date: transactions[currentIndex].date,
               plaid_category: transactions[currentIndex].category || [],
@@ -371,9 +405,6 @@ export default function TransactionCategorizationScreen({
               explanation: split.explanation,
               tax_deductible: split.taxDeductible,
               user_answers: answers,
-              is_split: true,
-              split_description: split.description,
-              original_transaction_id: transactions[currentIndex].transaction_id,
             }, {
               onConflict: 'user_id,plaid_transaction_id'
             });
@@ -446,6 +477,45 @@ export default function TransactionCategorizationScreen({
       await generateQuestions(transactions[nextIndex]);
     } else {
       navigation.goBack();
+    }
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedback.trim()) {
+      Alert.alert('Please enter feedback', 'Tell us what needs to be changed');
+      return;
+    }
+
+    try {
+      setRecategorizing(true);
+
+      const response = await fetch(`${API_URL}/api/recategorize_with_feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction: transactions[currentIndex],
+          answers: answers,
+          userProfile: userProfile || {},
+          currentCategorization: categorization,
+          feedback: feedback.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      setCategorization(data);
+      setFeedback('');
+      setShowFeedback(false);
+
+      // Show success banner
+      setShowSuccessBanner(true);
+      setTimeout(() => {
+        setShowSuccessBanner(false);
+      }, 3000);
+    } catch (error: any) {
+      console.error('Error re-categorizing:', error);
+      Alert.alert('Error', 'Failed to update categorization');
+    } finally {
+      setRecategorizing(false);
     }
   };
 
@@ -650,6 +720,14 @@ export default function TransactionCategorizationScreen({
           </>
         ) : (
           <View style={styles.resultContainer}>
+            {/* Success Banner */}
+            {showSuccessBanner && (
+              <View style={styles.successBanner}>
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                <Text style={styles.successBannerText}>Updated successfully</Text>
+              </View>
+            )}
+
             {(categorization as any).isSplit ? (
               // Split transaction display
               <>
@@ -693,16 +771,16 @@ export default function TransactionCategorizationScreen({
               <>
                 <View style={[
                   styles.resultBadge,
-                  { backgroundColor: categorization.taxDeductible ? '#10B98120' : '#EF444420' }
+                  { backgroundColor: categorization.taxDeductible ? '#10B98120' : '#64748B20' }
                 ]}>
                   <Ionicons
-                    name={categorization.taxDeductible ? "checkmark-circle" : "close-circle"}
+                    name={categorization.taxDeductible ? "checkmark-circle" : "home-outline"}
                     size={32}
-                    color={categorization.taxDeductible ? '#10B981' : '#EF4444'}
+                    color={categorization.taxDeductible ? '#10B981' : '#9CA3AF'}
                   />
                   <Text style={[
                     styles.resultTitle,
-                    { color: categorization.taxDeductible ? '#10B981' : '#EF4444' }
+                    { color: categorization.taxDeductible ? '#10B981' : '#9CA3AF' }
                   ]}>
                     {categorization.taxDeductible ? 'Business Expense' : 'Personal Expense'}
                   </Text>
@@ -725,6 +803,7 @@ export default function TransactionCategorizationScreen({
               <TouchableOpacity
                 style={[styles.button, styles.nextButton]}
                 onPress={handleNext}
+                disabled={recategorizing}
               >
                 <Text style={styles.buttonText}>Looks good</Text>
                 <Ionicons name="checkmark" size={20} color="#fff" />
@@ -733,10 +812,66 @@ export default function TransactionCategorizationScreen({
               <TouchableOpacity
                 style={[styles.button, styles.skipButton]}
                 onPress={handleSkip}
+                disabled={recategorizing}
               >
                 <Text style={styles.skipButtonText}>Skip</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Feedback Section */}
+            {!showFeedback ? (
+              <TouchableOpacity
+                style={styles.feedbackToggle}
+                onPress={() => setShowFeedback(true)}
+              >
+                <Ionicons name="help-circle-outline" size={18} color="#9CA3AF" />
+                <Text style={styles.feedbackToggleText}>Doesn't look right? Tell us why</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.feedbackContainer}>
+                <Text style={styles.feedbackLabel}>What needs to be changed?</Text>
+                <TextInput
+                  ref={feedbackInputRef}
+                  style={styles.feedbackInput}
+                  value={feedback}
+                  onChangeText={setFeedback}
+                  placeholder="e.g., This should be 100% business, not personal..."
+                  placeholderTextColor="#64748B"
+                  multiline
+                  autoFocus
+                />
+                <View style={styles.feedbackButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => {
+                      setShowFeedback(false);
+                      setFeedback('');
+                      Keyboard.dismiss();
+                    }}
+                    disabled={recategorizing}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      (!feedback.trim() || recategorizing) && styles.submitButtonDisabled
+                    ]}
+                    onPress={handleFeedbackSubmit}
+                    disabled={!feedback.trim() || recategorizing}
+                  >
+                    {recategorizing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.submitButtonText}>Update</Text>
+                        <Ionicons name="refresh" size={16} color="#fff" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         )}
         </ScrollView>
@@ -758,6 +893,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
+    paddingBottom: 300,
   },
   header: {
     flexDirection: 'row',
@@ -848,6 +984,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '500',
+    flex: 1,
+    marginRight: 12,
   },
   answersContainer: {
     backgroundColor: '#1F133380',
@@ -1077,5 +1215,67 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9CA3AF',
     lineHeight: 18,
+  },
+  feedbackToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    padding: 12,
+    gap: 8,
+  },
+  feedbackToggleText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
+  feedbackContainer: {
+    marginTop: 20,
+    width: '100%',
+    backgroundColor: '#1F1333',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#7C3AED40',
+  },
+  feedbackLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
+    marginBottom: 12,
+  },
+  feedbackInput: {
+    width: '100%',
+    backgroundColor: '#2E1A47',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    color: '#fff',
+    minHeight: 80,
+    maxHeight: 150,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#7C3AED40',
+  },
+  feedbackButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  successBanner: {
+    backgroundColor: '#10B98120',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  successBannerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
   },
 });

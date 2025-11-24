@@ -68,9 +68,18 @@ export default function TransactionListScreen({ route, navigation }: any) {
             categorizedData?.map(t => t.plaid_transaction_id) || []
           );
 
-          const uncategorized = data.transactions.filter(
-            (t: Transaction) => !categorizedIds.has(t.transaction_id)
-          );
+          const uncategorized = data.transactions.filter((t: Transaction) => {
+            // Check exact match
+            if (categorizedIds.has(t.transaction_id)) return false;
+
+            // Check if any categorized transaction starts with this ID (for split transactions)
+            // Split transactions are saved as: original_id_split_0, original_id_split_1, etc.
+            const hasSplitMatch = Array.from(categorizedIds).some(
+              id => id.startsWith(t.transaction_id + '_split_')
+            );
+
+            return !hasSplitMatch;
+          });
 
           setTransactions(uncategorized);
         } else {
