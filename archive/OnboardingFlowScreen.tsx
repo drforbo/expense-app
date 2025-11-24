@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
+import SignUpScreen from '../screens/onboarding/SignUpScreen';
 import OnboardingFlow from '../screens/onboarding/OnboardingFlow';
 import PaymentFlow from '../screens/onboarding/PaymentFlow';
 
@@ -22,7 +23,7 @@ interface OnboardingData {
   trackingGoal: string;
 }
 
-type FlowStep = 'welcome' | 'onboarding' | 'payment' | 'complete';
+type FlowStep = 'welcome' | 'signup' | 'onboarding' | 'payment' | 'complete';
 
 interface OnboardingFlowScreenProps {
   onComplete: () => void;
@@ -32,26 +33,34 @@ export default function OnboardingFlowScreen({ onComplete }: OnboardingFlowScree
   const [currentStep, setCurrentStep] = useState<FlowStep>('welcome');
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string>('');
 
   const handleWelcomeContinue = () => {
     console.log('Welcome screen completed');
+    setCurrentStep('signup');
+  };
+
+  const handleSignUpComplete = (newUserId: string, email: string) => {
+    console.log('Sign up completed for:', email);
+    setUserId(newUserId);
     setCurrentStep('onboarding');
   };
 
   const handleOnboardingBack = () => {
-    console.log('Back to welcome from onboarding');
-    setCurrentStep('welcome');
+    console.log('Back to sign up from onboarding');
+    setCurrentStep('signup');
   };
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
     console.log('Onboarding completed with data:', data);
-    
+
     setIsLoading(true);
-    
+
     try {
       setOnboardingData(data);
       await new Promise(resolve => setTimeout(resolve, 300));
-      setCurrentStep('payment');
+      // Skip payment for now - go directly to complete
+      setCurrentStep('complete');
     } catch (error) {
       console.error('Error saving onboarding data:', error);
     } finally {
@@ -98,8 +107,15 @@ export default function OnboardingFlowScreen({ onComplete }: OnboardingFlowScree
         <WelcomeScreen onComplete={handleWelcomeContinue} />
       )}
 
+      {currentStep === 'signup' && (
+        <SignUpScreen
+          onComplete={handleSignUpComplete}
+          onBack={() => setCurrentStep('welcome')}
+        />
+      )}
+
       {currentStep === 'onboarding' && (
-        <OnboardingFlow 
+        <OnboardingFlow
           onComplete={handleOnboardingComplete}
           onBack={handleOnboardingBack}
         />
@@ -171,9 +187,9 @@ export default function OnboardingFlowScreen({ onComplete }: OnboardingFlowScree
                 <View style={styles.summaryItem}>
                   <Ionicons name="flag" size={20} color="#FF6B6B" />
                   <Text style={styles.summaryText}>
-                    {onboardingData.trackingGoal === 'compliance' && 'Sole trader'}
-                    {onboardingData.trackingGoal === 'deductions' && 'Limited company'}
-                    {onboardingData.trackingGoal === 'tax_prep' && 'Not yet registered'}
+                    {onboardingData.trackingGoal === 'sole_trader' && 'Sole trader'}
+                    {onboardingData.trackingGoal === 'limited_company' && 'Limited company'}
+                    {onboardingData.trackingGoal === 'not_registered' && 'Not yet registered'}
                   </Text>
                 </View>
               </View>

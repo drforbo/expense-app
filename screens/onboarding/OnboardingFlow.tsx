@@ -12,10 +12,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import Markdown from 'react-native-markdown-display';
+import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -258,7 +260,7 @@ Ready to get started? Let's make tax simple.`;
     }, 1500);
   };
 
-  const handleBoppComplete = () => {
+  const handleBoppComplete = async () => {
     const data: OnboardingData = {
       workType,
       customWorkType: workType === 'other' ? customWorkType : undefined,
@@ -269,6 +271,42 @@ Ready to get started? Let's make tax simple.`;
       trackingGoal,
     };
     console.log('Completing with data:', data);
+
+    // Save profile to Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        console.log('👤 Saving profile for user:', user.id);
+        const { error } = await supabase
+          .from('user_profiles')
+          .upsert({
+            user_id: user.id,
+            work_type: data.workType,
+            custom_work_type: data.customWorkType,
+            time_commitment: data.timeCommitment,
+            monthly_income: data.monthlyIncome,
+            receives_gifted_items: data.receivesGiftedItems,
+            has_international_income: data.hasInternationalIncome,
+            tracking_goal: data.trackingGoal,
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (error) {
+          console.error('❌ Error saving profile:', error);
+          Alert.alert('Warning', 'Profile saved locally but not synced to cloud');
+        } else {
+          console.log('✅ Profile saved to Supabase');
+        }
+      } else {
+        console.log('⚠️  No authenticated user found - profile not saved');
+      }
+    } catch (error) {
+      console.error('❌ Error in profile save:', error);
+    }
+
+    console.log('🏁 Calling onComplete with data');
     onComplete(data);
   };
 
@@ -516,10 +554,8 @@ Ready to get started? Let's make tax simple.`;
       );
     }
 
-    const businessStructure = 
-      trackingGoal === 'compliance' ? 'sole_trader'
-      : trackingGoal === 'deductions' ? 'limited_company'
-      : 'not_registered';
+    // trackingGoal now directly contains the business structure
+    const businessStructure = trackingGoal;
 
     return (
       <Animated.View style={{ flex: 1, opacity: boppFadeAnim }}>
@@ -710,17 +746,17 @@ Ready to get started? Let's make tax simple.`;
             <OptionButton
               text="Yes - Sole trader"
               icon="person"
-              onPress={() => handleSelection('compliance')}
+              onPress={() => handleSelection('sole_trader')}
             />
             <OptionButton
               text="Yes - Limited company"
-              icon="home"
-              onPress={() => handleSelection('deductions')}
+              icon="briefcase"
+              onPress={() => handleSelection('limited_company')}
             />
             <OptionButton
               text="Not yet"
-              icon="thumbs-up"
-              onPress={() => handleSelection('tax_prep')}
+              icon="help-circle"
+              onPress={() => handleSelection('not_registered')}
             />
           </View>
         );
