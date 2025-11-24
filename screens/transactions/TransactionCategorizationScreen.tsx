@@ -62,6 +62,10 @@ export default function TransactionCategorizationScreen({
   const [recategorizing, setRecategorizing] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
+  // Helper to detect if current transaction is income
+  const currentTransaction = transactions[currentIndex] || transaction;
+  const isIncome = currentTransaction ? currentTransaction.amount < 0 : false;
+
   const scrollViewRef = useRef<ScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
   const feedbackInputRef = useRef<TextInput>(null);
@@ -545,7 +549,6 @@ export default function TransactionCategorizationScreen({
     );
   }
 
-  const currentTransaction = transactions[currentIndex];
   const currentQuestionIndex = Object.keys(answers).length;
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -571,9 +574,16 @@ export default function TransactionCategorizationScreen({
           </View>
 
         {/* Transaction Card */}
-        <View style={styles.transactionCard}>
+        <View style={[
+          styles.transactionCard,
+          { backgroundColor: isIncome ? '#FF6B6B10' : '#1F1333' }
+        ]}>
           <View style={styles.transactionHeader}>
-            <Ionicons name="receipt" size={32} color="#7C3AED" />
+            <Ionicons
+              name={isIncome ? "trending-up" : "receipt"}
+              size={32}
+              color={isIncome ? '#FF6B6B' : '#7C3AED'}
+            />
             <View style={styles.transactionInfo}>
               <Text style={styles.merchantName}>
                 {currentTransaction.merchant_name || currentTransaction.name}
@@ -581,8 +591,11 @@ export default function TransactionCategorizationScreen({
               <Text style={styles.transactionDate}>{currentTransaction.date}</Text>
             </View>
           </View>
-          <Text style={styles.amount}>
-            £{Math.abs(currentTransaction.amount).toFixed(2)}
+          <Text style={[
+            styles.amount,
+            { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+          ]}>
+            {isIncome ? '+' : ''}£{Math.abs(currentTransaction.amount).toFixed(2)}
           </Text>
         </View>
 
@@ -591,7 +604,7 @@ export default function TransactionCategorizationScreen({
           <>
             {processing ? (
               <View style={styles.processingContainer}>
-                <ActivityIndicator size="large" color="#7C3AED" />
+                <ActivityIndicator size="large" color={isIncome ? '#FF6B6B' : '#7C3AED'} />
                 <Text style={styles.processingText}>
                   {currentQuestionIndex === 0 ? 'Analyzing...' : 'Processing...'}
                 </Text>
@@ -623,6 +636,7 @@ export default function TransactionCategorizationScreen({
                     <TouchableOpacity
                       style={[
                         styles.submitButton,
+                        { backgroundColor: isIncome ? '#FF6B6B' : '#7C3AED' },
                         !customAnswer.trim() && styles.submitButtonDisabled
                       ]}
                       onPress={() => handleCustomAnswer(currentQuestionIndex)}
@@ -653,7 +667,11 @@ export default function TransactionCategorizationScreen({
                         style={styles.customAnswerToggle}
                         onPress={() => setShowCustomInput(true)}
                       >
-                        <Ionicons name="create-outline" size={18} color="#7C3AED" />
+                        <Ionicons
+                          name="create-outline"
+                          size={18}
+                          color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                        />
                         <Text style={styles.customAnswerToggleText}>or type your own answer</Text>
                       </TouchableOpacity>
                     ) : (
@@ -689,6 +707,7 @@ export default function TransactionCategorizationScreen({
                       <TouchableOpacity
                         style={[
                           styles.submitButton,
+                          { backgroundColor: isIncome ? '#FF6B6B' : '#7C3AED' },
                           !customAnswer.trim() && styles.submitButtonDisabled
                         ]}
                         onPress={() => handleCustomAnswer(currentQuestionIndex)}
@@ -732,57 +751,97 @@ export default function TransactionCategorizationScreen({
               // Split transaction display
               <>
                 <View style={styles.splitHeaderBadge}>
-                  <Ionicons name="git-branch-outline" size={24} color="#7C3AED" />
-                  <Text style={styles.splitHeaderText}>Split Transaction</Text>
+                  <Ionicons
+                    name="git-branch-outline"
+                    size={24}
+                    color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                  />
+                  <Text style={[
+                    styles.splitHeaderText,
+                    { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+                  ]}>
+                    Split Transaction
+                  </Text>
                 </View>
 
                 <Text style={styles.splitSubheader}>
                   This transaction has been split into business and personal portions
                 </Text>
 
-                {((categorization as any).splits || []).map((split: any, idx: number) => (
-                  <View key={idx} style={[
-                    styles.splitItem,
-                    { borderLeftColor: split.taxDeductible ? '#10B981' : '#EF4444' }
-                  ]}>
-                    <View style={styles.splitHeader}>
-                      <View style={styles.splitTitleRow}>
-                        <Ionicons
-                          name={split.taxDeductible ? "checkmark-circle" : "close-circle"}
-                          size={20}
-                          color={split.taxDeductible ? '#10B981' : '#EF4444'}
-                        />
+                {((categorization as any).splits || []).map((split: any, idx: number) => {
+                  const isBusiness = split.businessPercent > 0;
+                  const businessColor = isIncome ? '#FF6B6B' : '#10B981';
+                  const personalColor = '#9CA3AF';
+                  const color = isBusiness ? businessColor : personalColor;
+
+                  return (
+                    <View key={idx} style={[
+                      styles.splitItem,
+                      { borderLeftColor: color }
+                    ]}>
+                      <View style={styles.splitHeader}>
+                        <View style={styles.splitTitleRow}>
+                          <Ionicons
+                            name={isBusiness ? "checkmark-circle" : "home-outline"}
+                            size={20}
+                            color={color}
+                          />
+                          <Text style={[
+                            styles.splitCategory,
+                            { color: color }
+                          ]}>
+                            {split.categoryName}
+                          </Text>
+                        </View>
                         <Text style={[
-                          styles.splitCategory,
-                          { color: split.taxDeductible ? '#10B981' : '#EF4444' }
+                          styles.splitAmount,
+                          { color: isIncome ? '#FF6B6B' : '#7C3AED' }
                         ]}>
-                          {split.categoryName}
+                          £{split.amount.toFixed(2)}
                         </Text>
                       </View>
-                      <Text style={styles.splitAmount}>£{split.amount.toFixed(2)}</Text>
+                      <Text style={styles.splitDescription}>{split.description}</Text>
+                      <Text style={styles.splitExplanation}>{split.explanation}</Text>
                     </View>
-                    <Text style={styles.splitDescription}>{split.description}</Text>
-                    <Text style={styles.splitExplanation}>{split.explanation}</Text>
-                  </View>
-                ))}
+                  );
+                })}
               </>
             ) : (
               // Regular single-purpose transaction display
               <>
                 <View style={[
                   styles.resultBadge,
-                  { backgroundColor: categorization.taxDeductible ? '#10B98120' : '#64748B20' }
+                  {
+                    backgroundColor: isIncome
+                      ? (categorization.taxDeductible ? '#FF6B6B20' : '#64748B20')  // Coral for income
+                      : (categorization.taxDeductible ? '#10B98120' : '#64748B20')  // Green for business expenses
+                  }
                 ]}>
                   <Ionicons
-                    name={categorization.taxDeductible ? "checkmark-circle" : "home-outline"}
+                    name={
+                      isIncome
+                        ? (categorization.taxDeductible ? "trending-up" : "home-outline")
+                        : (categorization.taxDeductible ? "checkmark-circle" : "home-outline")
+                    }
                     size={32}
-                    color={categorization.taxDeductible ? '#10B981' : '#9CA3AF'}
+                    color={
+                      isIncome
+                        ? (categorization.taxDeductible ? '#FF6B6B' : '#9CA3AF')  // Coral for income
+                        : (categorization.taxDeductible ? '#10B981' : '#9CA3AF')  // Green for business expenses
+                    }
                   />
                   <Text style={[
                     styles.resultTitle,
-                    { color: categorization.taxDeductible ? '#10B981' : '#9CA3AF' }
+                    {
+                      color: isIncome
+                        ? (categorization.taxDeductible ? '#FF6B6B' : '#9CA3AF')  // Coral for income
+                        : (categorization.taxDeductible ? '#10B981' : '#9CA3AF')  // Green for business expenses
+                    }
                   ]}>
-                    {categorization.taxDeductible ? 'Business Expense' : 'Personal Expense'}
+                    {categorization.taxDeductible
+                      ? (isIncome ? 'Business Income' : 'Business Expense')
+                      : (isIncome ? 'Personal Income' : 'Personal Expense')
+                    }
                   </Text>
                 </View>
 
@@ -1170,7 +1229,6 @@ const styles = StyleSheet.create({
   splitHeaderText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#7C3AED',
   },
   splitSubheader: {
     fontSize: 14,

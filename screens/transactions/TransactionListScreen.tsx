@@ -184,34 +184,50 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
       {/* Transaction List */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
-        {transactions.map((transaction) => (
-          <TouchableOpacity
-            key={transaction.transaction_id}
-            style={styles.transactionItem}
-            onPress={() => handleTransactionPress(transaction)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.transactionIcon}>
-              <Ionicons name="receipt-outline" size={24} color="#7C3AED" />
-            </View>
+        {transactions.map((transaction) => {
+          const isIncome = transaction.amount < 0; // Negative = income in Plaid
+          return (
+            <TouchableOpacity
+              key={transaction.transaction_id}
+              style={[
+                styles.transactionItem,
+                { backgroundColor: isIncome ? '#FF6B6B15' : '#1F1333' }
+              ]}
+              onPress={() => handleTransactionPress(transaction)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.transactionIcon,
+                { backgroundColor: isIncome ? '#FF6B6B30' : '#7C3AED20' }
+              ]}>
+                <Ionicons
+                  name={isIncome ? "trending-up" : "receipt-outline"}
+                  size={24}
+                  color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                />
+              </View>
 
-            <View style={styles.transactionDetails}>
-              <Text style={styles.merchantName}>
-                {transaction.merchant_name || transaction.name}
-              </Text>
-              <Text style={styles.transactionDate}>
-                {formatDate(transaction.date)}
-              </Text>
-            </View>
+              <View style={styles.transactionDetails}>
+                <Text style={styles.merchantName}>
+                  {transaction.merchant_name || transaction.name}
+                </Text>
+                <Text style={styles.transactionDate}>
+                  {formatDate(transaction.date)}
+                </Text>
+              </View>
 
-            <View style={styles.transactionRight}>
-              <Text style={styles.transactionAmount}>
-                £{Math.abs(transaction.amount).toFixed(2)}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color="#64748B" />
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={styles.transactionRight}>
+                <Text style={[
+                  styles.transactionAmount,
+                  { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+                ]}>
+                  {isIncome ? '+' : ''}£{Math.abs(transaction.amount).toFixed(2)}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#64748B" />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
     </SafeAreaView>
