@@ -7,12 +7,13 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function DashboardScreen({ navigation }: any) {
   const [connecting, setConnecting] = useState(false);
@@ -31,18 +32,35 @@ export default function DashboardScreen({ navigation }: any) {
     }
   };
 
-  const handleResetOnboarding = async () => {
-    try {
-      await AsyncStorage.removeItem('onboarding_completed');
-      await AsyncStorage.removeItem('plaid_access_token');
-      setHasAccessToken(false);
-      console.log('Onboarding reset - restart app to see onboarding again');
-    } catch (error) {
-      console.error('Error resetting onboarding:', error);
-    }
+  const handleLogout = async () => {
+    Alert.alert(
+      'Log out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Sign out from Supabase
+              await supabase.auth.signOut();
+              // Clear local storage
+              await AsyncStorage.removeItem('onboarding_completed');
+              await AsyncStorage.removeItem('plaid_access_token');
+              // The auth state change will trigger app restart
+              console.log('✅ Logged out successfully');
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to log out');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const handleConnectBank = async () => {
+  const handleCategorizeTransactions = async () => {
     try {
       setConnecting(true);
 
@@ -97,74 +115,124 @@ export default function DashboardScreen({ navigation }: any) {
     }
   };
 
+  const handleComingSoon = (feature: string) => {
+    Alert.alert('Coming Soon', `${feature} will be available soon!`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome to Bopp!</Text>
-          <Text style={styles.subtitle}>Your expense tracking starts here</Text>
+          <View>
+            <Text style={styles.welcomeText}>Dashboard</Text>
+            <Text style={styles.subtitle}>Manage your tax tracking</Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
+          </TouchableOpacity>
         </View>
 
-        {/* Featured Action */}
+        {/* Primary Action - Categorize Transactions */}
         <TouchableOpacity
-          style={styles.featuredCard}
-          onPress={handleConnectBank}
+          style={styles.primaryCard}
+          onPress={handleCategorizeTransactions}
           disabled={connecting}
           activeOpacity={0.7}
         >
-          <View style={styles.featuredIconContainer}>
+          <View style={styles.primaryIconContainer}>
             {connecting ? (
-              <ActivityIndicator size={32} color="#7C3AED" />
+              <ActivityIndicator size={32} color="#fff" />
             ) : (
-              <Ionicons name="card" size={32} color="#7C3AED" />
+              <Ionicons name="card" size={32} color="#fff" />
             )}
           </View>
-          <View style={styles.featuredText}>
-            <Text style={styles.featuredTitle}>
+          <View style={styles.primaryText}>
+            <Text style={styles.primaryTitle}>
               {connecting ? 'Connecting...' : 'Categorize Transactions'}
             </Text>
-            <Text style={styles.featuredSubtitle}>
-              Start categorizing your expenses
+            <Text style={styles.primarySubtitle}>
+              Review and categorize your expenses
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#7C3AED" />
+          <Ionicons name="chevron-forward" size={24} color="#fff" />
         </TouchableOpacity>
 
-        {/* Placeholder Cards */}
-        <View style={styles.cardsContainer}>
-          <View style={styles.card}>
-            <Ionicons name="camera" size={28} color="#7C3AED" />
-            <Text style={styles.cardTitle}>Snap Receipts</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Ionicons name="list" size={28} color="#FF6B6B" />
-            <Text style={styles.cardTitle}>View Expenses</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Ionicons name="stats-chart" size={28} color="#7C3AED" />
-            <Text style={styles.cardTitle}>Tax Reports</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Ionicons name="settings" size={28} color="#FF6B6B" />
-            <Text style={styles.cardTitle}>Settings</Text>
-          </View>
-        </View>
-
-        {/* Dev Tools */}
-        <View style={styles.devSection}>
+        {/* Main Actions Grid */}
+        <View style={styles.gridContainer}>
           <TouchableOpacity
-            style={styles.devButton}
-            onPress={handleResetOnboarding}
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Qualify Transactions')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="refresh" size={18} color="#fff" />
-            <Text style={styles.devButtonText}>Reset Onboarding</Text>
+            <View style={styles.actionIcon}>
+              <Ionicons name="receipt" size={28} color="#7C3AED" />
+            </View>
+            <Text style={styles.actionTitle}>Qualify Transactions</Text>
+            <Text style={styles.actionSubtitle}>Upload receipts & evidence</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Log Gifted Items')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="gift" size={28} color="#FF6B6B" />
+            </View>
+            <Text style={styles.actionTitle}>Log Gifted Items</Text>
+            <Text style={styles.actionSubtitle}>Track PR packages & gifts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Tax Checklist')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="checkbox" size={28} color="#10B981" />
+            </View>
+            <Text style={styles.actionTitle}>Checklist</Text>
+            <Text style={styles.actionSubtitle}>Tax actions & deadlines</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Tax Summary')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="stats-chart" size={28} color="#3B82F6" />
+            </View>
+            <Text style={styles.actionTitle}>Summary</Text>
+            <Text style={styles.actionSubtitle}>View tax consolidation</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Export Data')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="download" size={28} color="#F59E0B" />
+            </View>
+            <Text style={styles.actionTitle}>Export</Text>
+            <Text style={styles.actionSubtitle}>Download as CSV</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('Account Settings')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="settings" size={28} color="#6B7280" />
+            </View>
+            <Text style={styles.actionTitle}>Settings</Text>
+            <Text style={styles.actionSubtitle}>Profile & billing</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -174,99 +242,103 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E1A47',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     padding: 20,
-    justifyContent: 'space-between',
+    paddingBottom: 40,
   },
   header: {
-    marginTop: 8,
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   welcomeText: {
     fontSize: 28,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
     color: '#9CA3AF',
   },
-  featuredCard: {
+  logoutButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#1F1333',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 2,
-    borderColor: '#7C3AED',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  featuredIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#7C3AED20',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
   },
-  featuredText: {
+  primaryCard: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  primaryIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  primaryText: {
     flex: 1,
   },
-  featuredTitle: {
-    fontSize: 16,
+  primaryTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 3,
+    marginBottom: 4,
   },
-  featuredSubtitle: {
-    fontSize: 13,
-    color: '#9CA3AF',
+  primarySubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
   },
-  cardsContainer: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 20,
   },
-  card: {
+  actionCard: {
     backgroundColor: '#1F1333',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     width: '48%',
-    alignItems: 'center',
-    minHeight: 90,
-    justifyContent: 'center',
+    minHeight: 130,
+    justifyContent: 'space-between',
   },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  devSection: {
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: 'rgba(124, 58, 237, 0.1)',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.3)',
-  },
-  devButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  devButtonText: {
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 6,
+    marginBottom: 4,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    lineHeight: 16,
   },
 });
