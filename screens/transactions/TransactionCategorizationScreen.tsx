@@ -453,9 +453,6 @@ export default function TransactionCategorizationScreen({
 
       // If we came from the transaction list, go back to it (list will auto-refresh via useFocusEffect)
       if (transaction) {
-        // Small delay to ensure Supabase replication completes before refreshing
-        console.log('⏳ Waiting for Supabase replication...');
-        await new Promise(resolve => setTimeout(resolve, 500));
         console.log('✅ Navigating back to refresh list');
         navigation.goBack();
       } else {
