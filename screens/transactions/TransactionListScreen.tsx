@@ -29,6 +29,7 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [preGeneratedQuestions, setPreGeneratedQuestions] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadTransactions();
@@ -72,6 +73,9 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
       if (data.transactions && data.transactions.length > 0) {
         setTransactions(data.transactions);
+
+        // Pre-generate Q1 for all transactions in the background
+        preGenerateQuestions(data.transactions, user?.id);
       } else {
         console.log('⚠️  No transactions returned');
         Alert.alert('No transactions', 'No transactions found in the last 30 days');
@@ -85,11 +89,54 @@ export default function TransactionListScreen({ route, navigation }: any) {
     }
   };
 
+  const preGenerateQuestions = async (txns: Transaction[], userId: string | undefined) => {
+    try {
+      console.log('⚡ Pre-generating Q1 for', txns.length, 'transactions...');
+
+      // Get user profile for better questions
+      let userProfile = {};
+      if (userId) {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        userProfile = data || {};
+      }
+
+      const response = await fetch(`${API_URL}/api/bulk_generate_first_questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactions: txns,
+          userProfile
+        }),
+      });
+
+      const data = await response.json();
+
+      // Map results by transaction_id for quick lookup
+      const questionsMap: Record<string, any> = {};
+      data.results.forEach((result: any) => {
+        if (result.questions) {
+          questionsMap[result.transaction_id] = result.questions;
+        }
+      });
+
+      setPreGeneratedQuestions(questionsMap);
+      console.log('✅ Pre-generated Q1 for', Object.keys(questionsMap).length, 'transactions');
+    } catch (error) {
+      console.error('Error pre-generating questions:', error);
+      // Don't alert user - this is a background optimization
+    }
+  };
+
   const handleTransactionPress = (transaction: Transaction) => {
     navigation.navigate('TransactionCategorization', {
       accessToken,
       transaction,
       allTransactions: transactions,
+      preGeneratedQuestions: preGeneratedQuestions[transaction.transaction_id],
     });
   };
 

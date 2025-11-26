@@ -45,7 +45,7 @@ export default function TransactionCategorizationScreen({
   route,
   navigation
 }: any) {
-  const { accessToken, transaction, allTransactions } = route.params || {};
+  const { accessToken, transaction, allTransactions, preGeneratedQuestions } = route.params || {};
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -123,7 +123,14 @@ export default function TransactionCategorizationScreen({
       if (transaction) {
         setTransactions([transaction]);
         setLoading(false);
-        await generateQuestions(transaction);
+
+        // Use pre-generated questions if available, otherwise generate them
+        if (preGeneratedQuestions && preGeneratedQuestions.length > 0) {
+          console.log('✅ Using pre-generated Q1 (instant load!)');
+          setQuestions(preGeneratedQuestions);
+        } else {
+          await generateQuestions(transaction);
+        }
       } else {
         // Otherwise load all transactions
         await loadTransactions();
