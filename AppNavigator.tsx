@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import OnboardingFlowScreen from './archive/OnboardingFlowScreen';
+import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import TransactionListScreen from './screens/transactions/TransactionListScreen';
 import TransactionCategorizationScreen from './screens/transactions/TransactionCategorizationScreen';
@@ -67,8 +67,7 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Onboarding">
           {(props) => (
-            <OnboardingFlowScreen
-              {...props}
+            <SimpleOnboarding
               onComplete={handleOnboardingComplete}
             />
           )}
