@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './lib/supabase';
 import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import TransactionListScreen from './screens/transactions/TransactionListScreen';
@@ -22,6 +23,27 @@ export default function AppNavigator() {
 
   useEffect(() => {
     checkOnboardingStatus();
+
+    // Listen for auth state changes (e.g., logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
+
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, resetting to onboarding');
+        setIsOnboarded(false);
+        // Reset navigation to Onboarding screen
+        if (navigationRef.current) {
+          navigationRef.current.reset({
+            index: 0,
+            routes: [{ name: 'Onboarding' }],
+          });
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkOnboardingStatus = async () => {
