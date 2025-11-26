@@ -21,9 +21,11 @@ interface SimpleOnboardingProps {
 }
 
 type Step = 'signup' | 'workType' | 'income' | 'registration';
+type AuthMode = 'login' | 'signup';
 
 export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) {
   const [currentStep, setCurrentStep] = useState<Step>('signup');
+  const [authMode, setAuthMode] = useState<AuthMode>('signup');
   const [loading, setLoading] = useState(false);
 
   // Auth fields
@@ -42,6 +44,34 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const formatCurrency = (value: number) => {
     if (value >= 10000) return `£${(value / 1000).toFixed(0)}k`;
     return `£${value.toLocaleString()}`;
+  };
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        console.log('✅ User logged in:', data.user.id);
+        // User already has profile, complete onboarding
+        onComplete();
+      }
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      Alert.alert('Login failed', error.message || 'Please check your credentials');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignUp = async () => {
@@ -154,6 +184,26 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         <Text style={styles.tagline}>Simple tax for side hustlers</Text>
       </View>
 
+      {/* Auth mode toggle */}
+      <View style={styles.authToggle}>
+        <TouchableOpacity
+          style={[styles.authToggleButton, authMode === 'signup' && styles.authToggleButtonActive]}
+          onPress={() => setAuthMode('signup')}
+        >
+          <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>
+            Sign up
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.authToggleButton, authMode === 'login' && styles.authToggleButtonActive]}
+          onPress={() => setAuthMode('login')}
+        >
+          <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>
+            Log in
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.formContainer}>
         <Text style={styles.inputLabel}>Email</Text>
         <TextInput
@@ -173,7 +223,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             style={[styles.input, styles.passwordInput]}
             value={password}
             onChangeText={setPassword}
-            placeholder="At least 6 characters"
+            placeholder={authMode === 'signup' ? 'At least 6 characters' : 'Your password'}
             placeholderTextColor="#64748B"
             secureTextEntry={!showPassword}
             autoCapitalize="none"
@@ -193,14 +243,16 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
-          onPress={handleSignUp}
+          onPress={authMode === 'signup' ? handleSignUp : handleLogin}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Text style={styles.primaryButtonText}>Create account</Text>
+              <Text style={styles.primaryButtonText}>
+                {authMode === 'signup' ? 'Create account' : 'Log in'}
+              </Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </>
           )}
@@ -448,7 +500,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginTop: 40,
-    marginBottom: 60,
+    marginBottom: 40,
   },
   logo: {
     fontSize: 48,
@@ -459,6 +511,31 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 16,
     color: '#9CA3AF',
+  },
+  authToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#1F1333',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+    gap: 4,
+  },
+  authToggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  authToggleButtonActive: {
+    backgroundColor: '#7C3AED',
+  },
+  authToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  authToggleTextActive: {
+    color: '#fff',
   },
   formContainer: {
     gap: 16,
