@@ -22,7 +22,7 @@ interface Transaction {
   category?: string[];
 }
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function TransactionListScreen({ route, navigation }: any) {
   const { accessToken } = route.params || {};
@@ -43,56 +43,45 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
   const loadTransactions = async () => {
     try {
+      console.log('🔄 Starting transaction load...');
       setLoading(true);
 
-      // Fetch transactions from Plaid
+      // Get current user for filtering on server side
+      console.log('👤 Getting user...');
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('✅ User ID:', user?.id);
+
+      // Fetch transactions from server (filtering happens server-side now)
+      console.log('📡 Fetching from:', `${API_URL}/api/sync_transactions`);
+      const startTime = Date.now();
+
       const response = await fetch(`${API_URL}/api/sync_transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: accessToken }),
+        body: JSON.stringify({
+          access_token: accessToken,
+          user_id: user?.id
+        }),
       });
 
+      const loadTime = Date.now() - startTime;
+      console.log(`⏱️  Server response time: ${loadTime}ms`);
+
       const data = await response.json();
+      console.log('📊 Received transactions:', data.transactions?.length || 0);
 
       if (data.transactions && data.transactions.length > 0) {
-        // Filter out already categorized transactions
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (user) {
-          const { data: categorizedData } = await supabase
-            .from('categorized_transactions')
-            .select('plaid_transaction_id')
-            .eq('user_id', user.id);
-
-          const categorizedIds = new Set(
-            categorizedData?.map(t => t.plaid_transaction_id) || []
-          );
-
-          const uncategorized = data.transactions.filter((t: Transaction) => {
-            // Check exact match
-            if (categorizedIds.has(t.transaction_id)) return false;
-
-            // Check if any categorized transaction starts with this ID (for split transactions)
-            // Split transactions are saved as: original_id_split_0, original_id_split_1, etc.
-            const hasSplitMatch = Array.from(categorizedIds).some(
-              id => id.startsWith(t.transaction_id + '_split_')
-            );
-
-            return !hasSplitMatch;
-          });
-
-          setTransactions(uncategorized);
-        } else {
-          setTransactions(data.transactions);
-        }
+        setTransactions(data.transactions);
       } else {
+        console.log('⚠️  No transactions returned');
         Alert.alert('No transactions', 'No transactions found in the last 30 days');
       }
     } catch (error: any) {
-      console.error('Error loading transactions:', error);
-      Alert.alert('Error', 'Failed to load transactions');
+      console.error('❌ Error loading transactions:', error);
+      Alert.alert('Error', 'Failed to load transactions: ' + error.message);
     } finally {
       setLoading(false);
+      console.log('✅ Transaction load complete');
     }
   };
 
