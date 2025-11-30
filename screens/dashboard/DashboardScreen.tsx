@@ -8,6 +8,10 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Platform,
+  Modal,
+  TextInput,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,9 +22,15 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 export default function DashboardScreen({ navigation }: any) {
   const [connecting, setConnecting] = useState(false);
   const [hasAccessToken, setHasAccessToken] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [lastExportDate, setLastExportDate] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     checkAccessToken();
+    fetchLastExportDate();
   }, []);
 
   const checkAccessToken = async () => {
@@ -29,6 +39,41 @@ export default function DashboardScreen({ navigation }: any) {
       setHasAccessToken(!!token);
     } catch (error) {
       console.error('Error checking access token:', error);
+    }
+  };
+
+  const fetchLastExportDate = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(`${API_URL}/api/get_last_export_date`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch last export date:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      setLastExportDate(data.last_export_date);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn('Fetch last export date timed out');
+      } else {
+        console.error('Error fetching last export date:', error);
+      }
+      // Don't block the UI - just keep it as null
     }
   };
 
@@ -119,6 +164,99 @@ export default function DashboardScreen({ navigation }: any) {
     Alert.alert('Coming Soon', `${feature} will be available soon!`);
   };
 
+  const handleExportTransactions = async (selectedStartDate?: string, selectedEndDate?: string) => {
+    try {
+      setExporting(true);
+      console.log('🚀 Starting export...');
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.log('❌ No user found');
+        Alert.alert('Error', 'You must be logged in to export transactions');
+        return;
+      }
+
+      console.log('📊 Exporting transactions for user:', user.id);
+      if (selectedStartDate) console.log('📅 Date range:', selectedStartDate, 'to', selectedEndDate);
+
+      // Build download URL with query parameters
+      const params = new URLSearchParams({
+        user_id: user.id,
+        ...(selectedStartDate && { start_date: selectedStartDate }),
+        ...(selectedEndDate && { end_date: selectedEndDate }),
+      });
+
+      const downloadUrl = `${API_URL}/api/download_transactions?${params.toString()}`;
+      console.log('🌐 Opening download URL:', downloadUrl);
+
+      // Open the download URL in the browser - iOS Safari will handle the download
+      const canOpen = await Linking.canOpenURL(downloadUrl);
+      console.log('📱 Can open URL:', canOpen);
+
+      if (canOpen) {
+        await Linking.openURL(downloadUrl);
+        console.log('✅ Browser opened successfully');
+
+        Alert.alert(
+          'Export Started',
+          'The file will download in your browser. You can then save it to Files or share it.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        throw new Error('Cannot open browser');
+      }
+
+      // Refresh last export date
+      fetchLastExportDate().catch(err => console.warn('Failed to refresh export date:', err));
+    } catch (error: any) {
+      console.error('❌ Error exporting transactions:', error);
+      console.error('❌ Error stack:', error.stack);
+      Alert.alert('Error', error.message || 'Failed to export transactions');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const openDatePicker = () => {
+    // Set default dates (last 30 days)
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+
+    setEndDate(end.toISOString().split('T')[0]);
+    setStartDate(start.toISOString().split('T')[0]);
+    setShowDatePicker(true);
+  };
+
+  const confirmExport = () => {
+    setShowDatePicker(false);
+    handleExportTransactions(startDate, endDate);
+  };
+
+  const formatLastExportDate = (dateString: string | null) => {
+    if (!dateString) return 'Never exported';
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
@@ -174,13 +312,13 @@ export default function DashboardScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => handleComingSoon('Log Gifted Items')}
+            onPress={() => navigation.navigate('GiftedTracker')}
             activeOpacity={0.7}
           >
             <View style={styles.actionIcon}>
               <Ionicons name="gift" size={28} color="#FF6B6B" />
             </View>
-            <Text style={styles.actionTitle}>Log Gifted Items</Text>
+            <Text style={styles.actionTitle}>Gifted Tracker</Text>
             <Text style={styles.actionSubtitle}>Track PR packages & gifts</Text>
           </TouchableOpacity>
 
@@ -209,15 +347,25 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => handleComingSoon('Export Data')}
+            style={[styles.actionCard, styles.exportCard]}
+            onPress={openDatePicker}
+            disabled={exporting}
             activeOpacity={0.7}
           >
             <View style={styles.actionIcon}>
-              <Ionicons name="download" size={28} color="#F59E0B" />
+              {exporting ? (
+                <ActivityIndicator size={28} color="#F59E0B" />
+              ) : (
+                <Ionicons name="download" size={28} color="#F59E0B" />
+              )}
             </View>
-            <Text style={styles.actionTitle}>Export</Text>
+            <Text style={styles.actionTitle}>
+              {exporting ? 'Exporting...' : 'Export'}
+            </Text>
             <Text style={styles.actionSubtitle}>Download as CSV</Text>
+            <Text style={styles.lastExportText}>
+              Last: {formatLastExportDate(lastExportDate)}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -233,6 +381,59 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Date Range Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Date Range</Text>
+            <Text style={styles.modalSubtitle}>Choose the period to export</Text>
+
+            <View style={styles.dateInputContainer}>
+              <Text style={styles.dateLabel}>Start Date</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={startDate}
+                onChangeText={setStartDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#64748B"
+              />
+            </View>
+
+            <View style={styles.dateInputContainer}>
+              <Text style={styles.dateLabel}>End Date</Text>
+              <TextInput
+                style={styles.dateInput}
+                value={endDate}
+                onChangeText={setEndDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#64748B"
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmExport}
+              >
+                <Text style={styles.confirmButtonText}>Export</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -340,5 +541,84 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     lineHeight: 16,
+  },
+  exportCard: {
+    minHeight: 150,
+  },
+  lastExportText: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 24,
+  },
+  dateInputContainer: {
+    marginBottom: 16,
+  },
+  dateLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  dateInput: {
+    backgroundColor: '#2E1A47',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#fff',
+    borderWidth: 1,
+    borderColor: '#7C3AED20',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalButton: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#2E1A47',
+  },
+  confirmButton: {
+    backgroundColor: '#7C3AED',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
   },
 });

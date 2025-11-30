@@ -504,9 +504,10 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 48,
-    fontWeight: '900',
+    fontWeight: '700',
     color: '#fff',
     marginBottom: 8,
+    letterSpacing: -1,
   },
   tagline: {
     fontSize: 16,

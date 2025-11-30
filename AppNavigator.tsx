@@ -7,12 +7,14 @@ import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import TransactionListScreen from './screens/transactions/TransactionListScreen';
 import TransactionCategorizationScreen from './screens/transactions/TransactionCategorizationScreen';
+import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 
 type RootStackParamList = {
   Onboarding: undefined;
   Dashboard: undefined;
   TransactionList: { accessToken: string };
   TransactionCategorization: { accessToken: string; transaction?: any; allTransactions?: any[]; onReturn?: () => void };
+  GiftedTracker: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -102,6 +104,10 @@ export default function AppNavigator() {
         <Stack.Screen
           name="TransactionCategorization"
           component={TransactionCategorizationScreen}
+        />
+        <Stack.Screen
+          name="GiftedTracker"
+          component={GiftedTrackerScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

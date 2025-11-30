@@ -39,6 +39,18 @@ interface Categorization {
   taxDeductible: boolean;
 }
 
+interface CategorizedTransaction {
+  id: string;
+  merchant_name: string;
+  amount: number;
+  transaction_date: string;
+  category_name: string;
+  business_percent: number;
+  explanation: string;
+  tax_deductible: boolean;
+  plaid_transaction_id: string;
+}
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
 
 export default function TransactionCategorizationScreen({
@@ -47,7 +59,9 @@ export default function TransactionCategorizationScreen({
 }: any) {
   const { accessToken, transaction, allTransactions, preGeneratedQuestions } = route.params || {};
 
+  const [activeTab, setActiveTab] = useState<'uncategorized' | 'categorized'>('uncategorized');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categorizedTransactions, setCategorizedTransactions] = useState<CategorizedTransaction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -88,6 +102,12 @@ export default function TransactionCategorizationScreen({
       keyboardDidHideListener.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'categorized') {
+      loadCategorizedTransactions();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     // Smart scroll when custom input is shown OR keyboard appears
@@ -171,6 +191,37 @@ export default function TransactionCategorizationScreen({
     } catch (error: any) {
       console.error('Error loading transactions:', error);
       Alert.alert('Error', 'Failed to load transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCategorizedTransactions = async () => {
+    try {
+      setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('categorized_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('transaction_date', { ascending: false });
+
+      if (error) {
+        console.error('Error loading categorized transactions:', error);
+        Alert.alert('Error', 'Failed to load categorized transactions');
+        return;
+      }
+
+      setCategorizedTransactions(data || []);
+    } catch (error: any) {
+      console.error('Error in loadCategorizedTransactions:', error);
+      Alert.alert('Error', 'Failed to load categorized transactions');
     } finally {
       setLoading(false);
     }
@@ -557,6 +608,25 @@ export default function TransactionCategorizationScreen({
     );
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  };
+
   const currentQuestionIndex = Object.keys(answers).length;
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -577,38 +647,76 @@ export default function TransactionCategorizationScreen({
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.progress}>
-              {currentIndex + 1} / {transactions.length}
+              {activeTab === 'uncategorized'
+                ? `${currentIndex + 1} / ${transactions.length}`
+                : `${categorizedTransactions.length} categorized`
+              }
             </Text>
           </View>
 
-        {/* Transaction Card */}
-        <View style={[
-          styles.transactionCard,
-          { backgroundColor: isIncome ? '#FF6B6B10' : '#1F1333' }
-        ]}>
-          <View style={styles.transactionHeader}>
-            <Ionicons
-              name={isIncome ? "trending-up" : "receipt"}
-              size={32}
-              color={isIncome ? '#FF6B6B' : '#7C3AED'}
-            />
-            <View style={styles.transactionInfo}>
-              <Text style={styles.merchantName}>
-                {currentTransaction.merchant_name || currentTransaction.name}
+          {/* Tabs */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'uncategorized' && styles.activeTab
+              ]}
+              onPress={() => setActiveTab('uncategorized')}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === 'uncategorized' && styles.activeTabText
+              ]}>
+                Uncategorized
               </Text>
-              <Text style={styles.transactionDate}>{currentTransaction.date}</Text>
-            </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'categorized' && styles.activeTab
+              ]}
+              onPress={() => setActiveTab('categorized')}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === 'categorized' && styles.activeTabText
+              ]}>
+                Categorized
+              </Text>
+            </TouchableOpacity>
           </View>
-          <Text style={[
-            styles.amount,
-            { color: isIncome ? '#FF6B6B' : '#7C3AED' }
-          ]}>
-            {isIncome ? '+' : ''}£{Math.abs(currentTransaction.amount).toFixed(2)}
-          </Text>
-        </View>
 
-        {/* Questions or Result */}
-        {!categorization ? (
+        {/* UNCATEGORIZED TAB: Q&A Flow */}
+        {activeTab === 'uncategorized' && (
+          <>
+            {/* Transaction Card */}
+            <View style={[
+              styles.transactionCard,
+              { backgroundColor: isIncome ? '#FF6B6B10' : '#1F1333' }
+            ]}>
+              <View style={styles.transactionHeader}>
+                <Ionicons
+                  name={isIncome ? "trending-up" : "receipt"}
+                  size={32}
+                  color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                />
+                <View style={styles.transactionInfo}>
+                  <Text style={styles.merchantName}>
+                    {currentTransaction?.merchant_name || currentTransaction?.name}
+                  </Text>
+                  <Text style={styles.transactionDate}>{currentTransaction?.date}</Text>
+                </View>
+              </View>
+              <Text style={[
+                styles.amount,
+                { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+              ]}>
+                {isIncome ? '+' : ''}£{Math.abs(currentTransaction?.amount || 0).toFixed(2)}
+              </Text>
+            </View>
+
+            {/* Questions or Result */}
+            {!categorization ? (
           <>
             {processing ? (
               <View style={styles.processingContainer}>
@@ -940,6 +1048,63 @@ export default function TransactionCategorizationScreen({
               </View>
             )}
           </View>
+        )}
+          </>
+        )}
+
+        {/* CATEGORIZED TAB: List View */}
+        {activeTab === 'categorized' && (
+          <>
+            {categorizedTransactions.length === 0 ? (
+              <View style={styles.emptyStateContainer}>
+                <Ionicons name="checkmark-circle-outline" size={64} color="#64748B" />
+                <Text style={styles.emptyStateText}>No categorized transactions yet</Text>
+              </View>
+            ) : (
+              categorizedTransactions.map((txn) => {
+                const isTaxDeductible = txn.tax_deductible;
+                return (
+                  <View
+                    key={txn.id}
+                    style={styles.categorizedTransactionItem}
+                  >
+                    <View style={styles.categorizedHeader}>
+                      <View style={styles.categorizedLeft}>
+                        <View style={[
+                          styles.categorizedIcon,
+                          { backgroundColor: isTaxDeductible ? '#10B98120' : '#64748B20' }
+                        ]}>
+                          <Ionicons
+                            name={isTaxDeductible ? "checkmark-circle" : "home-outline"}
+                            size={24}
+                            color={isTaxDeductible ? '#10B981' : '#64748B'}
+                          />
+                        </View>
+                        <View style={styles.categorizedInfo}>
+                          <Text style={styles.categorizedMerchant}>{txn.merchant_name}</Text>
+                          <Text style={styles.categorizedDate}>{formatDate(txn.transaction_date)}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.categorizedAmount}>£{txn.amount.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.categorizedDetails}>
+                      <View style={styles.categorizedBadge}>
+                        <Text style={styles.categorizedCategory}>{txn.category_name}</Text>
+                        {txn.business_percent > 0 && txn.business_percent < 100 && (
+                          <Text style={styles.categorizedPercent}>
+                            {txn.business_percent}% business
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={styles.categorizedExplanation} numberOfLines={2}>
+                        {txn.explanation}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </>
         )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1343,5 +1508,115 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#1F1333',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: '#7C3AED',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  categorizedTransactionItem: {
+    backgroundColor: '#1F1333',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  categorizedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  categorizedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  categorizedIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  categorizedInfo: {
+    flex: 1,
+  },
+  categorizedMerchant: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  categorizedDate: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  categorizedAmount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#7C3AED',
+    marginLeft: 12,
+  },
+  categorizedDetails: {
+    paddingLeft: 56,
+  },
+  categorizedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  categorizedCategory: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
+  categorizedPercent: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    backgroundColor: '#7C3AED20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  categorizedExplanation: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 18,
   },
 });
