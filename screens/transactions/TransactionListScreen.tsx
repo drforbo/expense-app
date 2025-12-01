@@ -33,6 +33,10 @@ interface CategorizedTransaction {
   tax_deductible: boolean;
   plaid_transaction_id: string;
   notes?: string;
+  qualified?: boolean;
+  receipt_image_url?: string;
+  business_use_explanation?: string;
+  content_link?: string;
 }
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
@@ -345,7 +349,33 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
       {/* CATEGORIZED TAB */}
       {activeTab === 'categorized' && (
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
+        <>
+          {/* Stats Bar - show count of transactions needing evidence */}
+          {(() => {
+            const needsEvidence = categorizedTransactions.filter(
+              txn => txn.tax_deductible && !txn.qualified
+            ).length;
+            const qualified = categorizedTransactions.filter(txn => txn.qualified).length;
+
+            return needsEvidence > 0 || qualified > 0 ? (
+              <View style={styles.statsBar}>
+                {needsEvidence > 0 && (
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{needsEvidence}</Text>
+                    <Text style={styles.statLabel}>need evidence</Text>
+                  </View>
+                )}
+                {qualified > 0 && (
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statNumber, { color: '#10B981' }]}>{qualified}</Text>
+                    <Text style={styles.statLabel}>qualified</Text>
+                  </View>
+                )}
+              </View>
+            ) : null;
+          })()}
+
+          <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
           {categorizedTransactions.length === 0 ? (
             <View style={styles.emptyStateContainer}>
               <Ionicons name="checkmark-circle-outline" size={64} color="#64748B" />
@@ -354,6 +384,8 @@ export default function TransactionListScreen({ route, navigation }: any) {
           ) : (
             categorizedTransactions.map((txn) => {
               const isTaxDeductible = txn.tax_deductible;
+              const isQualified = txn.qualified === true;
+              const hasReceipt = !!txn.receipt_image_url;
               return (
                 <View key={txn.id} style={styles.categorizedTransactionItem}>
                   <View style={styles.categorizedHeader}>
@@ -369,7 +401,17 @@ export default function TransactionListScreen({ route, navigation }: any) {
                         />
                       </View>
                       <View style={styles.categorizedDetails}>
-                        <Text style={styles.merchantName}>{txn.merchant_name}</Text>
+                        <View style={styles.merchantRow}>
+                          <Text style={styles.merchantName}>{txn.merchant_name}</Text>
+                          {isQualified && (
+                            <View style={styles.qualifiedBadge}>
+                              <Ionicons name="shield-checkmark" size={14} color="#10B981" />
+                            </View>
+                          )}
+                          {hasReceipt && !isQualified && (
+                            <Ionicons name="receipt" size={14} color="#9CA3AF" />
+                          )}
+                        </View>
                         <Text style={styles.transactionDate}>
                           {formatDate(txn.transaction_date)}
                         </Text>
@@ -403,12 +445,26 @@ export default function TransactionListScreen({ route, navigation }: any) {
                         <Text style={styles.taxBadgeText}>Tax Deductible</Text>
                       </View>
                     )}
+
+                    {/* Add Evidence Button */}
+                    {!isQualified && isTaxDeductible && (
+                      <TouchableOpacity
+                        style={styles.addEvidenceButton}
+                        onPress={() => navigation.navigate('AddEvidence', { transaction: txn })}
+                      >
+                        <Ionicons name="camera-outline" size={16} color="#7C3AED" />
+                        <Text style={styles.addEvidenceText}>
+                          {hasReceipt ? 'Complete Evidence' : 'Add Evidence'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               );
             })
           )}
         </ScrollView>
+        </>
       )}
 
     </SafeAreaView>
@@ -621,5 +677,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#10B981',
+  },
+  merchantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  qualifiedBadge: {
+    backgroundColor: '#10B98120',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addEvidenceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#7C3AED20',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  addEvidenceText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7C3AED',
   },
 });

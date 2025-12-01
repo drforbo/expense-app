@@ -27,11 +27,24 @@ export default function DashboardScreen({ navigation }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [uncategorizedCount, setUncategorizedCount] = useState(0);
+  const [unqualifiedCount, setUnqualifiedCount] = useState(0);
+  const [qualifiedCount, setQualifiedCount] = useState(0);
+  const [loadingCounts, setLoadingCounts] = useState(true);
 
   useEffect(() => {
     checkAccessToken();
     fetchLastExportDate();
+    fetchTransactionCounts();
   }, []);
+
+  useEffect(() => {
+    // Refresh counts when screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchTransactionCounts();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const checkAccessToken = async () => {
     try {
@@ -74,6 +87,61 @@ export default function DashboardScreen({ navigation }: any) {
         console.error('Error fetching last export date:', error);
       }
       // Don't block the UI - just keep it as null
+    }
+  };
+
+  const fetchTransactionCounts = async () => {
+    try {
+      setLoadingCounts(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const accessToken = await AsyncStorage.getItem('plaid_access_token');
+      if (!accessToken) {
+        setLoadingCounts(false);
+        return;
+      }
+
+      // Fetch uncategorized count from server
+      const uncategorizedResponse = await fetch(`${API_URL}/api/get_transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: accessToken }),
+      });
+      const uncategorizedData = await uncategorizedResponse.json();
+
+      // Filter out already categorized transactions
+      const { data: categorized } = await supabase
+        .from('categorized_transactions')
+        .select('plaid_transaction_id')
+        .eq('user_id', user.id);
+
+      const categorizedIds = new Set(categorized?.map(t => t.plaid_transaction_id) || []);
+      const uncategorized = uncategorizedData.transactions?.filter(
+        (t: any) => !categorizedIds.has(t.transaction_id)
+      ) || [];
+      setUncategorizedCount(uncategorized.length);
+
+      // Fetch unqualified count (tax-deductible but not qualified)
+      const { data: unqualified } = await supabase
+        .from('categorized_transactions')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('tax_deductible', true)
+        .or('qualified.is.null,qualified.eq.false');
+      setUnqualifiedCount(unqualified?.length || 0);
+
+      // Fetch qualified count
+      const { data: qualified } = await supabase
+        .from('categorized_transactions')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('qualified', true);
+      setQualifiedCount(qualified?.length || 0);
+    } catch (error) {
+      console.error('Error fetching transaction counts:', error);
+    } finally {
+      setLoadingCounts(false);
     }
   };
 
@@ -290,7 +358,11 @@ export default function DashboardScreen({ navigation }: any) {
               {connecting ? 'Connecting...' : 'Categorize Transactions'}
             </Text>
             <Text style={styles.primarySubtitle}>
-              Review and categorize your expenses
+              {loadingCounts
+                ? 'Loading...'
+                : uncategorizedCount > 0
+                  ? `${uncategorizedCount} transaction${uncategorizedCount !== 1 ? 's' : ''} to categorize`
+                  : 'All transactions categorized!'}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#fff" />
@@ -300,14 +372,36 @@ export default function DashboardScreen({ navigation }: any) {
         <View style={styles.gridContainer}>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => handleComingSoon('Qualify Transactions')}
+            onPress={() => navigation.navigate('QualifyTransactions')}
             activeOpacity={0.7}
           >
             <View style={styles.actionIcon}>
               <Ionicons name="receipt" size={28} color="#7C3AED" />
             </View>
             <Text style={styles.actionTitle}>Qualify Transactions</Text>
-            <Text style={styles.actionSubtitle}>Upload receipts & evidence</Text>
+            <Text style={styles.actionSubtitle}>
+              {loadingCounts
+                ? 'Loading...'
+                : unqualifiedCount > 0
+                  ? `${unqualifiedCount} to qualify`
+                  : 'All qualified!'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => handleComingSoon('View Qualified Transactions')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons name="checkmark-circle" size={28} color="#10B981" />
+            </View>
+            <Text style={styles.actionTitle}>Qualified</Text>
+            <Text style={styles.actionSubtitle}>
+              {loadingCounts
+                ? 'Loading...'
+                : `${qualifiedCount} complete`}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity

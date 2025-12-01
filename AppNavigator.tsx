@@ -7,6 +7,8 @@ import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import TransactionListScreen from './screens/transactions/TransactionListScreen';
 import TransactionCategorizationScreen from './screens/transactions/TransactionCategorizationScreen';
+import QualifyTransactionsScreen from './screens/transactions/QualifyTransactionsScreen';
+import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
 import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 
 type RootStackParamList = {
@@ -14,6 +16,8 @@ type RootStackParamList = {
   Dashboard: undefined;
   TransactionList: { accessToken: string };
   TransactionCategorization: { accessToken: string; transaction?: any; allTransactions?: any[]; onReturn?: () => void };
+  QualifyTransactions: undefined;
+  AddEvidence: { transaction: any };
   GiftedTracker: undefined;
 };
 
@@ -104,6 +108,14 @@ export default function AppNavigator() {
         <Stack.Screen
           name="TransactionCategorization"
           component={TransactionCategorizationScreen}
+        />
+        <Stack.Screen
+          name="QualifyTransactions"
+          component={QualifyTransactionsScreen}
+        />
+        <Stack.Screen
+          name="AddEvidence"
+          component={AddEvidenceScreen}
         />
         <Stack.Screen
           name="GiftedTracker"
