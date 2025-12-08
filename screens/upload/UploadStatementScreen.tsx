@@ -89,7 +89,7 @@ export default function UploadStatementScreen({ navigation }: any) {
         'Your statement is being processed. You can navigate away - we\'ll notify you when it\'s done!',
         [
           { text: 'Stay Here', style: 'cancel' },
-          { text: 'Go to Dashboard', onPress: () => navigation.navigate('Dashboard') },
+          { text: 'Go to Dashboard', onPress: () => navigation.navigate('MainTabs') },
         ]
       );
     } catch (error: any) {

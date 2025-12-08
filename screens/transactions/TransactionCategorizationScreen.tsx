@@ -39,18 +39,6 @@ interface Categorization {
   taxDeductible: boolean;
 }
 
-interface CategorizedTransaction {
-  id: string;
-  merchant_name: string;
-  amount: number;
-  transaction_date: string;
-  category_name: string;
-  business_percent: number;
-  explanation: string;
-  tax_deductible: boolean;
-  source_transaction_id: string;
-}
-
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
 
 export default function TransactionCategorizationScreen({
@@ -59,9 +47,7 @@ export default function TransactionCategorizationScreen({
 }: any) {
   const { transaction, allTransactions, preGeneratedQuestions } = route.params || {};
 
-  const [activeTab, setActiveTab] = useState<'uncategorized' | 'categorized'>('uncategorized');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categorizedTransactions, setCategorizedTransactions] = useState<CategorizedTransaction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -103,11 +89,6 @@ export default function TransactionCategorizationScreen({
     };
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'categorized') {
-      loadCategorizedTransactions();
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     // Smart scroll when custom input is shown OR keyboard appears
@@ -198,37 +179,6 @@ export default function TransactionCategorizationScreen({
     } catch (error: any) {
       console.error('Error loading transactions:', error);
       Alert.alert('Error', 'Failed to load transactions');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCategorizedTransactions = async () => {
-    try {
-      setLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('categorized_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('transaction_date', { ascending: false });
-
-      if (error) {
-        console.error('Error loading categorized transactions:', error);
-        Alert.alert('Error', 'Failed to load categorized transactions');
-        return;
-      }
-
-      setCategorizedTransactions(data || []);
-    } catch (error: any) {
-      console.error('Error in loadCategorizedTransactions:', error);
-      Alert.alert('Error', 'Failed to load categorized transactions');
     } finally {
       setLoading(false);
     }
@@ -654,48 +604,11 @@ export default function TransactionCategorizationScreen({
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.progress}>
-              {activeTab === 'uncategorized'
-                ? `${currentIndex + 1} / ${transactions.length}`
-                : `${categorizedTransactions.length} categorized`
-              }
+              {currentIndex + 1} / {transactions.length}
             </Text>
           </View>
 
-          {/* Tabs */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'uncategorized' && styles.activeTab
-              ]}
-              onPress={() => setActiveTab('uncategorized')}
-            >
-              <Text style={[
-                styles.tabText,
-                activeTab === 'uncategorized' && styles.activeTabText
-              ]}>
-                Uncategorized
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'categorized' && styles.activeTab
-              ]}
-              onPress={() => setActiveTab('categorized')}
-            >
-              <Text style={[
-                styles.tabText,
-                activeTab === 'categorized' && styles.activeTabText
-              ]}>
-                Categorized
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-        {/* UNCATEGORIZED TAB: Q&A Flow */}
-        {activeTab === 'uncategorized' && (
-          <>
+          {/* Q&A Flow */}
             {/* Transaction Card */}
             <View style={[
               styles.transactionCard,
@@ -1055,63 +968,6 @@ export default function TransactionCategorizationScreen({
               </View>
             )}
           </View>
-        )}
-          </>
-        )}
-
-        {/* CATEGORIZED TAB: List View */}
-        {activeTab === 'categorized' && (
-          <>
-            {categorizedTransactions.length === 0 ? (
-              <View style={styles.emptyStateContainer}>
-                <Ionicons name="checkmark-circle-outline" size={64} color="#64748B" />
-                <Text style={styles.emptyStateText}>No categorized transactions yet</Text>
-              </View>
-            ) : (
-              categorizedTransactions.map((txn) => {
-                const isTaxDeductible = txn.tax_deductible;
-                return (
-                  <View
-                    key={txn.id}
-                    style={styles.categorizedTransactionItem}
-                  >
-                    <View style={styles.categorizedHeader}>
-                      <View style={styles.categorizedLeft}>
-                        <View style={[
-                          styles.categorizedIcon,
-                          { backgroundColor: isTaxDeductible ? '#10B98120' : '#64748B20' }
-                        ]}>
-                          <Ionicons
-                            name={isTaxDeductible ? "checkmark-circle" : "home-outline"}
-                            size={24}
-                            color={isTaxDeductible ? '#10B981' : '#64748B'}
-                          />
-                        </View>
-                        <View style={styles.categorizedInfo}>
-                          <Text style={styles.categorizedMerchant}>{txn.merchant_name}</Text>
-                          <Text style={styles.categorizedDate}>{formatDate(txn.transaction_date)}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.categorizedAmount}>£{txn.amount.toFixed(2)}</Text>
-                    </View>
-                    <View style={styles.categorizedDetails}>
-                      <View style={styles.categorizedBadge}>
-                        <Text style={styles.categorizedCategory}>{txn.category_name}</Text>
-                        {txn.business_percent > 0 && txn.business_percent < 100 && (
-                          <Text style={styles.categorizedPercent}>
-                            {txn.business_percent}% business
-                          </Text>
-                        )}
-                      </View>
-                      <Text style={styles.categorizedExplanation} numberOfLines={2}>
-                        {txn.explanation}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </>
         )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1515,115 +1371,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 24,
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  activeTab: {
-    backgroundColor: '#7C3AED',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  emptyStateContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  categorizedTransactionItem: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  categorizedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categorizedLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  categorizedIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  categorizedInfo: {
-    flex: 1,
-  },
-  categorizedMerchant: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  categorizedDate: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
-  categorizedAmount: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginLeft: 12,
-  },
-  categorizedDetails: {
-    paddingLeft: 56,
-  },
-  categorizedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  categorizedCategory: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
-  },
-  categorizedPercent: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    backgroundColor: '#7C3AED20',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  categorizedExplanation: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    lineHeight: 18,
   },
 });

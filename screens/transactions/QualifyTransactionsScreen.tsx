@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
 
@@ -36,6 +37,10 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
   // Form state for current transaction
   const [receiptImage, setReceiptImage] = useState<string | null>(transaction?.receipt_image_url || null);
+  const [isPdf, setIsPdf] = useState(
+    transaction?.receipt_image_url?.toLowerCase().endsWith('.pdf') || false
+  );
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [businessUseExplanation, setBusinessUseExplanation] = useState(transaction?.business_use_explanation || '');
   const [contentLink, setContentLink] = useState(transaction?.content_link || '');
 
@@ -69,11 +74,78 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           }));
 
       if (!result.canceled && result.assets[0]) {
+        setIsPdf(false);
+        setPdfFileName(null);
         await uploadImage(result.assets[0].uri);
       }
     } catch (error: any) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to select image');
+    }
+  };
+
+  const pickPdf = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      await uploadPdf(file.uri, file.name);
+    } catch (error: any) {
+      console.error('Error picking PDF:', error);
+      Alert.alert('Error', 'Failed to select PDF');
+    }
+  };
+
+  const uploadPdf = async (uri: string, fileName: string) => {
+    try {
+      setUploading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        return;
+      }
+
+      // Create file name
+      const storagePath = `${user.id}/${transaction.id}_${Date.now()}.pdf`;
+
+      // Read file as base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
+
+      // Convert base64 to ArrayBuffer
+      const arrayBuffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('receipts')
+        .upload(storagePath, arrayBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(storagePath);
+
+      setReceiptImage(publicUrl);
+      setIsPdf(true);
+      setPdfFileName(fileName);
+      Alert.alert('Success', 'PDF uploaded!');
+    } catch (error: any) {
+      console.error('Error uploading PDF:', error);
+      Alert.alert('Error', 'Failed to upload PDF');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -210,13 +282,24 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
           {receiptImage ? (
             <View style={styles.imageContainer}>
-              <Image source={{ uri: receiptImage }} style={styles.receiptImage} />
+              {isPdf ? (
+                <View style={styles.pdfPreview}>
+                  <Ionicons name="document-text" size={48} color="#7C3AED" />
+                  <Text style={styles.pdfFileName} numberOfLines={2}>
+                    {pdfFileName || 'PDF Receipt'}
+                  </Text>
+                  <Text style={styles.pdfUploaded}>Uploaded</Text>
+                </View>
+              ) : (
+                <Image source={{ uri: receiptImage }} style={styles.receiptImage} />
+              )}
               <TouchableOpacity
                 style={styles.changeImageButton}
                 onPress={() => {
                   Alert.alert('Change Receipt', 'Choose source', [
                     { text: 'Take Photo', onPress: () => pickImage('camera') },
                     { text: 'Choose from Library', onPress: () => pickImage('library') },
+                    { text: 'Upload PDF', onPress: () => pickPdf() },
                     { text: 'Cancel', style: 'cancel' },
                   ]);
                 }}
@@ -225,23 +308,34 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.uploadButtons}>
-              <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={() => pickImage('camera')}
-                disabled={uploading}
-              >
-                <Ionicons name="camera" size={24} color="#7C3AED" />
-                <Text style={styles.uploadButtonText}>Take Photo</Text>
-              </TouchableOpacity>
+            <View>
+              <View style={styles.uploadButtons}>
+                <TouchableOpacity
+                  style={styles.uploadButton}
+                  onPress={() => pickImage('camera')}
+                  disabled={uploading}
+                >
+                  <Ionicons name="camera" size={24} color="#7C3AED" />
+                  <Text style={styles.uploadButtonText}>Take Photo</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.uploadButton}
+                  onPress={() => pickImage('library')}
+                  disabled={uploading}
+                >
+                  <Ionicons name="images" size={24} color="#7C3AED" />
+                  <Text style={styles.uploadButtonText}>Choose Photo</Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={() => pickImage('library')}
+                style={styles.pdfUploadButton}
+                onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="images" size={24} color="#7C3AED" />
-                <Text style={styles.uploadButtonText}>Choose Photo</Text>
+                <Ionicons name="document-text" size={24} color="#7C3AED" />
+                <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -409,6 +503,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#7C3AED',
+  },
+  pdfUploadButton: {
+    backgroundColor: '#1F1333',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: '#7C3AED30',
+  },
+  pdfPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#1F1333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: '#7C3AED30',
+  },
+  pdfFileName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  pdfUploaded: {
+    fontSize: 12,
+    color: '#10B981',
+    fontWeight: '600',
   },
   imageContainer: {
     position: 'relative',

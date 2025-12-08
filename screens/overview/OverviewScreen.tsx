@@ -26,11 +26,23 @@ interface CategoryBreakdown {
 interface FinancialSummary {
   estimatedTaxOwed: number;
   totalIncome: number;
+  businessIncome: number;
+  personalIncome: number;
   totalExpenses: number;
   businessExpenses: number;
   personalExpenses: number;
   categoryBreakdown: CategoryBreakdown[];
+  incomeCategoryBreakdown: CategoryBreakdown[];
   taxYear: string;
+}
+
+interface UserProfile {
+  tracking_goal: string;
+  profile_completed: boolean;
+  has_other_employment: boolean;
+  employment_income: number;
+  student_loan_plan: string;
+  monthly_income: number;
 }
 
 export default function OverviewScreen({ navigation }: any) {
@@ -38,10 +50,13 @@ export default function OverviewScreen({ navigation }: any) {
   const [summary, setSummary] = useState<FinancialSummary>({
     estimatedTaxOwed: 0,
     totalIncome: 0,
+    businessIncome: 0,
+    personalIncome: 0,
     totalExpenses: 0,
     businessExpenses: 0,
     personalExpenses: 0,
     categoryBreakdown: [],
+    incomeCategoryBreakdown: [],
     taxYear: '2024/25',
   });
   const [exporting, setExporting] = useState(false);
@@ -49,6 +64,7 @@ export default function OverviewScreen({ navigation }: any) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [lastExportDate, setLastExportDate] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     fetchFinancialSummary();
@@ -114,31 +130,51 @@ export default function OverviewScreen({ navigation }: any) {
 
       if (error) throw error;
 
-      // Calculate totals
+      // Calculate totals - separate income from expenses
       let businessExpenses = 0;
       let personalExpenses = 0;
-      const categoryMap = new Map<string, { total: number; count: number }>();
+      let businessIncome = 0;
+      let personalIncome = 0;
+      const expenseCategoryMap = new Map<string, { total: number; count: number }>();
+      const incomeCategoryMap = new Map<string, { total: number; count: number }>();
 
       transactions?.forEach((t) => {
         const amount = Math.abs(t.amount);
+        const isIncome = t.amount < 0; // Negative amounts are income (credits)
         const businessAmount = amount * (t.business_percent / 100);
         const personalAmount = amount - businessAmount;
 
-        businessExpenses += businessAmount;
-        personalExpenses += personalAmount;
+        if (isIncome) {
+          // This is income
+          businessIncome += businessAmount;
+          personalIncome += personalAmount;
 
-        // Track by category for business expenses
-        if (businessAmount > 0 && t.category_name) {
-          const existing = categoryMap.get(t.category_name) || { total: 0, count: 0 };
-          categoryMap.set(t.category_name, {
-            total: existing.total + businessAmount,
-            count: existing.count + 1,
-          });
+          // Track by category for business income
+          if (businessAmount > 0 && t.category_name) {
+            const existing = incomeCategoryMap.get(t.category_name) || { total: 0, count: 0 };
+            incomeCategoryMap.set(t.category_name, {
+              total: existing.total + businessAmount,
+              count: existing.count + 1,
+            });
+          }
+        } else {
+          // This is an expense
+          businessExpenses += businessAmount;
+          personalExpenses += personalAmount;
+
+          // Track by category for business expenses
+          if (businessAmount > 0 && t.category_name) {
+            const existing = expenseCategoryMap.get(t.category_name) || { total: 0, count: 0 };
+            expenseCategoryMap.set(t.category_name, {
+              total: existing.total + businessAmount,
+              count: existing.count + 1,
+            });
+          }
         }
       });
 
-      // Convert to array and sort
-      const categoryBreakdown: CategoryBreakdown[] = Array.from(categoryMap.entries())
+      // Convert expense categories to array and sort
+      const categoryBreakdown: CategoryBreakdown[] = Array.from(expenseCategoryMap.entries())
         .map(([name, data]) => ({
           category_name: name,
           total_amount: data.total,
@@ -146,18 +182,34 @@ export default function OverviewScreen({ navigation }: any) {
         }))
         .sort((a, b) => b.total_amount - a.total_amount);
 
-      // Fetch income from user profile
+      // Convert income categories to array and sort
+      const incomeCategoryBreakdown: CategoryBreakdown[] = Array.from(incomeCategoryMap.entries())
+        .map(([name, data]) => ({
+          category_name: name,
+          total_amount: data.total,
+          transaction_count: data.count,
+        }))
+        .sort((a, b) => b.total_amount - a.total_amount);
+
+      // Fetch user profile with all tax-relevant fields
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('monthly_income')
+        .select('monthly_income, tracking_goal, profile_completed, has_other_employment, employment_income, student_loan_plan')
         .eq('user_id', user.id)
         .single();
 
+      setUserProfile(profile);
+
+      // Use actual tracked business income from transactions
+      // If no income transactions tracked yet, fall back to estimated from profile
       const monthlyIncome = profile?.monthly_income || 0;
       const estimatedYearlyIncome = monthlyIncome * 12;
 
+      // Use tracked income if available, otherwise fall back to estimate
+      const actualBusinessIncome = businessIncome > 0 ? businessIncome : estimatedYearlyIncome;
+
       // Calculate taxable profit (income minus business expenses)
-      const taxableProfit = Math.max(0, estimatedYearlyIncome - businessExpenses);
+      const taxableProfit = Math.max(0, actualBusinessIncome - businessExpenses);
 
       // Calculate estimated tax using UK 2024/25 rates
       // Personal allowance: £12,570
@@ -167,36 +219,116 @@ export default function OverviewScreen({ navigation }: any) {
       const personalAllowance = 12570;
       const basicRateLimit = 50270;
 
-      if (taxableProfit > personalAllowance) {
-        const taxableAfterAllowance = taxableProfit - personalAllowance;
-        if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
-          // All in basic rate band
-          estimatedTax = taxableAfterAllowance * 0.2;
-        } else {
-          // Some in higher rate band
-          const basicRatePortion = basicRateLimit - personalAllowance;
-          const higherRatePortion = taxableAfterAllowance - basicRatePortion;
-          estimatedTax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
-        }
-      }
+      // For limited company users, we don't calculate personal tax
+      if (profile?.tracking_goal !== 'limited_company') {
+        // Calculate total income including employment if they have a day job
+        const employmentIncome = profile?.has_other_employment ? (profile?.employment_income || 0) : 0;
+        const totalIncome = taxableProfit + employmentIncome;
 
-      // Add Class 4 National Insurance (9% on profits between £12,570 and £50,270)
-      if (taxableProfit > personalAllowance) {
-        const niTaxable = Math.min(taxableProfit, basicRateLimit) - personalAllowance;
-        estimatedTax += niTaxable * 0.09;
-        // 2% on profits above £50,270
-        if (taxableProfit > basicRateLimit) {
-          estimatedTax += (taxableProfit - basicRateLimit) * 0.02;
+        // Calculate personal allowance reduction for high earners
+        let adjustedAllowance = personalAllowance;
+        if (totalIncome > 100000) {
+          adjustedAllowance = Math.max(0, personalAllowance - ((totalIncome - 100000) / 2));
+        }
+
+        // If they have other employment, that job handles their personal allowance
+        // So their side hustle profit is taxed at their marginal rate
+        if (profile?.has_other_employment && employmentIncome > 0) {
+          // Calculate what bracket their employment puts them in
+          if (employmentIncome >= basicRateLimit) {
+            // Employment income already in higher rate - all side hustle at 40%
+            estimatedTax = taxableProfit * 0.4;
+          } else if (employmentIncome > personalAllowance) {
+            // Employment uses up personal allowance, side hustle starts at basic rate
+            const roomInBasicBand = basicRateLimit - employmentIncome;
+            if (taxableProfit <= roomInBasicBand) {
+              estimatedTax = taxableProfit * 0.2;
+            } else {
+              estimatedTax = (roomInBasicBand * 0.2) + ((taxableProfit - roomInBasicBand) * 0.4);
+            }
+          } else {
+            // Employment doesn't use all personal allowance
+            const unusedAllowance = personalAllowance - employmentIncome;
+            const taxableAfterAllowance = Math.max(0, taxableProfit - unusedAllowance);
+            if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
+              estimatedTax = taxableAfterAllowance * 0.2;
+            } else {
+              const basicRatePortion = basicRateLimit - personalAllowance;
+              const higherRatePortion = taxableAfterAllowance - basicRatePortion;
+              estimatedTax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+            }
+          }
+        } else {
+          // No other employment - standard calculation
+          if (taxableProfit > adjustedAllowance) {
+            const taxableAfterAllowance = taxableProfit - adjustedAllowance;
+            if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
+              estimatedTax = taxableAfterAllowance * 0.2;
+            } else {
+              const basicRatePortion = basicRateLimit - personalAllowance;
+              const higherRatePortion = taxableAfterAllowance - basicRatePortion;
+              estimatedTax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+            }
+          }
+        }
+
+        // Add Class 4 National Insurance on self-employment profits
+        if (taxableProfit > personalAllowance) {
+          const niTaxable = Math.min(taxableProfit, basicRateLimit) - personalAllowance;
+          estimatedTax += niTaxable * 0.09;
+          if (taxableProfit > basicRateLimit) {
+            estimatedTax += (taxableProfit - basicRateLimit) * 0.02;
+          }
+        }
+
+        // Add student loan repayments if applicable
+        if (profile?.student_loan_plan && profile.student_loan_plan !== 'none') {
+          const totalIncomeForSL = taxableProfit + employmentIncome;
+          let slThreshold = 0;
+          let slRate = 0.09;
+
+          switch (profile.student_loan_plan) {
+            case 'plan1':
+              slThreshold = 22015; // Plan 1 threshold 2024/25
+              break;
+            case 'plan2':
+              slThreshold = 27295; // Plan 2 threshold 2024/25
+              break;
+            case 'plan4':
+              slThreshold = 27660; // Plan 4 threshold 2024/25
+              break;
+            case 'postgrad':
+              slThreshold = 21000;
+              slRate = 0.06;
+              break;
+          }
+
+          if (totalIncomeForSL > slThreshold) {
+            // Student loan repayment on income above threshold
+            // Note: If they have employment, employer handles most of this
+            // We estimate the additional from self-employment
+            if (!profile?.has_other_employment) {
+              estimatedTax += (totalIncomeForSL - slThreshold) * slRate;
+            } else if (employmentIncome < slThreshold) {
+              // Employment doesn't trigger student loan, but total does
+              const slAmount = (totalIncomeForSL - slThreshold) * slRate;
+              estimatedTax += slAmount;
+            }
+            // If employment already above threshold, employer handles it
+          }
         }
       }
 
       setSummary({
         estimatedTaxOwed: estimatedTax,
-        totalIncome: estimatedYearlyIncome,
+        totalIncome: businessIncome + personalIncome,
+        businessIncome,
+        personalIncome,
         totalExpenses: businessExpenses + personalExpenses,
         businessExpenses,
         personalExpenses,
         categoryBreakdown,
+        incomeCategoryBreakdown,
         taxYear: taxYearLabel,
       });
     } catch (error) {
@@ -307,25 +439,100 @@ export default function OverviewScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Tax Estimate Card */}
-        <View style={styles.taxCard}>
-          <View style={styles.taxHeader}>
-            <View style={styles.taxIconContainer}>
-              <Ionicons name="calculator" size={24} color="#F59E0B" />
+        {/* Profile Completion Prompt */}
+        {userProfile && !userProfile.profile_completed && userProfile.tracking_goal !== 'limited_company' && (
+          <TouchableOpacity
+            style={styles.profilePromptCard}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <View style={styles.profilePromptIcon}>
+              <Ionicons name="person-circle" size={24} color="#7C3AED" />
             </View>
-            <Text style={styles.taxLabel}>Estimated Tax Owed</Text>
-          </View>
-          <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
-          <Text style={styles.taxNote}>
-            Tax Year {summary.taxYear} (includes Income Tax + Class 4 NI)
-          </Text>
-          <View style={styles.disclaimerContainer}>
-            <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
-            <Text style={styles.disclaimerText}>
-              This is an estimate only, not financial advice. Consult an accountant for accurate figures.
+            <View style={styles.profilePromptText}>
+              <Text style={styles.profilePromptTitle}>Complete your profile</Text>
+              <Text style={styles.profilePromptSubtitle}>Get a more accurate tax estimate</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        )}
+
+        {/* Tax Estimate Card - Different for Limited Company */}
+        {userProfile?.tracking_goal === 'limited_company' ? (
+          <View style={styles.limitedCompanyCard}>
+            <View style={styles.taxHeader}>
+              <View style={[styles.taxIconContainer, { backgroundColor: '#7C3AED20' }]}>
+                <Ionicons name="business" size={24} color="#7C3AED" />
+              </View>
+              <Text style={styles.taxLabel}>Limited Company</Text>
+            </View>
+            <Text style={styles.limitedCompanyTitle}>Tax estimates coming soon!</Text>
+            <Text style={styles.limitedCompanyText}>
+              We're working on bringing corporation tax and director salary calculations to bopp. In the meantime, you can still track and categorize all your business expenses.
             </Text>
+            <View style={styles.comingSoonBadge}>
+              <Ionicons name="rocket" size={14} color="#7C3AED" />
+              <Text style={styles.comingSoonText}>Coming soon to bopp</Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.taxCard}>
+            <View style={styles.taxHeader}>
+              <View style={styles.taxIconContainer}>
+                <Ionicons name="calculator" size={24} color="#F59E0B" />
+              </View>
+              <Text style={styles.taxLabel}>Estimated Tax Owed</Text>
+            </View>
+            <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
+            <Text style={styles.taxNote}>
+              Tax Year {summary.taxYear} (includes Income Tax + Class 4 NI
+              {userProfile?.student_loan_plan && userProfile.student_loan_plan !== 'none' ? ' + Student Loan' : ''})
+            </Text>
+            {userProfile?.has_other_employment && (
+              <View style={styles.taxInfoRow}>
+                <Ionicons name="briefcase-outline" size={14} color="#7C3AED" />
+                <Text style={styles.taxInfoText}>
+                  Calculated based on employment income of £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr
+                </Text>
+              </View>
+            )}
+            <View style={styles.disclaimerContainer}>
+              <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+              <Text style={styles.disclaimerText}>
+                This is an estimate only, not financial advice. Consult an accountant for accurate figures.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Income Section */}
+        {summary.totalIncome > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Income</Text>
+            <View style={styles.incomeCard}>
+              <View style={styles.incomeHeader}>
+                <View style={styles.incomeIconContainer}>
+                  <Ionicons name="trending-up" size={24} color="#10B981" />
+                </View>
+                <View style={styles.incomeInfo}>
+                  <Text style={styles.incomeLabel}>Total Income</Text>
+                  <Text style={styles.incomeAmount}>{formatCurrency(summary.totalIncome)}</Text>
+                </View>
+              </View>
+              <View style={styles.incomeBreakdown}>
+                <View style={styles.incomeBreakdownItem}>
+                  <Ionicons name="briefcase-outline" size={16} color="#7C3AED" />
+                  <Text style={styles.incomeBreakdownLabel}>Business</Text>
+                  <Text style={styles.incomeBreakdownAmount}>{formatCurrency(summary.businessIncome)}</Text>
+                </View>
+                <View style={styles.incomeBreakdownItem}>
+                  <Ionicons name="person-outline" size={16} color="#6B7280" />
+                  <Text style={styles.incomeBreakdownLabel}>Personal</Text>
+                  <Text style={styles.incomeBreakdownAmount}>{formatCurrency(summary.personalIncome)}</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
 
         {/* Expenses Split */}
         <Text style={styles.sectionTitle}>Expenses Breakdown</Text>
@@ -407,6 +614,21 @@ export default function OverviewScreen({ navigation }: any) {
             <Text style={styles.actionSubtitle}>Last: {formatLastExportDate(lastExportDate)}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Profile Action */}
+        <TouchableOpacity
+          style={styles.profileActionCard}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <View style={[styles.actionIcon, { backgroundColor: '#7C3AED20' }]}>
+            <Ionicons name="person" size={24} color="#7C3AED" />
+          </View>
+          <View style={styles.profileActionText}>
+            <Text style={styles.actionTitle}>Your Profile</Text>
+            <Text style={styles.actionSubtitle}>View and edit your tax settings</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Date Range Picker Modal */}
@@ -511,6 +733,74 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  profilePromptCard: {
+    backgroundColor: '#7C3AED15',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  profilePromptIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#7C3AED20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  profilePromptText: {
+    flex: 1,
+  },
+  profilePromptTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  profilePromptSubtitle: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  limitedCompanyCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#6B728030',
+  },
+  limitedCompanyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  limitedCompanyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  comingSoonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#7C3AED15',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  comingSoonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
   taxCard: {
     backgroundColor: '#1F1333',
     borderRadius: 16,
@@ -561,6 +851,77 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6B7280',
     lineHeight: 16,
+  },
+  taxInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+    backgroundColor: '#7C3AED10',
+    padding: 8,
+    borderRadius: 8,
+  },
+  taxInfoText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  incomeCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#10B98130',
+  },
+  incomeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  incomeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#10B98120',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  incomeInfo: {
+    flex: 1,
+  },
+  incomeLabel: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  incomeAmount: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  incomeBreakdown: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  incomeBreakdownItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#2E1A47',
+    borderRadius: 8,
+    padding: 12,
+  },
+  incomeBreakdownLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  incomeBreakdownAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
   sectionTitle: {
     fontSize: 18,
@@ -659,6 +1020,18 @@ const styles = StyleSheet.create({
   actionsGrid: {
     flexDirection: 'row',
     gap: 12,
+  },
+  profileActionCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  profileActionText: {
+    flex: 1,
+    marginLeft: 12,
   },
   actionCard: {
     flex: 1,

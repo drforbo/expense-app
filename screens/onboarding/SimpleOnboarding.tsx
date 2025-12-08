@@ -20,7 +20,7 @@ interface SimpleOnboardingProps {
   onComplete: () => void;
 }
 
-type Step = 'signup' | 'workType' | 'income' | 'registration';
+type Step = 'signup' | 'workType' | 'income' | 'registration' | 'employment' | 'studentLoan';
 type AuthMode = 'login' | 'signup';
 
 export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) {
@@ -40,6 +40,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [receivesGiftedItems, setReceivesGiftedItems] = useState(false);
   const [hasInternationalIncome, setHasInternationalIncome] = useState(false);
   const [trackingGoal, setTrackingGoal] = useState<string>('');
+  const [hasOtherEmployment, setHasOtherEmployment] = useState<boolean | null>(null);
+  const [employmentIncome, setEmploymentIncome] = useState(30000);
+  const [studentLoanPlan, setStudentLoanPlan] = useState<string>('none');
 
   const formatCurrency = (value: number) => {
     if (value >= 10000) return `£${(value / 1000).toFixed(0)}k`;
@@ -146,6 +149,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           receives_gifted_items: receivesGiftedItems,
           has_international_income: hasInternationalIncome,
           tracking_goal: trackingGoal,
+          has_other_employment: hasOtherEmployment,
+          employment_income: hasOtherEmployment ? employmentIncome : null,
+          student_loan_plan: studentLoanPlan,
         }, {
           onConflict: 'user_id'
         });
@@ -169,10 +175,15 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     if (currentStep === 'workType') setCurrentStep('signup');
     else if (currentStep === 'income') setCurrentStep('workType');
     else if (currentStep === 'registration') setCurrentStep('income');
+    else if (currentStep === 'employment') {
+      setHasOtherEmployment(null);
+      setCurrentStep('registration');
+    }
+    else if (currentStep === 'studentLoan') setCurrentStep('employment');
   };
 
   const getProgress = () => {
-    const steps = ['signup', 'workType', 'income', 'registration'];
+    const steps = ['signup', 'workType', 'income', 'registration', 'employment', 'studentLoan'];
     const index = steps.indexOf(currentStep);
     return ((index + 1) / steps.length) * 100;
   };
@@ -378,7 +389,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         icon="person"
         onPress={() => {
           setTrackingGoal('sole_trader');
-          setTimeout(handleComplete, 300);
+          setTimeout(() => setCurrentStep('employment'), 300);
         }}
       />
       <OptionButton
@@ -386,7 +397,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         icon="briefcase"
         onPress={() => {
           setTrackingGoal('limited_company');
-          setTimeout(handleComplete, 300);
+          setTimeout(() => setCurrentStep('employment'), 300);
         }}
       />
       <OptionButton
@@ -394,6 +405,112 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         icon="help-circle"
         onPress={() => {
           setTrackingGoal('not_registered');
+          setTimeout(() => setCurrentStep('employment'), 300);
+        }}
+      />
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#7C3AED" />
+        </View>
+      )}
+    </View>
+  );
+
+  const renderEmployment = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>Is this your only income?</Text>
+      <Text style={styles.questionSubtitle}>This helps us calculate your tax more accurately</Text>
+
+      <OptionButton
+        text="Yes, just my side hustle"
+        icon="cash"
+        onPress={() => {
+          setHasOtherEmployment(false);
+          setTimeout(() => setCurrentStep('studentLoan'), 300);
+        }}
+      />
+      <OptionButton
+        text="No, I also have a day job"
+        icon="business"
+        onPress={() => {
+          setHasOtherEmployment(true);
+        }}
+      />
+
+      {hasOtherEmployment === true && (
+        <View style={styles.employmentIncomeContainer}>
+          <Text style={styles.sliderLabel}>Approximate yearly salary (before tax)</Text>
+          <Text style={styles.incomeDisplay}>{formatCurrency(employmentIncome)}</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={10000}
+            maximumValue={150000}
+            step={5000}
+            value={employmentIncome}
+            onValueChange={setEmploymentIncome}
+            minimumTrackTintColor="#7C3AED"
+            maximumTrackTintColor="rgba(255,255,255,0.2)"
+            thumbTintColor="#FF6B6B"
+          />
+          <View style={styles.sliderLabels}>
+            <Text style={styles.sliderLabelText}>£10k</Text>
+            <Text style={styles.sliderLabelText}>£150k+</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setCurrentStep('studentLoan')}
+          >
+            <Text style={styles.primaryButtonText}>Continue</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderStudentLoan = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>Do you have a student loan?</Text>
+      <Text style={styles.questionSubtitle}>This affects your take-home pay calculations</Text>
+
+      <OptionButton
+        text="No student loan"
+        icon="school-outline"
+        onPress={() => {
+          setStudentLoanPlan('none');
+          setTimeout(handleComplete, 300);
+        }}
+      />
+      <OptionButton
+        text="Plan 1 (started before 2012)"
+        icon="school"
+        onPress={() => {
+          setStudentLoanPlan('plan1');
+          setTimeout(handleComplete, 300);
+        }}
+      />
+      <OptionButton
+        text="Plan 2 (started 2012 or later)"
+        icon="school"
+        onPress={() => {
+          setStudentLoanPlan('plan2');
+          setTimeout(handleComplete, 300);
+        }}
+      />
+      <OptionButton
+        text="Plan 4 (Scotland)"
+        icon="school"
+        onPress={() => {
+          setStudentLoanPlan('plan4');
+          setTimeout(handleComplete, 300);
+        }}
+      />
+      <OptionButton
+        text="Postgraduate loan"
+        icon="library"
+        onPress={() => {
+          setStudentLoanPlan('postgrad');
           setTimeout(handleComplete, 300);
         }}
       />
@@ -432,6 +549,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           {currentStep === 'workType' && renderWorkType()}
           {currentStep === 'income' && renderIncome()}
           {currentStep === 'registration' && renderRegistration()}
+          {currentStep === 'employment' && renderEmployment()}
+          {currentStep === 'studentLoan' && renderStudentLoan()}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -590,7 +709,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 32,
+    marginBottom: 8,
+  },
+  questionSubtitle: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    marginBottom: 24,
+  },
+  employmentIncomeContainer: {
+    marginTop: 24,
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
   },
   optionButton: {
     backgroundColor: '#1F1333',

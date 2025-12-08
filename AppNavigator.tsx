@@ -17,6 +17,7 @@ import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import OverviewScreen from './screens/overview/OverviewScreen';
 import TaxChecklistScreen from './screens/overview/TaxChecklistScreen';
+import ProfileScreen from './screens/profile/ProfileScreen';
 
 type RootStackParamList = {
   Onboarding: undefined;
@@ -29,6 +30,7 @@ type RootStackParamList = {
   AddEvidence: { transaction: any };
   GiftedTracker: undefined;
   TaxChecklist: undefined;
+  Profile: undefined;
 };
 
 type TabParamList = {
@@ -189,6 +191,10 @@ export default function AppNavigator() {
         <Stack.Screen
           name="TaxChecklist"
           component={TaxChecklistScreen}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>
