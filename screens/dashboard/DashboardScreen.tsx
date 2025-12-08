@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,14 +12,17 @@ import {
   Modal,
   TextInput,
   Linking,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { useUpload } from '../../context/UploadContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function DashboardScreen({ navigation }: any) {
+  const { uploadState, clearUpload } = useUpload();
   const [exporting, setExporting] = useState(false);
   const [lastExportDate, setLastExportDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -29,11 +32,49 @@ export default function DashboardScreen({ navigation }: any) {
   const [unqualifiedCount, setUnqualifiedCount] = useState(0);
   const [qualifiedCount, setQualifiedCount] = useState(0);
   const [loadingCounts, setLoadingCounts] = useState(true);
+  const [showUploadComplete, setShowUploadComplete] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
 
   useEffect(() => {
     fetchLastExportDate();
     fetchTransactionCounts();
   }, []);
+
+  // Handle upload completion notification
+  useEffect(() => {
+    if (uploadState.status === 'complete' && uploadState.result) {
+      setShowUploadComplete(true);
+      fetchTransactionCounts(); // Refresh counts
+
+      // Animate in
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => {
+        hideUploadComplete();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadState.status]);
+
+  const hideUploadComplete = () => {
+    Animated.timing(slideAnim, {
+      toValue: -100,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowUploadComplete(false);
+      clearUpload();
+    });
+  };
 
   useEffect(() => {
     // Refresh counts when screen comes into focus
@@ -246,6 +287,47 @@ export default function DashboardScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Upload Progress Banner */}
+      {isUploading && (
+        <View style={styles.uploadBanner}>
+          <ActivityIndicator size="small" color="#fff" />
+          <View style={styles.uploadBannerText}>
+            <Text style={styles.uploadBannerTitle}>
+              {uploadState.status === 'uploading' ? 'Uploading...' : 'Processing PDF...'}
+            </Text>
+            <Text style={styles.uploadBannerSubtitle} numberOfLines={1}>
+              {uploadState.filename}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('UploadStatement')}>
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Upload Complete Notification */}
+      {showUploadComplete && uploadState.result && (
+        <Animated.View
+          style={[
+            styles.uploadCompleteBanner,
+            { transform: [{ translateY: slideAnim }] }
+          ]}
+        >
+          <View style={styles.uploadCompleteIcon}>
+            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+          </View>
+          <View style={styles.uploadBannerText}>
+            <Text style={styles.uploadCompleteTitle}>Upload Complete!</Text>
+            <Text style={styles.uploadCompleteSubtitle}>
+              {uploadState.result.transactions_saved} new transactions added
+            </Text>
+          </View>
+          <TouchableOpacity onPress={hideUploadComplete} style={styles.dismissButton}>
+            <Ionicons name="close" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
@@ -460,6 +542,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#2E1A47',
+  },
+  uploadBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#7C3AED',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  uploadBannerText: {
+    flex: 1,
+  },
+  uploadBannerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  uploadBannerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  uploadCompleteBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1F1333',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#10B98130',
+  },
+  uploadCompleteIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B98120',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadCompleteTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  uploadCompleteSubtitle: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  dismissButton: {
+    padding: 4,
   },
   scrollView: {
     flex: 1,

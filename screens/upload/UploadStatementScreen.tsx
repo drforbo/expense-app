@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import { supabase } from '../../lib/supabase';
+import { useUpload } from '../../context/UploadContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -25,13 +25,22 @@ interface Statement {
 }
 
 export default function UploadStatementScreen({ navigation }: any) {
-  const [uploading, setUploading] = useState(false);
+  const { uploadState, startUpload } = useUpload();
   const [statements, setStatements] = useState<Statement[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
 
   useEffect(() => {
     loadStatements();
   }, []);
+
+  // Reload statements when upload completes
+  useEffect(() => {
+    if (uploadState.status === 'complete') {
+      loadStatements();
+    }
+  }, [uploadState.status]);
 
   const loadStatements = async () => {
     try {
@@ -66,53 +75,26 @@ export default function UploadStatementScreen({ navigation }: any) {
       if (result.canceled) return;
 
       const file = result.assets[0];
-      setUploading(true);
 
-      // Get user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in');
-        setUploading(false);
-        return;
-      }
-
-      console.log('Uploading file:', file.name, 'Size:', file.size);
-
-      // Read file and create form data
-      const formData = new FormData();
-      formData.append('pdf', {
+      // Start background upload via context
+      startUpload({
         uri: file.uri,
-        type: 'application/pdf',
         name: file.name,
-      } as any);
-      formData.append('user_id', user.id);
-
-      // Upload to server
-      const response = await fetch(`${API_URL}/api/upload_statement`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        size: file.size,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        Alert.alert(
-          'Upload Complete',
-          `Found ${data.transactions_found} transactions.\n${data.transactions_saved} saved, ${data.duplicates_skipped} duplicates skipped.`,
-          [{ text: 'OK', onPress: () => loadStatements() }]
-        );
-      } else {
-        throw new Error(data.error || 'Upload failed');
-      }
-
+      // Show message that they can leave
+      Alert.alert(
+        'Upload Started',
+        'Your statement is being processed. You can navigate away - we\'ll notify you when it\'s done!',
+        [
+          { text: 'Stay Here', style: 'cancel' },
+          { text: 'Go to Dashboard', onPress: () => navigation.navigate('Dashboard') },
+        ]
+      );
     } catch (error: any) {
-      console.error('Error uploading:', error);
-      Alert.alert('Error', error.message || 'Failed to upload statement');
-    } finally {
-      setUploading(false);
+      console.error('Error picking file:', error);
+      Alert.alert('Error', error.message || 'Failed to select file');
     }
   };
 
@@ -123,6 +105,12 @@ export default function UploadStatementScreen({ navigation }: any) {
       month: 'short',
       year: 'numeric',
     });
+  };
+
+  const getUploadStatusText = () => {
+    if (uploadState.status === 'uploading') return 'Uploading...';
+    if (uploadState.status === 'processing') return 'Extracting transactions with AI...';
+    return 'Processing...';
   };
 
   return (
@@ -138,16 +126,17 @@ export default function UploadStatementScreen({ navigation }: any) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Upload Button */}
         <TouchableOpacity
-          style={[styles.uploadButton, uploading && styles.uploadButtonDisabled]}
+          style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
           onPress={handleUpload}
-          disabled={uploading}
+          disabled={isUploading}
           activeOpacity={0.8}
         >
-          {uploading ? (
+          {isUploading ? (
             <View style={styles.uploadingContent}>
               <ActivityIndicator color="#fff" size="large" />
-              <Text style={styles.uploadingText}>Processing PDF...</Text>
-              <Text style={styles.uploadingSubtext}>Extracting transactions with AI</Text>
+              <Text style={styles.uploadingText}>{getUploadStatusText()}</Text>
+              <Text style={styles.uploadingSubtext}>{uploadState.filename}</Text>
+              <Text style={styles.uploadingHint}>You can navigate away</Text>
             </View>
           ) : (
             <>
@@ -286,6 +275,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.7)',
     marginTop: 4,
+  },
+  uploadingHint: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 12,
+    fontStyle: 'italic',
   },
   infoBox: {
     flexDirection: 'row',

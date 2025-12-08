@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ interface Transaction {
   amount: number;
   date: string;
   category?: string[];
+  statement_filename?: string;
 }
 
 interface CategorizedTransaction {
@@ -48,6 +49,8 @@ export default function TransactionListScreen({ navigation }: any) {
   const [preGeneratedQuestions, setPreGeneratedQuestions] = useState<Record<string, any>>({});
   const [activeTab, setActiveTab] = useState<'uncategorized' | 'categorized'>('uncategorized');
   const [categorizedTransactions, setCategorizedTransactions] = useState<CategorizedTransaction[]>([]);
+  const isPreGenerating = useRef(false);
+  const lastTransactionCount = useRef(0);
 
   useEffect(() => {
     loadTransactions();
@@ -118,7 +121,21 @@ export default function TransactionListScreen({ navigation }: any) {
   };
 
   const preGenerateQuestions = async (txns: Transaction[], userId: string | undefined) => {
+    // Skip if already pre-generating or if transaction count hasn't changed significantly
+    if (isPreGenerating.current) {
+      console.log('⏭️ Skipping pre-generation - already in progress');
+      return;
+    }
+
+    // Only re-generate if transaction count changed (new transactions added or categorized)
+    if (lastTransactionCount.current === txns.length && Object.keys(preGeneratedQuestions).length > 0) {
+      console.log('⏭️ Skipping pre-generation - no new transactions');
+      return;
+    }
+
     try {
+      isPreGenerating.current = true;
+      lastTransactionCount.current = txns.length;
       console.log('⚡ Pre-generating Q1 for', txns.length, 'transactions...');
 
       // Get user profile for better questions
@@ -156,6 +173,8 @@ export default function TransactionListScreen({ navigation }: any) {
     } catch (error) {
       console.error('Error pre-generating questions:', error);
       // Don't alert user - this is a background optimization
+    } finally {
+      isPreGenerating.current = false;
     }
   };
 
@@ -330,6 +349,11 @@ export default function TransactionListScreen({ navigation }: any) {
                 <Text style={styles.transactionDate}>
                   {formatDate(transaction.date)}
                 </Text>
+                {transaction.statement_filename && (
+                  <Text style={styles.statementSource}>
+                    {transaction.statement_filename.replace(/\.pdf$/i, '')}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.transactionRight}>
@@ -553,6 +577,11 @@ const styles = StyleSheet.create({
   transactionDate: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+  statementSource: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
   },
   transactionRight: {
     flexDirection: 'row',
