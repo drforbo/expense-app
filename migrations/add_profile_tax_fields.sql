@@ -8,6 +8,9 @@ ADD COLUMN IF NOT EXISTS has_other_employment BOOLEAN DEFAULT FALSE;
 ALTER TABLE user_profiles
 ADD COLUMN IF NOT EXISTS employment_income INTEGER;
 
+ALTER TABLE user_profiles
+ADD COLUMN IF NOT EXISTS employment_is_paye BOOLEAN DEFAULT TRUE;
+
 -- Add student loan plan
 ALTER TABLE user_profiles
 ADD COLUMN IF NOT EXISTS student_loan_plan TEXT DEFAULT 'none';
@@ -31,6 +34,7 @@ ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN DEFAULT FALSE;
 -- Comment on columns for documentation
 COMMENT ON COLUMN user_profiles.has_other_employment IS 'Whether user has employment income in addition to side hustle';
 COMMENT ON COLUMN user_profiles.employment_income IS 'Yearly salary from other employment (before tax)';
+COMMENT ON COLUMN user_profiles.employment_is_paye IS 'Whether other employment is PAYE (true) or contractor/freelance (false)';
 COMMENT ON COLUMN user_profiles.student_loan_plan IS 'Student loan plan: none, plan1, plan2, plan4, postgrad';
 COMMENT ON COLUMN user_profiles.works_from_home IS 'Whether user works from home for their side hustle';
 COMMENT ON COLUMN user_profiles.home_office_percentage IS 'Percentage of home used for work (for expense claims)';

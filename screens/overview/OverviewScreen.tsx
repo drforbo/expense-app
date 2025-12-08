@@ -11,6 +11,7 @@ import {
   TextInput,
   Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -41,6 +42,7 @@ interface UserProfile {
   profile_completed: boolean;
   has_other_employment: boolean;
   employment_income: number;
+  employment_is_paye: boolean;
   student_loan_plan: string;
   monthly_income: number;
 }
@@ -65,6 +67,8 @@ export default function OverviewScreen({ navigation }: any) {
   const [endDate, setEndDate] = useState('');
   const [lastExportDate, setLastExportDate] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [pendingExportDates, setPendingExportDates] = useState<{ start?: string; end?: string }>({});
 
   useEffect(() => {
     fetchFinancialSummary();
@@ -194,7 +198,7 @@ export default function OverviewScreen({ navigation }: any) {
       // Fetch user profile with all tax-relevant fields
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('monthly_income, tracking_goal, profile_completed, has_other_employment, employment_income, student_loan_plan')
+        .select('monthly_income, tracking_goal, profile_completed, has_other_employment, employment_income, employment_is_paye, student_loan_plan')
         .eq('user_id', user.id)
         .single();
 
@@ -386,9 +390,40 @@ export default function OverviewScreen({ navigation }: any) {
     setShowDatePicker(true);
   };
 
+  const checkDisclaimerAndExport = async (selectedStartDate: string, selectedEndDate: string) => {
+    try {
+      const lastDisclaimerDate = await AsyncStorage.getItem('export_disclaimer_date');
+      const today = new Date().toISOString().split('T')[0];
+
+      if (lastDisclaimerDate === today) {
+        // Already shown today, proceed directly
+        handleExportTransactions(selectedStartDate, selectedEndDate);
+      } else {
+        // Show disclaimer first
+        setPendingExportDates({ start: selectedStartDate, end: selectedEndDate });
+        setShowDisclaimerModal(true);
+      }
+    } catch (error) {
+      // If error reading storage, show disclaimer to be safe
+      setPendingExportDates({ start: selectedStartDate, end: selectedEndDate });
+      setShowDisclaimerModal(true);
+    }
+  };
+
+  const acceptDisclaimerAndExport = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await AsyncStorage.setItem('export_disclaimer_date', today);
+    } catch (error) {
+      console.warn('Failed to save disclaimer date');
+    }
+    setShowDisclaimerModal(false);
+    handleExportTransactions(pendingExportDates.start, pendingExportDates.end);
+  };
+
   const confirmExport = () => {
     setShowDatePicker(false);
-    handleExportTransactions(startDate, endDate);
+    checkDisclaimerAndExport(startDate, endDate);
   };
 
   const formatCurrency = (amount: number) => {
@@ -480,18 +515,35 @@ export default function OverviewScreen({ navigation }: any) {
               <View style={styles.taxIconContainer}>
                 <Ionicons name="calculator" size={24} color="#F59E0B" />
               </View>
-              <Text style={styles.taxLabel}>Estimated Tax Owed</Text>
+              <Text style={styles.taxLabel}>
+                {userProfile?.has_other_employment && userProfile?.employment_is_paye
+                  ? 'Additional Tax on Side Hustle'
+                  : 'Estimated Tax Owed'}
+              </Text>
             </View>
             <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
             <Text style={styles.taxNote}>
               Tax Year {summary.taxYear} (includes Income Tax + Class 4 NI
               {userProfile?.student_loan_plan && userProfile.student_loan_plan !== 'none' ? ' + Student Loan' : ''})
             </Text>
-            {userProfile?.has_other_employment && (
+            {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
+              <View style={styles.payeInfoContainer}>
+                <View style={styles.payeInfoRow}>
+                  <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                  <Text style={styles.payeInfoText}>
+                    Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
+                  </Text>
+                </View>
+                <Text style={styles.payeInfoDetail}>
+                  This estimate is only for the additional tax you'll owe on your side hustle profits via Self Assessment
+                </Text>
+              </View>
+            )}
+            {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
               <View style={styles.taxInfoRow}>
-                <Ionicons name="briefcase-outline" size={14} color="#7C3AED" />
+                <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
                 <Text style={styles.taxInfoText}>
-                  Calculated based on employment income of £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr
+                  Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
                 </Text>
               </View>
             )}
@@ -683,6 +735,51 @@ export default function OverviewScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {/* Export Disclaimer Modal */}
+      <Modal
+        visible={showDisclaimerModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDisclaimerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.disclaimerHeader}>
+              <Ionicons name="alert-circle" size={32} color="#F59E0B" />
+            </View>
+            <Text style={styles.modalTitle}>Important Disclaimer</Text>
+            <Text style={styles.disclaimerBody}>
+              The data you are about to export is provided for informational purposes only and should not be considered as professional tax, accounting, or financial advice.
+            </Text>
+            <Text style={styles.disclaimerBody}>
+              We do not guarantee the accuracy, completeness, or suitability of this information for your tax return or any other purpose.
+            </Text>
+            <Text style={styles.disclaimerBody}>
+              You are solely responsible for verifying all information and consulting with a qualified accountant or tax professional before submitting any tax returns.
+            </Text>
+            <Text style={styles.disclaimerEmphasis}>
+              By proceeding, you acknowledge that you understand and accept these terms.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowDisclaimerModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={acceptDisclaimerAndExport}
+              >
+                <Text style={styles.confirmButtonText}>I Understand</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -857,13 +954,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginBottom: 12,
-    backgroundColor: '#7C3AED10',
+    backgroundColor: '#F59E0B10',
     padding: 8,
     borderRadius: 8,
   },
   taxInfoText: {
     fontSize: 12,
     color: '#9CA3AF',
+    flex: 1,
+  },
+  payeInfoContainer: {
+    backgroundColor: '#10B98110',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#10B98120',
+  },
+  payeInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 8,
+  },
+  payeInfoText: {
+    fontSize: 13,
+    color: '#10B981',
+    fontWeight: '600',
+    flex: 1,
+  },
+  payeInfoDetail: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    lineHeight: 18,
   },
   incomeCard: {
     backgroundColor: '#1F1333',
@@ -1127,5 +1250,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  disclaimerHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  disclaimerBody: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  disclaimerEmphasis: {
+    fontSize: 14,
+    color: '#F59E0B',
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 8,
   },
 });

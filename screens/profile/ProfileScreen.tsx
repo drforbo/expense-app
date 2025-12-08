@@ -46,6 +46,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [monthlyIncome, setMonthlyIncome] = useState(1000);
   const [hasOtherEmployment, setHasOtherEmployment] = useState(false);
   const [employmentIncome, setEmploymentIncome] = useState(30000);
+  const [employmentIsPaye, setEmploymentIsPaye] = useState(true);
   const [studentLoanPlan, setStudentLoanPlan] = useState('none');
   const [trackingGoal, setTrackingGoal] = useState('sole_trader');
   const [workType, setWorkType] = useState('content_creation');
@@ -86,6 +87,7 @@ export default function ProfileScreen({ navigation }: any) {
       setMonthlyIncome(data.monthly_income || 1000);
       setHasOtherEmployment(data.has_other_employment || false);
       setEmploymentIncome(data.employment_income || 30000);
+      setEmploymentIsPaye(data.employment_is_paye !== false); // Default to true
       setStudentLoanPlan(data.student_loan_plan || 'none');
       setTrackingGoal(data.tracking_goal || 'sole_trader');
       setWorkType(data.work_type || 'content_creation');
@@ -156,6 +158,7 @@ export default function ProfileScreen({ navigation }: any) {
           monthly_income: monthlyIncome,
           has_other_employment: hasOtherEmployment,
           employment_income: hasOtherEmployment ? employmentIncome : null,
+          employment_is_paye: hasOtherEmployment ? employmentIsPaye : null,
           student_loan_plan: studentLoanPlan,
           tracking_goal: trackingGoal,
           work_type: workType,
@@ -312,25 +315,62 @@ export default function ProfileScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
             {hasOtherEmployment && (
-              <View style={styles.subSection}>
-                <Text style={styles.subSectionLabel}>Yearly salary (before tax)</Text>
-                <Text style={styles.modalValue}>{formatCurrency(employmentIncome)}</Text>
-                <Slider
-                  style={styles.modalSlider}
-                  minimumValue={10000}
-                  maximumValue={150000}
-                  step={5000}
-                  value={employmentIncome}
-                  onValueChange={setEmploymentIncome}
-                  minimumTrackTintColor="#7C3AED"
-                  maximumTrackTintColor="rgba(255,255,255,0.2)"
-                  thumbTintColor="#FF6B6B"
-                />
-                <View style={styles.sliderLabels}>
-                  <Text style={styles.sliderLabelText}>£10k</Text>
-                  <Text style={styles.sliderLabelText}>£150k+</Text>
+              <>
+                <View style={styles.subSection}>
+                  <Text style={styles.subSectionLabel}>How are you paid?</Text>
+                  <View style={styles.optionsList}>
+                    <TouchableOpacity
+                      style={[styles.optionItem, employmentIsPaye && styles.optionItemActive]}
+                      onPress={() => setEmploymentIsPaye(true)}
+                    >
+                      <View style={styles.optionWithIcon}>
+                        <Ionicons name="card-outline" size={20} color={employmentIsPaye ? '#7C3AED' : '#9CA3AF'} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.optionText, employmentIsPaye && styles.optionTextActive]}>
+                            PAYE (employee)
+                          </Text>
+                          <Text style={styles.optionHint}>Tax deducted from salary automatically</Text>
+                        </View>
+                      </View>
+                      {employmentIsPaye && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.optionItem, !employmentIsPaye && styles.optionItemActive]}
+                      onPress={() => setEmploymentIsPaye(false)}
+                    >
+                      <View style={styles.optionWithIcon}>
+                        <Ionicons name="document-text-outline" size={20} color={!employmentIsPaye ? '#7C3AED' : '#9CA3AF'} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.optionText, !employmentIsPaye && styles.optionTextActive]}>
+                            Contractor/Freelance
+                          </Text>
+                          <Text style={styles.optionHint}>I invoice and pay my own tax</Text>
+                        </View>
+                      </View>
+                      {!employmentIsPaye && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+                <View style={styles.subSection}>
+                  <Text style={styles.subSectionLabel}>Yearly income (before tax)</Text>
+                  <Text style={styles.modalValue}>{formatCurrency(employmentIncome)}</Text>
+                  <Slider
+                    style={styles.modalSlider}
+                    minimumValue={10000}
+                    maximumValue={150000}
+                    step={5000}
+                    value={employmentIncome}
+                    onValueChange={setEmploymentIncome}
+                    minimumTrackTintColor="#7C3AED"
+                    maximumTrackTintColor="rgba(255,255,255,0.2)"
+                    thumbTintColor="#FF6B6B"
+                  />
+                  <View style={styles.sliderLabels}>
+                    <Text style={styles.sliderLabelText}>£10k</Text>
+                    <Text style={styles.sliderLabelText}>£150k+</Text>
+                  </View>
+                </View>
+              </>
             )}
           </>
         );
@@ -555,7 +595,9 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Other Employment</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>
-                {hasOtherEmployment ? `Yes (${formatCurrency(employmentIncome)}/yr)` : 'No'}
+                {hasOtherEmployment
+                  ? `${employmentIsPaye ? 'PAYE' : 'Contractor'} (${formatCurrency(employmentIncome)}/yr)`
+                  : 'No'}
               </Text>
               <Ionicons name="chevron-forward" size={16} color="#6B7280" />
             </View>
@@ -992,6 +1034,11 @@ const styles = StyleSheet.create({
   optionTextActive: {
     color: '#fff',
     fontWeight: '600',
+  },
+  optionHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
   },
   subSection: {
     marginTop: 20,
