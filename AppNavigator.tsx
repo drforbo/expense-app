@@ -10,12 +10,14 @@ import TransactionCategorizationScreen from './screens/transactions/TransactionC
 import QualifyTransactionsScreen from './screens/transactions/QualifyTransactionsScreen';
 import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
 import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
+import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 
 type RootStackParamList = {
   Onboarding: undefined;
   Dashboard: undefined;
-  TransactionList: { accessToken: string };
-  TransactionCategorization: { accessToken: string; transaction?: any; allTransactions?: any[]; onReturn?: () => void };
+  UploadStatement: undefined;
+  TransactionList: undefined;
+  TransactionCategorization: { transaction?: any; allTransactions?: any[]; preGeneratedQuestions?: any };
   QualifyTransactions: undefined;
   AddEvidence: { transaction: any };
   GiftedTracker: undefined;
@@ -120,6 +122,10 @@ export default function AppNavigator() {
         <Stack.Screen
           name="GiftedTracker"
           component={GiftedTrackerScreen}
+        />
+        <Stack.Screen
+          name="UploadStatement"
+          component={UploadStatementScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

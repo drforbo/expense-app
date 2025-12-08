@@ -48,7 +48,7 @@ interface CategorizedTransaction {
   business_percent: number;
   explanation: string;
   tax_deductible: boolean;
-  plaid_transaction_id: string;
+  source_transaction_id: string;
 }
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
@@ -57,7 +57,7 @@ export default function TransactionCategorizationScreen({
   route,
   navigation
 }: any) {
-  const { accessToken, transaction, allTransactions, preGeneratedQuestions } = route.params || {};
+  const { transaction, allTransactions, preGeneratedQuestions } = route.params || {};
 
   const [activeTab, setActiveTab] = useState<'uncategorized' | 'categorized'>('uncategorized');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -172,11 +172,18 @@ export default function TransactionCategorizationScreen({
     try {
       setLoading(true);
 
-      // Fetch transactions from Plaid
-      const response = await fetch(`${API_URL}/api/sync_transactions`, {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch uncategorized transactions
+      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: accessToken }),
+        body: JSON.stringify({ user_id: user.id }),
       });
 
       const data = await response.json();
@@ -186,7 +193,7 @@ export default function TransactionCategorizationScreen({
         // Generate questions for first transaction
         await generateQuestions(data.transactions[0]);
       } else {
-        Alert.alert('No transactions', 'No transactions found in the last 30 days');
+        setTransactions([]);
       }
     } catch (error: any) {
       console.error('Error loading transactions:', error);
@@ -456,11 +463,11 @@ export default function TransactionCategorizationScreen({
             .from('categorized_transactions')
             .upsert({
               user_id: user.id,
-              plaid_transaction_id: `${transactions[currentIndex].transaction_id}_split_${i}`,
+              source_transaction_id: `${transactions[currentIndex].transaction_id}_split_${i}`,
+              source_type: 'pdf_upload',
               merchant_name: `${transactions[currentIndex].merchant_name || transactions[currentIndex].name} (${split.description})`,
               amount: split.amount,
               transaction_date: transactions[currentIndex].date,
-              plaid_category: transactions[currentIndex].category || [],
               category_id: split.categoryId,
               category_name: split.categoryName,
               business_percent: split.businessPercent,
@@ -468,7 +475,7 @@ export default function TransactionCategorizationScreen({
               tax_deductible: split.taxDeductible,
               user_answers: answers,
             }, {
-              onConflict: 'user_id,plaid_transaction_id'
+              onConflict: 'user_id,source_transaction_id'
             });
 
           if (error) {
@@ -485,11 +492,11 @@ export default function TransactionCategorizationScreen({
           .from('categorized_transactions')
           .upsert({
             user_id: user.id,
-            plaid_transaction_id: transactions[currentIndex].transaction_id,
+            source_transaction_id: transactions[currentIndex].transaction_id,
+            source_type: 'pdf_upload',
             merchant_name: transactions[currentIndex].merchant_name || transactions[currentIndex].name,
             amount: Math.abs(transactions[currentIndex].amount),
             transaction_date: transactions[currentIndex].date,
-            plaid_category: transactions[currentIndex].category || [],
             category_id: categorization.categoryId,
             category_name: categorization.categoryName,
             business_percent: categorization.businessPercent,
@@ -497,7 +504,7 @@ export default function TransactionCategorizationScreen({
             tax_deductible: categorization.taxDeductible,
             user_answers: answers,
           }, {
-            onConflict: 'user_id,plaid_transaction_id'
+            onConflict: 'user_id,source_transaction_id'
           });
 
         if (error) {

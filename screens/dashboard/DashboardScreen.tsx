@@ -20,8 +20,6 @@ import { supabase } from '../../lib/supabase';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function DashboardScreen({ navigation }: any) {
-  const [connecting, setConnecting] = useState(false);
-  const [hasAccessToken, setHasAccessToken] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [lastExportDate, setLastExportDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -33,7 +31,6 @@ export default function DashboardScreen({ navigation }: any) {
   const [loadingCounts, setLoadingCounts] = useState(true);
 
   useEffect(() => {
-    checkAccessToken();
     fetchLastExportDate();
     fetchTransactionCounts();
   }, []);
@@ -45,15 +42,6 @@ export default function DashboardScreen({ navigation }: any) {
     });
     return unsubscribe;
   }, [navigation]);
-
-  const checkAccessToken = async () => {
-    try {
-      const token = await AsyncStorage.getItem('plaid_access_token');
-      setHasAccessToken(!!token);
-    } catch (error) {
-      console.error('Error checking access token:', error);
-    }
-  };
 
   const fetchLastExportDate = async () => {
     try {
@@ -96,31 +84,14 @@ export default function DashboardScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const accessToken = await AsyncStorage.getItem('plaid_access_token');
-      if (!accessToken) {
-        setLoadingCounts(false);
-        return;
-      }
-
       // Fetch uncategorized count from server
-      const uncategorizedResponse = await fetch(`${API_URL}/api/get_transactions`, {
+      const uncategorizedResponse = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: accessToken }),
+        body: JSON.stringify({ user_id: user.id }),
       });
       const uncategorizedData = await uncategorizedResponse.json();
-
-      // Filter out already categorized transactions
-      const { data: categorized } = await supabase
-        .from('categorized_transactions')
-        .select('plaid_transaction_id')
-        .eq('user_id', user.id);
-
-      const categorizedIds = new Set(categorized?.map(t => t.plaid_transaction_id) || []);
-      const uncategorized = uncategorizedData.transactions?.filter(
-        (t: any) => !categorizedIds.has(t.transaction_id)
-      ) || [];
-      setUncategorizedCount(uncategorized.length);
+      setUncategorizedCount(uncategorizedData.count || 0);
 
       // Fetch unqualified count (tax-deductible but not qualified)
       const { data: unqualified } = await supabase
@@ -160,7 +131,6 @@ export default function DashboardScreen({ navigation }: any) {
               await supabase.auth.signOut();
               // Clear local storage
               await AsyncStorage.removeItem('onboarding_completed');
-              await AsyncStorage.removeItem('plaid_access_token');
               // The auth state change will trigger app restart
               console.log('✅ Logged out successfully');
             } catch (error) {
@@ -173,59 +143,8 @@ export default function DashboardScreen({ navigation }: any) {
     );
   };
 
-  const handleCategorizeTransactions = async () => {
-    try {
-      setConnecting(true);
-
-      // Check if we already have an access token
-      let accessToken = await AsyncStorage.getItem('plaid_access_token');
-
-      // If we have a token, use it directly
-      if (accessToken) {
-        console.log('✅ Using existing access token');
-        navigation.navigate('TransactionList', { accessToken });
-        setConnecting(false);
-        return;
-      }
-
-      // Otherwise, create a new sandbox connection
-      console.log('🔧 Creating new sandbox connection...');
-
-      // Get authenticated user ID
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in to connect your bank');
-        setConnecting(false);
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/api/create_sandbox_token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const data = await response.json();
-
-      if (data.access_token) {
-        // Save the token for future use
-        await AsyncStorage.setItem('plaid_access_token', data.access_token);
-        setHasAccessToken(true);
-        console.log('✅ Access token saved');
-
-        navigation.navigate('TransactionList', {
-          accessToken: data.access_token,
-        });
-      } else {
-        Alert.alert('Error', 'Failed to connect bank');
-      }
-    } catch (error: any) {
-      console.error('Error connecting bank:', error);
-      Alert.alert('Error', error.message || 'Failed to connect bank');
-    } finally {
-      setConnecting(false);
-    }
+  const handleCategorizeTransactions = () => {
+    navigation.navigate('TransactionList');
   };
 
   const handleComingSoon = (feature: string) => {
@@ -343,20 +262,13 @@ export default function DashboardScreen({ navigation }: any) {
         <TouchableOpacity
           style={styles.primaryCard}
           onPress={handleCategorizeTransactions}
-          disabled={connecting}
           activeOpacity={0.7}
         >
           <View style={styles.primaryIconContainer}>
-            {connecting ? (
-              <ActivityIndicator size={32} color="#fff" />
-            ) : (
-              <Ionicons name="card" size={32} color="#fff" />
-            )}
+            <Ionicons name="card" size={32} color="#fff" />
           </View>
           <View style={styles.primaryText}>
-            <Text style={styles.primaryTitle}>
-              {connecting ? 'Connecting...' : 'Categorize Transactions'}
-            </Text>
+            <Text style={styles.primaryTitle}>Categorize Transactions</Text>
             <Text style={styles.primarySubtitle}>
               {loadingCounts
                 ? 'Loading...'
@@ -370,6 +282,18 @@ export default function DashboardScreen({ navigation }: any) {
 
         {/* Main Actions Grid */}
         <View style={styles.gridContainer}>
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => navigation.navigate('UploadStatement')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <Ionicons name="cloud-upload" size={28} color="#3B82F6" />
+            </View>
+            <Text style={styles.actionTitle}>Upload Statement</Text>
+            <Text style={styles.actionSubtitle}>Add PDF bank statements</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => navigation.navigate('QualifyTransactions')}

@@ -31,7 +31,7 @@ interface CategorizedTransaction {
   business_percent: number;
   explanation: string;
   tax_deductible: boolean;
-  plaid_transaction_id: string;
+  source_transaction_id: string;
   notes?: string;
   qualified?: boolean;
   receipt_image_url?: string;
@@ -41,8 +41,7 @@ interface CategorizedTransaction {
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
-export default function TransactionListScreen({ route, navigation }: any) {
-  const { accessToken } = route.params || {};
+export default function TransactionListScreen({ navigation }: any) {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,22 +72,25 @@ export default function TransactionListScreen({ route, navigation }: any) {
       console.log('🔄 Starting transaction load...');
       setLoading(true);
 
-      // Get current user for filtering on server side
+      // Get current user
       console.log('👤 Getting user...');
       const { data: { user } } = await supabase.auth.getUser();
       console.log('✅ User ID:', user?.id);
 
-      // Fetch transactions from server (filtering happens server-side now)
-      console.log('📡 Fetching from:', `${API_URL}/api/sync_transactions`);
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch uncategorized transactions from server
+      console.log('📡 Fetching from:', `${API_URL}/api/get_uncategorized_transactions`);
       const startTime = Date.now();
 
-      const response = await fetch(`${API_URL}/api/sync_transactions`, {
+      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_token: accessToken,
-          user_id: user?.id
-        }),
+        body: JSON.stringify({ user_id: user.id }),
       });
 
       const loadTime = Date.now() - startTime;
@@ -101,10 +103,10 @@ export default function TransactionListScreen({ route, navigation }: any) {
         setTransactions(data.transactions);
 
         // Pre-generate Q1 for all transactions in the background
-        preGenerateQuestions(data.transactions, user?.id);
+        preGenerateQuestions(data.transactions, user.id);
       } else {
-        console.log('⚠️  No transactions returned');
-        Alert.alert('No transactions', 'No transactions found in the last 30 days');
+        console.log('⚠️  No uncategorized transactions');
+        setTransactions([]);
       }
     } catch (error: any) {
       console.error('❌ Error loading transactions:', error);
@@ -189,7 +191,6 @@ export default function TransactionListScreen({ route, navigation }: any) {
 
   const handleTransactionPress = (transaction: Transaction) => {
     navigation.navigate('TransactionCategorization', {
-      accessToken,
       transaction,
       allTransactions: transactions,
       preGeneratedQuestions: preGeneratedQuestions[transaction.transaction_id],
