@@ -8,13 +8,13 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Animated,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import Markdown from 'react-native-markdown-display';
 import { supabase } from '../../lib/supabase';

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   FlatList,
   Image,
   Modal,
@@ -16,6 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
 
@@ -43,7 +43,6 @@ export default function GiftedTrackerScreen({ navigation }: any) {
   const [notes, setNotes] = useState('');
   const [receivedDate, setReceivedDate] = useState('');
   const [receivedFrom, setReceivedFrom] = useState('');
-  const [reason, setReason] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
@@ -252,7 +251,6 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             notes,
             received_date: receivedDate,
             received_from: receivedFrom,
-            reason,
           }
         : {
             user_id: user.id,
@@ -262,7 +260,6 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             notes,
             received_date: receivedDate,
             received_from: receivedFrom,
-            reason,
           };
 
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -342,7 +339,6 @@ export default function GiftedTrackerScreen({ navigation }: any) {
     setPhotoUri(null);
     setReceivedDate(item.received_date);
     setReceivedFrom(item.received_from || '');
-    setReason(item.reason || '');
     setShowAddModal(true);
   };
 
@@ -356,7 +352,6 @@ export default function GiftedTrackerScreen({ navigation }: any) {
     setPhotoUrl(null);
     setRecognizing(false);
     setReceivedFrom('');
-    setReason('');
   };
 
   const formatDate = (dateString: string) => {
@@ -550,24 +545,12 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 keyboardAppearance="dark"
               />
 
-              <Text style={styles.label}>Who did you receive this from? (Optional)</Text>
+              <Text style={styles.label}>Brand Name (Optional)</Text>
               <TextInput
                 style={styles.input}
                 value={receivedFrom}
                 onChangeText={setReceivedFrom}
-                placeholder="e.g., Friend, Family Member, Company..."
-                placeholderTextColor="#64748B"
-                keyboardAppearance="dark"
-                selectionColor="#8B5CF6"
-                cursorColor="#8B5CF6"
-              />
-
-              <Text style={styles.label}>Why did you receive this? (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={reason}
-                onChangeText={setReason}
-                placeholder="e.g., Birthday, Christmas, Work Achievement..."
+                placeholder="e.g., Apple, Samsung, Nike..."
                 placeholderTextColor="#64748B"
                 keyboardAppearance="dark"
                 selectionColor="#8B5CF6"
@@ -579,7 +562,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 style={[styles.input, styles.textArea]}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Add any notes about this gift..."
+                placeholder="Add extra details like the video you featured it in, or why you received the item..."
                 placeholderTextColor="#64748B"
                 multiline
                 numberOfLines={4}

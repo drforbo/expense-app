@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 
@@ -23,23 +23,6 @@ interface Transaction {
   statement_filename?: string;
 }
 
-interface CategorizedTransaction {
-  id: string;
-  merchant_name: string;
-  amount: number;
-  transaction_date: string;
-  category_name: string;
-  business_percent: number;
-  explanation: string;
-  tax_deductible: boolean;
-  source_transaction_id: string;
-  notes?: string;
-  qualified?: boolean;
-  receipt_image_url?: string;
-  business_use_explanation?: string;
-  content_link?: string;
-}
-
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function TransactionListScreen({ navigation }: any) {
@@ -47,8 +30,6 @@ export default function TransactionListScreen({ navigation }: any) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [preGeneratedQuestions, setPreGeneratedQuestions] = useState<Record<string, any>>({});
-  const [activeTab, setActiveTab] = useState<'uncategorized' | 'categorized'>('uncategorized');
-  const [categorizedTransactions, setCategorizedTransactions] = useState<CategorizedTransaction[]>([]);
   const isPreGenerating = useRef(false);
   const lastTransactionCount = useRef(0);
 
@@ -62,13 +43,6 @@ export default function TransactionListScreen({ navigation }: any) {
       loadTransactions();
     }, [])
   );
-
-  // Load categorized transactions when tab changes
-  useEffect(() => {
-    if (activeTab === 'categorized') {
-      loadCategorizedTransactions();
-    }
-  }, [activeTab]);
 
   const loadTransactions = async () => {
     try {
@@ -178,36 +152,6 @@ export default function TransactionListScreen({ navigation }: any) {
     }
   };
 
-  const loadCategorizedTransactions = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('categorized_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('transaction_date', { ascending: false });
-
-      if (error) {
-        console.error('Error loading categorized transactions:', error);
-        Alert.alert('Error', 'Failed to load categorized transactions');
-        return;
-      }
-
-      setCategorizedTransactions(data || []);
-    } catch (error: any) {
-      console.error('Error in loadCategorizedTransactions:', error);
-      Alert.alert('Error', 'Failed to load categorized transactions');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleTransactionPress = (transaction: Transaction) => {
     navigation.navigate('TransactionCategorization', {
       transaction,
@@ -215,7 +159,6 @@ export default function TransactionListScreen({ navigation }: any) {
       preGeneratedQuestions: preGeneratedQuestions[transaction.transaction_id],
     });
   };
-
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -260,7 +203,7 @@ export default function TransactionListScreen({ navigation }: any) {
           <View style={styles.emptyStateIcon}>
             <Ionicons name="checkmark-circle" size={64} color="#10B981" />
           </View>
-          <Text style={styles.emptyStateTitle}>You're at bopp zero!</Text>
+          <Text style={styles.emptyStateTitle}>All done!</Text>
           <Text style={styles.emptyStateText}>
             All transactions have been categorized
           </Text>
@@ -286,41 +229,18 @@ export default function TransactionListScreen({ navigation }: any) {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'uncategorized' && styles.activeTab]}
-          onPress={() => setActiveTab('uncategorized')}
-        >
-          <Text style={[styles.tabText, activeTab === 'uncategorized' && styles.activeTabText]}>
-            Uncategorized
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'categorized' && styles.activeTab]}
-          onPress={() => setActiveTab('categorized')}
-        >
-          <Text style={[styles.tabText, activeTab === 'categorized' && styles.activeTabText]}>
-            Categorized
-          </Text>
-        </TouchableOpacity>
+      {/* Stats Bar */}
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Text style={styles.statNumber}>{transactions.length}</Text>
+          <Text style={styles.statLabel}>to categorize</Text>
+        </View>
       </View>
 
-      {/* UNCATEGORIZED TAB */}
-      {activeTab === 'uncategorized' && (
-        <>
-          {/* Stats Bar */}
-          <View style={styles.statsBar}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{transactions.length}</Text>
-              <Text style={styles.statLabel}>to categorize</Text>
-            </View>
-          </View>
-
-          {/* Transaction List */}
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
+      {/* Transaction List */}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
         {transactions.map((transaction) => {
-          const isIncome = transaction.amount < 0; // Negative = income in Plaid
+          const isIncome = transaction.amount < 0;
           return (
             <TouchableOpacity
               key={transaction.transaction_id}
@@ -368,130 +288,7 @@ export default function TransactionListScreen({ navigation }: any) {
             </TouchableOpacity>
           );
         })}
-          </ScrollView>
-        </>
-      )}
-
-      {/* CATEGORIZED TAB */}
-      {activeTab === 'categorized' && (
-        <>
-          {/* Stats Bar - show count of transactions needing evidence */}
-          {(() => {
-            const needsEvidence = categorizedTransactions.filter(
-              txn => txn.tax_deductible && !txn.qualified
-            ).length;
-            const qualified = categorizedTransactions.filter(txn => txn.qualified).length;
-
-            return needsEvidence > 0 || qualified > 0 ? (
-              <View style={styles.statsBar}>
-                {needsEvidence > 0 && (
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{needsEvidence}</Text>
-                    <Text style={styles.statLabel}>need evidence</Text>
-                  </View>
-                )}
-                {qualified > 0 && (
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statNumber, { color: '#10B981' }]}>{qualified}</Text>
-                    <Text style={styles.statLabel}>qualified</Text>
-                  </View>
-                )}
-              </View>
-            ) : null;
-          })()}
-
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
-          {categorizedTransactions.length === 0 ? (
-            <View style={styles.emptyStateContainer}>
-              <Ionicons name="checkmark-circle-outline" size={64} color="#64748B" />
-              <Text style={styles.emptyStateText}>No categorized transactions yet</Text>
-            </View>
-          ) : (
-            categorizedTransactions.map((txn) => {
-              const isTaxDeductible = txn.tax_deductible;
-              const isQualified = txn.qualified === true;
-              const hasReceipt = !!txn.receipt_image_url;
-              return (
-                <View key={txn.id} style={styles.categorizedTransactionItem}>
-                  <View style={styles.categorizedHeader}>
-                    <View style={styles.categorizedLeft}>
-                      <View style={[
-                        styles.transactionIcon,
-                        { backgroundColor: isTaxDeductible ? '#10B98120' : '#64748B20' }
-                      ]}>
-                        <Ionicons
-                          name={isTaxDeductible ? "checkmark-circle" : "close-circle"}
-                          size={24}
-                          color={isTaxDeductible ? '#10B981' : '#64748B'}
-                        />
-                      </View>
-                      <View style={styles.categorizedDetails}>
-                        <View style={styles.merchantRow}>
-                          <Text style={styles.merchantName}>{txn.merchant_name}</Text>
-                          {isQualified && (
-                            <View style={styles.qualifiedBadge}>
-                              <Ionicons name="shield-checkmark" size={14} color="#10B981" />
-                            </View>
-                          )}
-                          {hasReceipt && !isQualified && (
-                            <Ionicons name="receipt" size={14} color="#9CA3AF" />
-                          )}
-                        </View>
-                        <Text style={styles.transactionDate}>
-                          {formatDate(txn.transaction_date)}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.transactionAmount}>
-                      £{Math.abs(txn.amount).toFixed(2)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.categorizedInfo}>
-                    <View style={styles.infoRow}>
-                      <Ionicons name="pricetag-outline" size={16} color="#9CA3AF" />
-                      <Text style={styles.infoText}>{txn.category_name}</Text>
-                    </View>
-                    {txn.business_percent > 0 && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="briefcase-outline" size={16} color="#9CA3AF" />
-                        <Text style={styles.infoText}>{txn.business_percent}% business use</Text>
-                      </View>
-                    )}
-                    {txn.explanation && (
-                      <View style={styles.infoRow}>
-                        <Ionicons name="information-circle-outline" size={16} color="#9CA3AF" />
-                        <Text style={styles.infoText}>{txn.explanation}</Text>
-                      </View>
-                    )}
-                    {isTaxDeductible && (
-                      <View style={[styles.infoRow, styles.taxBadge]}>
-                        <Ionicons name="checkmark" size={16} color="#10B981" />
-                        <Text style={styles.taxBadgeText}>Tax Deductible</Text>
-                      </View>
-                    )}
-
-                    {/* Add Evidence Button */}
-                    {!isQualified && isTaxDeductible && (
-                      <TouchableOpacity
-                        style={styles.addEvidenceButton}
-                        onPress={() => navigation.navigate('AddEvidence', { transaction: txn })}
-                      >
-                        <Ionicons name="camera-outline" size={16} color="#7C3AED" />
-                        <Text style={styles.addEvidenceText}>
-                          {hasReceipt ? 'Complete Evidence' : 'Add Evidence'}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </ScrollView>
-        </>
-      )}
-
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -506,6 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    backgroundColor: '#2E1A47',
   },
   header: {
     flexDirection: 'row',
@@ -534,7 +332,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FF6B6B',
+    color: '#7C3AED',
     marginBottom: 4,
   },
   statLabel: {
@@ -629,113 +427,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 4,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  activeTab: {
-    backgroundColor: '#7C3AED',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  categorizedTransactionItem: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  categorizedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categorizedLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  categorizedDetails: {
-    flex: 1,
-  },
-  categorizedInfo: {
-    gap: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    flex: 1,
-  },
-  taxBadge: {
-    backgroundColor: '#10B98120',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  taxBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#10B981',
-  },
-  merchantRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  qualifiedBadge: {
-    backgroundColor: '#10B98120',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addEvidenceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#7C3AED20',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#7C3AED30',
-  },
-  addEvidenceText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#7C3AED',
   },
 });

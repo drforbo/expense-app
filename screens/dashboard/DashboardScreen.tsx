@@ -4,17 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
   ScrollView,
-  Platform,
-  Modal,
-  TextInput,
-  Linking,
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
@@ -23,14 +19,8 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
 
 export default function DashboardScreen({ navigation }: any) {
   const { uploadState, clearUpload } = useUpload();
-  const [exporting, setExporting] = useState(false);
-  const [lastExportDate, setLastExportDate] = useState<string | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [uncategorizedCount, setUncategorizedCount] = useState(0);
   const [unqualifiedCount, setUnqualifiedCount] = useState(0);
-  const [qualifiedCount, setQualifiedCount] = useState(0);
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [showUploadComplete, setShowUploadComplete] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -38,7 +28,6 @@ export default function DashboardScreen({ navigation }: any) {
   const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
 
   useEffect(() => {
-    fetchLastExportDate();
     fetchTransactionCounts();
   }, []);
 
@@ -84,41 +73,6 @@ export default function DashboardScreen({ navigation }: any) {
     return unsubscribe;
   }, [navigation]);
 
-  const fetchLastExportDate = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(`${API_URL}/api/get_last_export_date`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        console.warn('Failed to fetch last export date:', response.status);
-        return;
-      }
-
-      const data = await response.json();
-      setLastExportDate(data.last_export_date);
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.warn('Fetch last export date timed out');
-      } else {
-        console.error('Error fetching last export date:', error);
-      }
-      // Don't block the UI - just keep it as null
-    }
-  };
-
   const fetchTransactionCounts = async () => {
     try {
       setLoadingCounts(true);
@@ -142,14 +96,6 @@ export default function DashboardScreen({ navigation }: any) {
         .eq('tax_deductible', true)
         .or('qualified.is.null,qualified.eq.false');
       setUnqualifiedCount(unqualified?.length || 0);
-
-      // Fetch qualified count
-      const { data: qualified } = await supabase
-        .from('categorized_transactions')
-        .select('id', { count: 'exact' })
-        .eq('user_id', user.id)
-        .eq('qualified', true);
-      setQualifiedCount(qualified?.length || 0);
     } catch (error) {
       console.error('Error fetching transaction counts:', error);
     } finally {
@@ -188,105 +134,8 @@ export default function DashboardScreen({ navigation }: any) {
     navigation.navigate('TransactionList');
   };
 
-  const handleComingSoon = (feature: string) => {
-    Alert.alert('Coming Soon', `${feature} will be available soon!`);
-  };
-
-  const handleExportTransactions = async (selectedStartDate?: string, selectedEndDate?: string) => {
-    try {
-      setExporting(true);
-      console.log('🚀 Starting export...');
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        console.log('❌ No user found');
-        Alert.alert('Error', 'You must be logged in to export transactions');
-        return;
-      }
-
-      console.log('📊 Exporting transactions for user:', user.id);
-      if (selectedStartDate) console.log('📅 Date range:', selectedStartDate, 'to', selectedEndDate);
-
-      // Build download URL with query parameters
-      const params = new URLSearchParams({
-        user_id: user.id,
-        ...(selectedStartDate && { start_date: selectedStartDate }),
-        ...(selectedEndDate && { end_date: selectedEndDate }),
-      });
-
-      const downloadUrl = `${API_URL}/api/download_transactions?${params.toString()}`;
-      console.log('🌐 Opening download URL:', downloadUrl);
-
-      // Open the download URL in the browser - iOS Safari will handle the download
-      const canOpen = await Linking.canOpenURL(downloadUrl);
-      console.log('📱 Can open URL:', canOpen);
-
-      if (canOpen) {
-        await Linking.openURL(downloadUrl);
-        console.log('✅ Browser opened successfully');
-
-        Alert.alert(
-          'Export Started',
-          'The file will download in your browser. You can then save it to Files or share it.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        throw new Error('Cannot open browser');
-      }
-
-      // Refresh last export date
-      fetchLastExportDate().catch(err => console.warn('Failed to refresh export date:', err));
-    } catch (error: any) {
-      console.error('❌ Error exporting transactions:', error);
-      console.error('❌ Error stack:', error.stack);
-      Alert.alert('Error', error.message || 'Failed to export transactions');
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const openDatePicker = () => {
-    // Set default dates (last 30 days)
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-
-    setEndDate(end.toISOString().split('T')[0]);
-    setStartDate(start.toISOString().split('T')[0]);
-    setShowDatePicker(true);
-  };
-
-  const confirmExport = () => {
-    setShowDatePicker(false);
-    handleExportTransactions(startDate, endDate);
-  };
-
-  const formatLastExportDate = (dateString: string | null) => {
-    if (!dateString) return 'Never exported';
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Upload Progress Banner */}
       {isUploading && (
         <View style={styles.uploadBanner}>
@@ -340,6 +189,22 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* Upload Statement Card */}
+        <TouchableOpacity
+          style={styles.uploadCard}
+          onPress={() => navigation.navigate('UploadStatement')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.uploadIconContainer}>
+            <Ionicons name="cloud-upload" size={32} color="#fff" />
+          </View>
+          <View style={styles.primaryText}>
+            <Text style={styles.primaryTitle}>Upload Statement</Text>
+            <Text style={styles.uploadSubtitle}>Add PDF bank statements</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#fff" />
+        </TouchableOpacity>
+
         {/* Primary Action - Categorize Transactions */}
         <TouchableOpacity
           style={styles.primaryCard}
@@ -362,178 +227,54 @@ export default function DashboardScreen({ navigation }: any) {
           <Ionicons name="chevron-forward" size={24} color="#fff" />
         </TouchableOpacity>
 
-        {/* Main Actions Grid */}
-        <View style={styles.gridContainer}>
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('UploadStatement')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-              <Ionicons name="cloud-upload" size={28} color="#3B82F6" />
-            </View>
-            <Text style={styles.actionTitle}>Upload Statement</Text>
-            <Text style={styles.actionSubtitle}>Add PDF bank statements</Text>
-          </TouchableOpacity>
+        {/* Gifted Tracker */}
+        <TouchableOpacity
+          style={styles.giftedCard}
+          onPress={() => navigation.navigate('GiftedTracker')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.giftedIconContainer}>
+            <Ionicons name="gift" size={32} color="#fff" />
+          </View>
+          <View style={styles.primaryText}>
+            <Text style={styles.primaryTitle}>Gifted Tracker</Text>
+            <Text style={styles.giftedSubtitle}>Track PR packages & gifts</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#fff" />
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('QualifyTransactions')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="receipt" size={28} color="#7C3AED" />
-            </View>
-            <Text style={styles.actionTitle}>Qualify Transactions</Text>
-            <Text style={styles.actionSubtitle}>
+        {/* Secondary Action - Qualify Transactions */}
+        <TouchableOpacity
+          style={styles.secondaryCard}
+          onPress={() => navigation.navigate('QualifyTransactionList')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.secondaryIconContainer}>
+            <Ionicons name="shield-checkmark" size={32} color="#fff" />
+          </View>
+          <View style={styles.primaryText}>
+            <Text style={styles.primaryTitle}>Qualify Transactions</Text>
+            <Text style={styles.secondarySubtitle}>
               {loadingCounts
                 ? 'Loading...'
                 : unqualifiedCount > 0
-                  ? `${unqualifiedCount} to qualify`
-                  : 'All qualified!'}
+                  ? `${unqualifiedCount} transaction${unqualifiedCount !== 1 ? 's' : ''} to qualify`
+                  : 'All transactions qualified!'}
             </Text>
-          </TouchableOpacity>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#fff" />
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => handleComingSoon('View Qualified Transactions')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="checkmark-circle" size={28} color="#10B981" />
-            </View>
-            <Text style={styles.actionTitle}>Qualified</Text>
-            <Text style={styles.actionSubtitle}>
-              {loadingCounts
-                ? 'Loading...'
-                : `${qualifiedCount} complete`}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('GiftedTracker')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="gift" size={28} color="#FF6B6B" />
-            </View>
-            <Text style={styles.actionTitle}>Gifted Tracker</Text>
-            <Text style={styles.actionSubtitle}>Track PR packages & gifts</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => handleComingSoon('Tax Checklist')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="checkbox" size={28} color="#10B981" />
-            </View>
-            <Text style={styles.actionTitle}>Checklist</Text>
-            <Text style={styles.actionSubtitle}>Tax actions & deadlines</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => handleComingSoon('Tax Summary')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="stats-chart" size={28} color="#3B82F6" />
-            </View>
-            <Text style={styles.actionTitle}>Summary</Text>
-            <Text style={styles.actionSubtitle}>View tax consolidation</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionCard, styles.exportCard]}
-            onPress={openDatePicker}
-            disabled={exporting}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              {exporting ? (
-                <ActivityIndicator size={28} color="#F59E0B" />
-              ) : (
-                <Ionicons name="download" size={28} color="#F59E0B" />
-              )}
-            </View>
-            <Text style={styles.actionTitle}>
-              {exporting ? 'Exporting...' : 'Export'}
-            </Text>
-            <Text style={styles.actionSubtitle}>Download as CSV</Text>
-            <Text style={styles.lastExportText}>
-              Last: {formatLastExportDate(lastExportDate)}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => handleComingSoon('Account Settings')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="settings" size={28} color="#6B7280" />
-            </View>
-            <Text style={styles.actionTitle}>Settings</Text>
-            <Text style={styles.actionSubtitle}>Profile & billing</Text>
-          </TouchableOpacity>
+        {/* Tip Card */}
+        <View style={styles.tipCard}>
+          <View style={styles.tipIcon}>
+            <Ionicons name="bulb" size={20} color="#F59E0B" />
+          </View>
+          <Text style={styles.tipText}>
+            Tap the Overview tab below to see your financial summary, export data, and tax checklist.
+          </Text>
         </View>
       </ScrollView>
-
-      {/* Date Range Picker Modal */}
-      <Modal
-        visible={showDatePicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Date Range</Text>
-            <Text style={styles.modalSubtitle}>Choose the period to export</Text>
-
-            <View style={styles.dateInputContainer}>
-              <Text style={styles.dateLabel}>Start Date</Text>
-              <TextInput
-                style={styles.dateInput}
-                value={startDate}
-                onChangeText={setStartDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#64748B"
-              />
-            </View>
-
-            <View style={styles.dateInputContainer}>
-              <Text style={styles.dateLabel}>End Date</Text>
-              <TextInput
-                style={styles.dateInput}
-                value={endDate}
-                onChangeText={setEndDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#64748B"
-              />
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowDatePicker(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={confirmExport}
-              >
-                <Text style={styles.confirmButtonText}>Export</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -600,7 +341,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -632,7 +373,7 @@ const styles = StyleSheet.create({
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -661,116 +402,107 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
   },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  actionCard: {
-    backgroundColor: '#1F1333',
+  secondaryCard: {
+    backgroundColor: '#10B981',
     borderRadius: 16,
-    padding: 16,
-    width: '48%',
-    minHeight: 130,
-    justifyContent: 'space-between',
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+  secondaryIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  secondarySubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  uploadCard: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  actionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  actionSubtitle: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    lineHeight: 16,
-  },
-  exportCard: {
-    minHeight: 150,
-  },
-  lastExportText: {
-    fontSize: 10,
-    color: '#64748B',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  uploadIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    marginRight: 16,
   },
-  modalContent: {
-    backgroundColor: '#1F1333',
+  uploadSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  giftedCard: {
+    backgroundColor: '#FF6B6B',
     borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 24,
-  },
-  dateInputContainer: {
-    marginBottom: 16,
-  },
-  dateLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  dateInput: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#7C3AED20',
-  },
-  modalButtons: {
+    padding: 20,
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  modalButton: {
-    flex: 1,
+  giftedIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  giftedSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  tipCard: {
+    flexDirection: 'row',
+    backgroundColor: '#1F1333',
     borderRadius: 12,
     padding: 16,
+    marginTop: 8,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F59E0B30',
   },
-  cancelButton: {
-    backgroundColor: '#2E1A47',
+  tipIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F59E0B20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  confirmButton: {
-    backgroundColor: '#7C3AED',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+  tipText: {
+    flex: 1,
+    fontSize: 13,
     color: '#9CA3AF',
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    lineHeight: 18,
   },
 });

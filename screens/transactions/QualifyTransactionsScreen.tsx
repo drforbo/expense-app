@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -12,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
@@ -29,63 +29,15 @@ interface Transaction {
   content_link?: string;
 }
 
-export default function QualifyTransactionsScreen({ navigation }: any) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default function QualifyTransactionsScreen({ navigation, route }: any) {
+  const transaction: Transaction = route.params?.transaction;
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Form state for current transaction
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [businessUseExplanation, setBusinessUseExplanation] = useState('');
-  const [contentLink, setContentLink] = useState('');
-
-  useEffect(() => {
-    loadUnqualifiedTransactions();
-  }, []);
-
-  const loadUnqualifiedTransactions = async () => {
-    try {
-      setLoading(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in');
-        return;
-      }
-
-      // Fetch tax-deductible transactions that haven't been qualified yet
-      const { data, error } = await supabase
-        .from('categorized_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('tax_deductible', true)
-        .or('qualified.is.null,qualified.eq.false')
-        .order('transaction_date', { ascending: false });
-
-      if (error) {
-        console.error('Error loading transactions:', error);
-        Alert.alert('Error', 'Failed to load transactions');
-        return;
-      }
-
-      setTransactions(data || []);
-
-      // Load existing data if any
-      if (data && data.length > 0) {
-        const first = data[0];
-        setReceiptImage(first.receipt_image_url || null);
-        setBusinessUseExplanation(first.business_use_explanation || '');
-        setContentLink(first.content_link || '');
-      }
-    } catch (error: any) {
-      console.error('Error in loadUnqualifiedTransactions:', error);
-      Alert.alert('Error', 'Failed to load transactions');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [receiptImage, setReceiptImage] = useState<string | null>(transaction?.receipt_image_url || null);
+  const [businessUseExplanation, setBusinessUseExplanation] = useState(transaction?.business_use_explanation || '');
+  const [contentLink, setContentLink] = useState(transaction?.content_link || '');
 
   const pickImage = async (source: 'camera' | 'library') => {
     try {
@@ -135,11 +87,9 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
         return;
       }
 
-      const currentTransaction = transactions[currentIndex];
-
       // Create file name
       const fileExt = uri.split('.').pop();
-      const fileName = `${user.id}/${currentTransaction.id}_${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${transaction.id}_${Date.now()}.${fileExt}`;
 
       // Read file as base64
       const base64 = await FileSystem.readAsStringAsync(uri, {
@@ -174,7 +124,7 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
     }
   };
 
-  const handleSaveAndNext = async () => {
+  const handleSave = async () => {
     if (!receiptImage) {
       Alert.alert('Receipt required', 'Please add a receipt image');
       return;
@@ -188,8 +138,6 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
     try {
       setSaving(true);
 
-      const currentTransaction = transactions[currentIndex];
-
       const { error } = await supabase
         .from('categorized_transactions')
         .update({
@@ -199,28 +147,12 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
           qualified: true,
           qualified_at: new Date().toISOString(),
         })
-        .eq('id', currentTransaction.id);
+        .eq('id', transaction.id);
 
       if (error) throw error;
 
-      // Move to next transaction
-      const nextIndex = currentIndex + 1;
-      if (nextIndex < transactions.length) {
-        setCurrentIndex(nextIndex);
-
-        // Load data for next transaction
-        const next = transactions[nextIndex];
-        setReceiptImage(next.receipt_image_url || null);
-        setBusinessUseExplanation(next.business_use_explanation || '');
-        setContentLink(next.content_link || '');
-      } else {
-        // All done!
-        Alert.alert(
-          'All Done!',
-          'All your tax-deductible transactions are now qualified!',
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-      }
+      // Go back to list
+      navigation.goBack();
     } catch (error: any) {
       console.error('Error saving:', error);
       Alert.alert('Error', 'Failed to save evidence');
@@ -230,18 +162,7 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
   };
 
   const handleSkip = () => {
-    const nextIndex = currentIndex + 1;
-    if (nextIndex < transactions.length) {
-      setCurrentIndex(nextIndex);
-
-      // Load data for next transaction
-      const next = transactions[nextIndex];
-      setReceiptImage(next.receipt_image_url || null);
-      setBusinessUseExplanation(next.business_use_explanation || '');
-      setContentLink(next.content_link || '');
-    } else {
-      navigation.goBack();
-    }
+    navigation.goBack();
   };
 
   const formatDate = (dateString: string) => {
@@ -253,46 +174,11 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
     });
   };
 
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#7C3AED" />
-        <Text style={styles.loadingText}>Loading transactions...</Text>
-      </View>
-    );
+  // If no transaction passed, go back
+  if (!transaction) {
+    navigation.goBack();
+    return null;
   }
-
-  if (transactions.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Qualify Transactions</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.centerContainer}>
-          <View style={styles.emptyStateIcon}>
-            <Ionicons name="shield-checkmark" size={64} color="#10B981" />
-          </View>
-          <Text style={styles.emptyStateTitle}>You're all set!</Text>
-          <Text style={styles.emptyStateText}>
-            All your tax-deductible transactions have evidence
-          </Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.buttonText}>Back to Dashboard</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const currentTransaction = transactions[currentIndex];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -302,21 +188,19 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Evidence</Text>
-        <Text style={styles.progress}>
-          {currentIndex + 1} / {transactions.length}
-        </Text>
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
         {/* Transaction Card */}
         <View style={styles.transactionCard}>
-          <Text style={styles.merchantName}>{currentTransaction.merchant_name}</Text>
-          <Text style={styles.amount}>£{Math.abs(currentTransaction.amount).toFixed(2)}</Text>
+          <Text style={styles.merchantName}>{transaction.merchant_name}</Text>
+          <Text style={styles.amount}>£{Math.abs(transaction.amount).toFixed(2)}</Text>
           <View style={styles.transactionMeta}>
-            <Text style={styles.category}>{currentTransaction.category_name}</Text>
-            <Text style={styles.date}>{formatDate(currentTransaction.transaction_date)}</Text>
+            <Text style={styles.category}>{transaction.category_name}</Text>
+            <Text style={styles.date}>{formatDate(transaction.transaction_date)}</Text>
           </View>
-          <Text style={styles.explanation}>{currentTransaction.explanation}</Text>
+          <Text style={styles.explanation}>{transaction.explanation}</Text>
         </View>
 
         {/* Receipt Upload */}
@@ -409,16 +293,14 @@ export default function QualifyTransactionsScreen({ navigation }: any) {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.saveButton, (saving || uploading) && styles.saveButtonDisabled]}
-            onPress={handleSaveAndNext}
+            onPress={handleSave}
             disabled={saving || uploading}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Text style={styles.saveButtonText}>
-                  {currentIndex === transactions.length - 1 ? 'Save & Finish' : 'Save & Next'}
-                </Text>
+                <Text style={styles.saveButtonText}>Save Evidence</Text>
                 <Ionicons name="checkmark" size={20} color="#fff" />
               </>
             )}
@@ -442,12 +324,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E1A47',
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -459,11 +335,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-  },
-  progress: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
   },
   content: {
     flex: 1,
@@ -624,36 +495,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#9CA3AF',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  emptyStateIcon: {
-    marginBottom: 16,
-  },
-  emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  button: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
-    paddingHorizontal: 32,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
   },
 });
