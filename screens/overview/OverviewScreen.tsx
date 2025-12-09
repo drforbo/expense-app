@@ -22,19 +22,45 @@ interface CategoryBreakdown {
   category_name: string;
   total_amount: number;
   transaction_count: number;
+  transactions?: TransactionDetail[];
+}
+
+interface TransactionDetail {
+  id: string;
+  merchant_name: string;
+  amount: number;
+  transaction_date: string;
+  business_percent: number;
+  qualified: boolean;
+}
+
+interface GiftedItem {
+  id: string;
+  item_name: string;
+  received_from?: string;
+  rrp: number;
+  received_date: string;
 }
 
 interface FinancialSummary {
   estimatedTaxOwed: number;
+  runningTaxOwed: number;
   totalIncome: number;
   businessIncome: number;
   personalIncome: number;
+  giftedItemsTotal: number;
+  giftedItemsCount: number;
+  giftedItems: GiftedItem[];
   totalExpenses: number;
   businessExpenses: number;
   personalExpenses: number;
+  unqualifiedExpenses: number;
+  unqualifiedCount: number;
   categoryBreakdown: CategoryBreakdown[];
   incomeCategoryBreakdown: CategoryBreakdown[];
   taxYear: string;
+  hasEnoughData: boolean;
+  monthsOfData: number;
 }
 
 interface UserProfile {
@@ -51,16 +77,32 @@ export default function OverviewScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<FinancialSummary>({
     estimatedTaxOwed: 0,
+    runningTaxOwed: 0,
     totalIncome: 0,
     businessIncome: 0,
     personalIncome: 0,
+    giftedItemsTotal: 0,
+    giftedItemsCount: 0,
+    giftedItems: [],
     totalExpenses: 0,
     businessExpenses: 0,
     personalExpenses: 0,
+    unqualifiedExpenses: 0,
+    unqualifiedCount: 0,
     categoryBreakdown: [],
     incomeCategoryBreakdown: [],
     taxYear: '2024/25',
+    hasEnoughData: false,
+    monthsOfData: 0,
   });
+  const [showEstimateInfo, setShowEstimateInfo] = useState(false);
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+  const [selectedBreakdown, setSelectedBreakdown] = useState<{
+    title: string;
+    type: 'expense' | 'income' | 'gifted';
+    transactions?: TransactionDetail[];
+    giftedItems?: GiftedItem[];
+  } | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -134,31 +176,76 @@ export default function OverviewScreen({ navigation }: any) {
 
       if (error) throw error;
 
+      // Fetch gifted items for this tax year
+      const { data: giftedItems } = await supabase
+        .from('gifted_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('received_date', taxYearStart.toISOString().split('T')[0])
+        .lte('received_date', taxYearEnd.toISOString().split('T')[0]);
+
+      // Calculate gifted items total using RRP (Recommended Retail Price) - this is taxable
+      let giftedItemsTotal = 0;
+      const giftedItemsList: GiftedItem[] = (giftedItems || []).map(item => {
+        giftedItemsTotal += item.rrp || 0;
+        return {
+          id: item.id,
+          item_name: item.item_name,
+          received_from: item.received_from,
+          rrp: item.rrp || 0,
+          received_date: item.received_date,
+        };
+      });
+
       // Calculate totals - separate income from expenses
       let businessExpenses = 0;
       let personalExpenses = 0;
       let businessIncome = 0;
       let personalIncome = 0;
-      const expenseCategoryMap = new Map<string, { total: number; count: number }>();
-      const incomeCategoryMap = new Map<string, { total: number; count: number }>();
+      let unqualifiedExpenses = 0;
+      let unqualifiedCount = 0;
+      const expenseCategoryMap = new Map<string, { total: number; count: number; transactions: TransactionDetail[] }>();
+      const incomeCategoryMap = new Map<string, { total: number; count: number; transactions: TransactionDetail[] }>();
+
+      // Categories that are NOT self-employment income (shouldn't count towards taxable business income)
+      const nonBusinessIncomeCategories = ['Personal Income', 'Employment Income'];
 
       transactions?.forEach((t) => {
         const amount = Math.abs(t.amount);
-        const isIncome = t.amount < 0; // Negative amounts are income (credits)
+        const isIncome = t.transaction_type === 'income'; // Use explicit transaction_type field
         const businessAmount = amount * (t.business_percent / 100);
         const personalAmount = amount - businessAmount;
 
-        if (isIncome) {
-          // This is income
-          businessIncome += businessAmount;
-          personalIncome += personalAmount;
+        const txDetail: TransactionDetail = {
+          id: t.id,
+          merchant_name: t.merchant_name,
+          amount: t.amount,
+          transaction_date: t.transaction_date,
+          business_percent: t.business_percent,
+          qualified: t.qualified || false,
+        };
 
-          // Track by category for business income
-          if (businessAmount > 0 && t.category_name) {
-            const existing = incomeCategoryMap.get(t.category_name) || { total: 0, count: 0 };
+        if (isIncome) {
+          // Check if this is non-business income (PAYE salary or personal transfers)
+          const isNonBusinessIncome = nonBusinessIncomeCategories.includes(t.category_name);
+
+          if (isNonBusinessIncome) {
+            // PAYE or personal income - don't count as self-employment business income
+            personalIncome += amount;
+          } else {
+            // This is self-employment/business income
+            businessIncome += businessAmount;
+            personalIncome += personalAmount;
+          }
+
+          // Track by category for income breakdown (include all for visibility)
+          if (amount > 0 && t.category_name) {
+            const existing = incomeCategoryMap.get(t.category_name) || { total: 0, count: 0, transactions: [] };
+            existing.transactions.push(txDetail);
             incomeCategoryMap.set(t.category_name, {
-              total: existing.total + businessAmount,
+              total: existing.total + (isNonBusinessIncome ? amount : businessAmount),
               count: existing.count + 1,
+              transactions: existing.transactions,
             });
           }
         } else {
@@ -166,12 +253,20 @@ export default function OverviewScreen({ navigation }: any) {
           businessExpenses += businessAmount;
           personalExpenses += personalAmount;
 
+          // Track unqualified business expenses (no receipt or explanation)
+          if (businessAmount > 0 && !t.qualified) {
+            unqualifiedExpenses += businessAmount;
+            unqualifiedCount += 1;
+          }
+
           // Track by category for business expenses
           if (businessAmount > 0 && t.category_name) {
-            const existing = expenseCategoryMap.get(t.category_name) || { total: 0, count: 0 };
+            const existing = expenseCategoryMap.get(t.category_name) || { total: 0, count: 0, transactions: [] };
+            existing.transactions.push(txDetail);
             expenseCategoryMap.set(t.category_name, {
               total: existing.total + businessAmount,
               count: existing.count + 1,
+              transactions: existing.transactions,
             });
           }
         }
@@ -183,6 +278,7 @@ export default function OverviewScreen({ navigation }: any) {
           category_name: name,
           total_amount: data.total,
           transaction_count: data.count,
+          transactions: data.transactions,
         }))
         .sort((a, b) => b.total_amount - a.total_amount);
 
@@ -192,6 +288,7 @@ export default function OverviewScreen({ navigation }: any) {
           category_name: name,
           total_amount: data.total,
           transaction_count: data.count,
+          transactions: data.transactions,
         }))
         .sort((a, b) => b.total_amount - a.total_amount);
 
@@ -204,136 +301,132 @@ export default function OverviewScreen({ navigation }: any) {
 
       setUserProfile(profile);
 
-      // Use actual tracked business income from transactions
-      // If no income transactions tracked yet, fall back to estimated from profile
-      const monthlyIncome = profile?.monthly_income || 0;
-      const estimatedYearlyIncome = monthlyIncome * 12;
+      // Calculate months of data based on transaction dates
+      const transactionDates = transactions?.map(t => new Date(t.transaction_date)) || [];
+      let monthsOfData = 0;
+      if (transactionDates.length > 0) {
+        const earliestDate = new Date(Math.min(...transactionDates.map(d => d.getTime())));
+        const now = new Date();
+        monthsOfData = Math.max(1, Math.ceil((now.getTime() - earliestDate.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+      }
+      const hasEnoughData = monthsOfData >= 3;
 
-      // Use tracked income if available, otherwise fall back to estimate
-      const actualBusinessIncome = businessIncome > 0 ? businessIncome : estimatedYearlyIncome;
+      // Tax calculation helper function
+      const calculateTax = (taxableProfit: number, profile: any) => {
+        let tax = 0;
+        const personalAllowance = 12570;
+        const basicRateLimit = 50270;
 
-      // Calculate taxable profit (income minus business expenses)
-      const taxableProfit = Math.max(0, actualBusinessIncome - businessExpenses);
+        if (profile?.tracking_goal === 'limited_company') {
+          return 0;
+        }
 
-      // Calculate estimated tax using UK 2024/25 rates
-      // Personal allowance: £12,570
-      // Basic rate (20%): £12,571 to £50,270
-      // Higher rate (40%): £50,271 to £125,140
-      let estimatedTax = 0;
-      const personalAllowance = 12570;
-      const basicRateLimit = 50270;
-
-      // For limited company users, we don't calculate personal tax
-      if (profile?.tracking_goal !== 'limited_company') {
-        // Calculate total income including employment if they have a day job
         const employmentIncome = profile?.has_other_employment ? (profile?.employment_income || 0) : 0;
         const totalIncome = taxableProfit + employmentIncome;
 
-        // Calculate personal allowance reduction for high earners
         let adjustedAllowance = personalAllowance;
         if (totalIncome > 100000) {
           adjustedAllowance = Math.max(0, personalAllowance - ((totalIncome - 100000) / 2));
         }
 
-        // If they have other employment, that job handles their personal allowance
-        // So their side hustle profit is taxed at their marginal rate
         if (profile?.has_other_employment && employmentIncome > 0) {
-          // Calculate what bracket their employment puts them in
           if (employmentIncome >= basicRateLimit) {
-            // Employment income already in higher rate - all side hustle at 40%
-            estimatedTax = taxableProfit * 0.4;
+            tax = taxableProfit * 0.4;
           } else if (employmentIncome > personalAllowance) {
-            // Employment uses up personal allowance, side hustle starts at basic rate
             const roomInBasicBand = basicRateLimit - employmentIncome;
             if (taxableProfit <= roomInBasicBand) {
-              estimatedTax = taxableProfit * 0.2;
+              tax = taxableProfit * 0.2;
             } else {
-              estimatedTax = (roomInBasicBand * 0.2) + ((taxableProfit - roomInBasicBand) * 0.4);
+              tax = (roomInBasicBand * 0.2) + ((taxableProfit - roomInBasicBand) * 0.4);
             }
           } else {
-            // Employment doesn't use all personal allowance
             const unusedAllowance = personalAllowance - employmentIncome;
             const taxableAfterAllowance = Math.max(0, taxableProfit - unusedAllowance);
             if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
-              estimatedTax = taxableAfterAllowance * 0.2;
+              tax = taxableAfterAllowance * 0.2;
             } else {
               const basicRatePortion = basicRateLimit - personalAllowance;
               const higherRatePortion = taxableAfterAllowance - basicRatePortion;
-              estimatedTax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+              tax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
             }
           }
         } else {
-          // No other employment - standard calculation
           if (taxableProfit > adjustedAllowance) {
             const taxableAfterAllowance = taxableProfit - adjustedAllowance;
             if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
-              estimatedTax = taxableAfterAllowance * 0.2;
+              tax = taxableAfterAllowance * 0.2;
             } else {
               const basicRatePortion = basicRateLimit - personalAllowance;
               const higherRatePortion = taxableAfterAllowance - basicRatePortion;
-              estimatedTax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+              tax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
             }
           }
         }
 
-        // Add Class 4 National Insurance on self-employment profits
+        // Class 4 NI
         if (taxableProfit > personalAllowance) {
           const niTaxable = Math.min(taxableProfit, basicRateLimit) - personalAllowance;
-          estimatedTax += niTaxable * 0.09;
+          tax += niTaxable * 0.09;
           if (taxableProfit > basicRateLimit) {
-            estimatedTax += (taxableProfit - basicRateLimit) * 0.02;
+            tax += (taxableProfit - basicRateLimit) * 0.02;
           }
         }
 
-        // Add student loan repayments if applicable
+        // Student loan
         if (profile?.student_loan_plan && profile.student_loan_plan !== 'none') {
           const totalIncomeForSL = taxableProfit + employmentIncome;
           let slThreshold = 0;
           let slRate = 0.09;
 
           switch (profile.student_loan_plan) {
-            case 'plan1':
-              slThreshold = 22015; // Plan 1 threshold 2024/25
-              break;
-            case 'plan2':
-              slThreshold = 27295; // Plan 2 threshold 2024/25
-              break;
-            case 'plan4':
-              slThreshold = 27660; // Plan 4 threshold 2024/25
-              break;
-            case 'postgrad':
-              slThreshold = 21000;
-              slRate = 0.06;
-              break;
+            case 'plan1': slThreshold = 22015; break;
+            case 'plan2': slThreshold = 27295; break;
+            case 'plan4': slThreshold = 27660; break;
+            case 'postgrad': slThreshold = 21000; slRate = 0.06; break;
           }
 
           if (totalIncomeForSL > slThreshold) {
-            // Student loan repayment on income above threshold
-            // Note: If they have employment, employer handles most of this
-            // We estimate the additional from self-employment
             if (!profile?.has_other_employment) {
-              estimatedTax += (totalIncomeForSL - slThreshold) * slRate;
+              tax += (totalIncomeForSL - slThreshold) * slRate;
             } else if (employmentIncome < slThreshold) {
-              // Employment doesn't trigger student loan, but total does
-              const slAmount = (totalIncomeForSL - slThreshold) * slRate;
-              estimatedTax += slAmount;
+              tax += (totalIncomeForSL - slThreshold) * slRate;
             }
-            // If employment already above threshold, employer handles it
           }
         }
-      }
+
+        return tax;
+      };
+
+      // ESTIMATED TAX: Based on onboarding monthly income projection
+      const monthlyIncome = profile?.monthly_income || 0;
+      const estimatedYearlyIncome = monthlyIncome * 12;
+      const estimatedTaxableProfit = Math.max(0, estimatedYearlyIncome);
+      const estimatedTax = calculateTax(estimatedTaxableProfit, profile);
+
+      // RUNNING TAX: Based on actual tracked transactions + gifted items
+      const actualTaxableIncome = businessIncome + giftedItemsTotal;
+      const runningTaxableProfit = Math.max(0, actualTaxableIncome - businessExpenses);
+      const runningTax = calculateTax(runningTaxableProfit, profile);
 
       setSummary({
         estimatedTaxOwed: estimatedTax,
+        runningTaxOwed: runningTax,
         totalIncome: businessIncome + personalIncome,
         businessIncome,
         personalIncome,
+        giftedItemsTotal,
+        giftedItemsCount: giftedItemsList.length,
+        giftedItems: giftedItemsList,
         totalExpenses: businessExpenses + personalExpenses,
         businessExpenses,
         personalExpenses,
+        unqualifiedExpenses,
+        unqualifiedCount,
         categoryBreakdown,
         incomeCategoryBreakdown,
         taxYear: taxYearLabel,
+        hasEnoughData,
+        monthsOfData,
       });
     } catch (error) {
       console.error('Error fetching financial summary:', error);
@@ -510,84 +603,218 @@ export default function OverviewScreen({ navigation }: any) {
             </View>
           </View>
         ) : (
-          <View style={styles.taxCard}>
-            <View style={styles.taxHeader}>
-              <View style={styles.taxIconContainer}>
-                <Ionicons name="calculator" size={24} color="#F59E0B" />
+          <>
+            {/* Estimated Tax Card - Based on Onboarding */}
+            <View style={styles.taxCard}>
+              <View style={styles.taxHeader}>
+                <View style={styles.taxIconContainer}>
+                  <Ionicons name="calculator" size={24} color="#F59E0B" />
+                </View>
+                <Text style={styles.taxLabel}>
+                  {userProfile?.has_other_employment && userProfile?.employment_is_paye
+                    ? 'Estimated Additional Tax'
+                    : 'Estimated Annual Tax'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.infoButton}
+                  onPress={() => setShowEstimateInfo(true)}
+                >
+                  <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.taxLabel}>
-                {userProfile?.has_other_employment && userProfile?.employment_is_paye
-                  ? 'Additional Tax on Side Hustle'
-                  : 'Estimated Tax Owed'}
+              <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
+              <Text style={styles.taxNote}>
+                Based on your expected monthly income of {formatCurrency(userProfile?.monthly_income || 0)}
               </Text>
-            </View>
-            <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
-            <Text style={styles.taxNote}>
-              Tax Year {summary.taxYear} (includes Income Tax + Class 4 NI
-              {userProfile?.student_loan_plan && userProfile.student_loan_plan !== 'none' ? ' + Student Loan' : ''})
-            </Text>
-            {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
-              <View style={styles.payeInfoContainer}>
-                <View style={styles.payeInfoRow}>
-                  <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                  <Text style={styles.payeInfoText}>
-                    Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
+              {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
+                <View style={styles.payeInfoContainer}>
+                  <View style={styles.payeInfoRow}>
+                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                    <Text style={styles.payeInfoText}>
+                      Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
+                    </Text>
+                  </View>
+                  <Text style={styles.payeInfoDetail}>
+                    This estimate is only for the additional tax you'll owe on your side hustle profits via Self Assessment
                   </Text>
                 </View>
-                <Text style={styles.payeInfoDetail}>
-                  This estimate is only for the additional tax you'll owe on your side hustle profits via Self Assessment
+              )}
+              {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
+                <View style={styles.taxInfoRow}>
+                  <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
+                  <Text style={styles.taxInfoText}>
+                    Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Running Total Tax Card - Based on Actual Transactions */}
+            <View style={styles.runningTaxCard}>
+              <View style={styles.taxHeader}>
+                <View style={[styles.taxIconContainer, { backgroundColor: '#10B98120' }]}>
+                  <Ionicons name="trending-up" size={24} color="#10B981" />
+                </View>
+                <View style={styles.runningTaxLabelContainer}>
+                  <Text style={styles.taxLabel}>Tax on Tracked Income</Text>
+                  <Text style={styles.runningTaxSubLabel}>
+                    {summary.monthsOfData > 0 ? `${summary.monthsOfData} month${summary.monthsOfData !== 1 ? 's' : ''} of data` : 'No data yet'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.taxAmount, { color: '#10B981' }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
+              <Text style={styles.taxNote}>
+                Tax Year {summary.taxYear} • Based on {formatCurrency(Math.max(0, (summary.businessIncome + summary.giftedItemsTotal) - summary.businessExpenses))} taxable profit
+              </Text>
+              <View style={styles.taxBreakdownRow}>
+                <Text style={styles.taxBreakdownItem}>
+                  Income: {formatCurrency(summary.businessIncome + summary.giftedItemsTotal)}
+                </Text>
+                <Text style={styles.taxBreakdownItem}>
+                  Expenses: {formatCurrency(summary.businessExpenses)}
                 </Text>
               </View>
-            )}
-            {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
-              <View style={styles.taxInfoRow}>
-                <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
-                <Text style={styles.taxInfoText}>
-                  Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
-                </Text>
-              </View>
-            )}
+              {(summary.businessIncome + summary.giftedItemsTotal) === 0 && (
+                <View style={styles.noDataHint}>
+                  <Ionicons name="bulb-outline" size={14} color="#6B7280" />
+                  <Text style={styles.noDataHintText}>
+                    Start categorizing income transactions to see your actual tax liability
+                  </Text>
+                </View>
+              )}
+            </View>
+
             <View style={styles.disclaimerContainer}>
               <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
               <Text style={styles.disclaimerText}>
-                This is an estimate only, not financial advice. Consult an accountant for accurate figures.
+                These are estimates only, not financial advice. Consult an accountant for accurate figures.
               </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Income Section */}
-        {summary.totalIncome > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Income</Text>
-            <View style={styles.incomeCard}>
-              <View style={styles.incomeHeader}>
-                <View style={styles.incomeIconContainer}>
-                  <Ionicons name="trending-up" size={24} color="#10B981" />
-                </View>
-                <View style={styles.incomeInfo}>
-                  <Text style={styles.incomeLabel}>Total Income</Text>
-                  <Text style={styles.incomeAmount}>{formatCurrency(summary.totalIncome)}</Text>
-                </View>
-              </View>
-              <View style={styles.incomeBreakdown}>
-                <View style={styles.incomeBreakdownItem}>
-                  <Ionicons name="briefcase-outline" size={16} color="#7C3AED" />
-                  <Text style={styles.incomeBreakdownLabel}>Business</Text>
-                  <Text style={styles.incomeBreakdownAmount}>{formatCurrency(summary.businessIncome)}</Text>
-                </View>
-                <View style={styles.incomeBreakdownItem}>
-                  <Ionicons name="person-outline" size={16} color="#6B7280" />
-                  <Text style={styles.incomeBreakdownLabel}>Personal</Text>
-                  <Text style={styles.incomeBreakdownAmount}>{formatCurrency(summary.personalIncome)}</Text>
-                </View>
-              </View>
             </View>
           </>
         )}
 
+        {/* Income Section - Always shown */}
+        <Text style={styles.sectionTitle}>Income</Text>
+
+        {/* Business Income Card */}
+        <TouchableOpacity
+          style={styles.incomeCard}
+          onPress={() => {
+            if (summary.incomeCategoryBreakdown.length > 0) {
+              const allIncomeTransactions = summary.incomeCategoryBreakdown.flatMap(c => c.transactions || []);
+              setSelectedBreakdown({
+                title: 'Business Income',
+                type: 'income',
+                transactions: allIncomeTransactions,
+              });
+              setShowBreakdownModal(true);
+            }
+          }}
+          disabled={summary.businessIncome === 0}
+        >
+          <View style={styles.incomeHeader}>
+            <View style={styles.incomeIconContainer}>
+              <Ionicons name="cash-outline" size={24} color="#10B981" />
+            </View>
+            <View style={styles.incomeInfo}>
+              <Text style={styles.incomeLabel}>Business Income</Text>
+              <Text style={styles.incomeAmount}>{formatCurrency(summary.businessIncome)}</Text>
+            </View>
+            {summary.businessIncome > 0 && (
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            )}
+          </View>
+          {summary.businessIncome === 0 && (
+            <View style={styles.emptyIncomeMessage}>
+              <Text style={styles.emptyIncomeSubtext}>Categorize income transactions to see them here</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Gifted Items Card - Always shown separately */}
+        <TouchableOpacity
+          style={styles.giftedItemsCard}
+          onPress={() => {
+            if (summary.giftedItemsCount > 0) {
+              setSelectedBreakdown({
+                title: 'Gifted Items',
+                type: 'gifted',
+                giftedItems: summary.giftedItems,
+              });
+              setShowBreakdownModal(true);
+            } else {
+              navigation.navigate('GiftedTracker');
+            }
+          }}
+        >
+          <View style={styles.incomeHeader}>
+            <View style={[styles.incomeIconContainer, { backgroundColor: '#F59E0B20' }]}>
+              <Ionicons name="gift-outline" size={24} color="#F59E0B" />
+            </View>
+            <View style={styles.incomeInfo}>
+              <Text style={styles.incomeLabel}>Gifted Items</Text>
+              <Text style={[styles.incomeAmount, { color: '#F59E0B' }]}>{formatCurrency(summary.giftedItemsTotal)}</Text>
+              {summary.giftedItemsCount > 0 && (
+                <Text style={styles.giftedItemsCount}>{summary.giftedItemsCount} item{summary.giftedItemsCount !== 1 ? 's' : ''} tracked</Text>
+              )}
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </View>
+          {summary.giftedItemsCount === 0 && (
+            <View style={styles.emptyIncomeMessage}>
+              <Text style={styles.emptyIncomeSubtext}>Tap to track gifted items (PR packages, etc.)</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Total Taxable Income Summary */}
+        <View style={styles.totalIncomeRow}>
+          <Text style={styles.totalIncomeLabel}>Total Taxable Income</Text>
+          <Text style={styles.totalIncomeAmount}>{formatCurrency(summary.businessIncome + summary.giftedItemsTotal)}</Text>
+        </View>
+
+        {/* Income by Category */}
+        {summary.incomeCategoryBreakdown.length > 0 && (
+          <View style={styles.categoryList}>
+            <Text style={styles.categoryListTitle}>Income by Category</Text>
+            {summary.incomeCategoryBreakdown.map((category, index) => {
+              const maxAmount = summary.incomeCategoryBreakdown[0]?.total_amount || 1;
+              const barWidth = (category.total_amount / maxAmount) * 100;
+
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.categoryItem}
+                  onPress={() => {
+                    setSelectedBreakdown({
+                      title: category.category_name,
+                      type: 'income',
+                      transactions: category.transactions,
+                    });
+                    setShowBreakdownModal(true);
+                  }}
+                >
+                  <View style={styles.categoryHeader}>
+                    <Text style={styles.categoryName}>{category.category_name}</Text>
+                    <View style={styles.categoryHeaderRight}>
+                      <Text style={[styles.categoryAmount, { color: '#10B981' }]}>{formatCurrency(category.total_amount)}</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                    </View>
+                  </View>
+                  <View style={[styles.categoryBarContainer, { backgroundColor: '#10B98120' }]}>
+                    <View style={[styles.categoryBar, { width: `${barWidth}%`, backgroundColor: '#10B981' }]} />
+                  </View>
+                  <Text style={styles.categoryCount}>
+                    {category.transaction_count} transaction{category.transaction_count !== 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         {/* Expenses Split */}
-        <Text style={styles.sectionTitle}>Expenses Breakdown</Text>
+        <Text style={styles.sectionTitle}>Expenses</Text>
         <View style={styles.expensesRow}>
           <View style={[styles.expenseCard, styles.businessCard]}>
             <View style={styles.expenseIconContainer}>
@@ -608,6 +835,31 @@ export default function OverviewScreen({ navigation }: any) {
           </View>
         </View>
 
+        {/* Unqualified Expenses */}
+        {summary.unqualifiedExpenses > 0 && (
+          <TouchableOpacity
+            style={styles.unqualifiedCard}
+            onPress={() => navigation.navigate('QualifyTransactionList')}
+          >
+            <View style={styles.unqualifiedHeader}>
+              <View style={styles.unqualifiedIconContainer}>
+                <Ionicons name="document-text-outline" size={24} color="#F59E0B" />
+              </View>
+              <View style={styles.unqualifiedInfo}>
+                <Text style={styles.unqualifiedLabel}>Needs Evidence</Text>
+                <Text style={styles.unqualifiedAmount}>{formatCurrency(summary.unqualifiedExpenses)}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </View>
+            <Text style={styles.unqualifiedDescription}>
+              {summary.unqualifiedCount} expense{summary.unqualifiedCount !== 1 ? 's' : ''} need receipts to be HMRC-ready
+            </Text>
+            <View style={styles.unqualifiedAction}>
+              <Text style={styles.unqualifiedActionText}>Add receipts & explanations</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Category Breakdown */}
         {summary.categoryBreakdown.length > 0 && (
           <>
@@ -618,10 +870,24 @@ export default function OverviewScreen({ navigation }: any) {
                 const barWidth = (category.total_amount / maxAmount) * 100;
 
                 return (
-                  <View key={index} style={styles.categoryItem}>
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.categoryItem}
+                    onPress={() => {
+                      setSelectedBreakdown({
+                        title: category.category_name,
+                        type: 'expense',
+                        transactions: category.transactions,
+                      });
+                      setShowBreakdownModal(true);
+                    }}
+                  >
                     <View style={styles.categoryHeader}>
                       <Text style={styles.categoryName}>{category.category_name}</Text>
-                      <Text style={styles.categoryAmount}>{formatCurrency(category.total_amount)}</Text>
+                      <View style={styles.categoryHeaderRight}>
+                        <Text style={styles.categoryAmount}>{formatCurrency(category.total_amount)}</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                      </View>
                     </View>
                     <View style={styles.categoryBarContainer}>
                       <View style={[styles.categoryBar, { width: `${barWidth}%` }]} />
@@ -629,32 +895,20 @@ export default function OverviewScreen({ navigation }: any) {
                     <Text style={styles.categoryCount}>
                       {category.transaction_count} transaction{category.transaction_count !== 1 ? 's' : ''}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
           </>
         )}
 
-        {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Actions</Text>
-        <View style={styles.actionsGrid}>
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => navigation.navigate('TaxChecklist')}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#10B98120' }]}>
-              <Ionicons name="checkbox" size={24} color="#10B981" />
-            </View>
-            <Text style={styles.actionTitle}>Tax Checklist</Text>
-            <Text style={styles.actionSubtitle}>Your to-do list</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={openDatePicker}
-            disabled={exporting}
-          >
+        {/* Export Button - Full Width */}
+        <TouchableOpacity
+          style={styles.exportButton}
+          onPress={openDatePicker}
+          disabled={exporting}
+        >
+          <View style={styles.exportButtonContent}>
             <View style={[styles.actionIcon, { backgroundColor: '#F59E0B20' }]}>
               {exporting ? (
                 <ActivityIndicator size={24} color="#F59E0B" />
@@ -662,25 +916,14 @@ export default function OverviewScreen({ navigation }: any) {
                 <Ionicons name="download" size={24} color="#F59E0B" />
               )}
             </View>
-            <Text style={styles.actionTitle}>Export</Text>
-            <Text style={styles.actionSubtitle}>Last: {formatLastExportDate(lastExportDate)}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Profile Action */}
-        <TouchableOpacity
-          style={styles.profileActionCard}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: '#7C3AED20' }]}>
-            <Ionicons name="person" size={24} color="#7C3AED" />
-          </View>
-          <View style={styles.profileActionText}>
-            <Text style={styles.actionTitle}>Your Profile</Text>
-            <Text style={styles.actionSubtitle}>View and edit your tax settings</Text>
+            <View style={styles.exportButtonText}>
+              <Text style={styles.actionTitle}>Export Transactions</Text>
+              <Text style={styles.actionSubtitle}>Last export: {formatLastExportDate(lastExportDate)}</Text>
+            </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
         </TouchableOpacity>
+
       </ScrollView>
 
       {/* Date Range Picker Modal */}
@@ -777,6 +1020,169 @@ export default function OverviewScreen({ navigation }: any) {
                 <Text style={styles.confirmButtonText}>I Understand</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Transaction Breakdown Modal */}
+      <Modal
+        visible={showBreakdownModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowBreakdownModal(false)}
+      >
+        <View style={styles.breakdownModalOverlay}>
+          <View style={styles.breakdownModalContent}>
+            <View style={styles.breakdownModalHeader}>
+              <Text style={styles.breakdownModalTitle}>{selectedBreakdown?.title}</Text>
+              <TouchableOpacity onPress={() => setShowBreakdownModal(false)}>
+                <Ionicons name="close" size={24} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.breakdownList}>
+              {selectedBreakdown?.type === 'gifted' ? (
+                // Gifted items list - navigate to gifted tracker for editing
+                selectedBreakdown.giftedItems?.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id || index}
+                    style={styles.breakdownItem}
+                    onPress={() => {
+                      setShowBreakdownModal(false);
+                      navigation.navigate('GiftedTracker');
+                    }}
+                  >
+                    <View style={styles.breakdownItemIcon}>
+                      <Ionicons name="gift" size={20} color="#F59E0B" />
+                    </View>
+                    <View style={styles.breakdownItemDetails}>
+                      <Text style={styles.breakdownItemName}>{item.item_name}</Text>
+                      <Text style={styles.breakdownItemMeta}>
+                        {item.received_from ? `From ${item.received_from} • ` : ''}{new Date(item.received_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                    <Text style={[styles.breakdownItemAmount, { color: '#F59E0B' }]}>
+                      {formatCurrency(item.rrp)}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                ))
+              ) : (
+                // Transaction list - navigate to edit screen
+                selectedBreakdown?.transactions?.map((txn, index) => (
+                  <TouchableOpacity
+                    key={txn.id || index}
+                    style={styles.breakdownItem}
+                    onPress={() => {
+                      setShowBreakdownModal(false);
+                      // Navigate to edit transaction screen
+                      navigation.navigate('EditTransaction', {
+                        transactionId: txn.id,
+                        transactionType: selectedBreakdown.type,
+                      });
+                    }}
+                  >
+                    <View style={[styles.breakdownItemIcon, {
+                      backgroundColor: selectedBreakdown.type === 'income' ? '#10B98120' : '#7C3AED20'
+                    }]}>
+                      <Ionicons
+                        name={selectedBreakdown.type === 'income' ? 'trending-up' : 'receipt-outline'}
+                        size={20}
+                        color={selectedBreakdown.type === 'income' ? '#10B981' : '#7C3AED'}
+                      />
+                    </View>
+                    <View style={styles.breakdownItemDetails}>
+                      <Text style={styles.breakdownItemName}>{txn.merchant_name}</Text>
+                      <View style={styles.breakdownItemMetaRow}>
+                        <Text style={styles.breakdownItemMeta}>
+                          {new Date(txn.transaction_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </Text>
+                        {txn.business_percent < 100 && (
+                          <Text style={styles.breakdownItemPercent}>{txn.business_percent}% business</Text>
+                        )}
+                        {selectedBreakdown.type === 'expense' && !txn.qualified && (
+                          <View style={styles.needsEvidenceBadge}>
+                            <Text style={styles.needsEvidenceText}>Needs evidence</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <Text style={[styles.breakdownItemAmount, {
+                      color: selectedBreakdown.type === 'income' ? '#10B981' : '#7C3AED'
+                    }]}>
+                      {formatCurrency(Math.abs(txn.amount) * (txn.business_percent / 100))}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            <View style={styles.breakdownModalButtons}>
+              <TouchableOpacity
+                style={styles.breakdownCloseButton}
+                onPress={() => setShowBreakdownModal(false)}
+              >
+                <Text style={styles.breakdownCloseButtonText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.breakdownEditButton}
+                onPress={() => {
+                  setShowBreakdownModal(false);
+                  if (selectedBreakdown?.type === 'gifted') {
+                    navigation.navigate('GiftedTracker');
+                  } else {
+                    // Navigate to transaction list filtered by type
+                    navigation.navigate('CategorizedTransactions', {
+                      filterType: selectedBreakdown?.type,
+                    });
+                  }
+                }}
+              >
+                <Ionicons name="pencil" size={18} color="#fff" />
+                <Text style={styles.breakdownEditButtonText}>Edit All</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Estimated Tax Info Modal */}
+      <Modal
+        visible={showEstimateInfo}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEstimateInfo(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.infoModalHeader}>
+              <View style={[styles.taxIconContainer, { marginRight: 0 }]}>
+                <Ionicons name="information-circle" size={28} color="#F59E0B" />
+              </View>
+            </View>
+            <Text style={styles.modalTitle}>About Estimated Tax</Text>
+            <Text style={styles.infoModalText}>
+              This estimate is calculated using the expected monthly income you provided during onboarding ({formatCurrency(userProfile?.monthly_income || 0)}/month).
+            </Text>
+            <Text style={styles.infoModalText}>
+              It projects your annual tax liability based on this figure, giving you a year-end target to plan for.
+            </Text>
+            <View style={styles.infoModalHighlight}>
+              <Ionicons name="bulb" size={18} color="#10B981" />
+              <Text style={styles.infoModalHighlightText}>
+                After 3+ months of tracking, the "Tax on Tracked Income" below will become a more accurate reflection of your actual tax position based on real transactions.
+              </Text>
+            </View>
+            <Text style={styles.infoModalNote}>
+              You can update your expected monthly income in your Profile settings.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.confirmButton, { marginTop: 16 }]}
+              onPress={() => setShowEstimateInfo(false)}
+            >
+              <Text style={styles.confirmButtonText}>Got it</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -992,14 +1398,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#1F1333',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#10B98130',
   },
   incomeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
   incomeIconContainer: {
     width: 48,
@@ -1144,18 +1549,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  profileActionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  profileActionText: {
-    flex: 1,
-    marginLeft: 12,
-  },
   actionCard: {
     flex: 1,
     backgroundColor: '#1F1333',
@@ -1267,5 +1660,379 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
     marginBottom: 8,
+  },
+  unqualifiedCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#F59E0B30',
+  },
+  unqualifiedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  unqualifiedIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#F59E0B20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  unqualifiedInfo: {
+    flex: 1,
+  },
+  unqualifiedLabel: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  unqualifiedAmount: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  unqualifiedDescription: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  unqualifiedAction: {
+    backgroundColor: '#F59E0B15',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  unqualifiedActionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F59E0B',
+  },
+  // Income source styles
+  incomeSourceList: {
+    marginTop: 12,
+    gap: 8,
+  },
+  incomeSourceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    padding: 12,
+  },
+  incomeSourceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#10B98120',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  incomeSourceLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  incomeSourceAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#10B981',
+    marginRight: 4,
+  },
+  // Empty income message
+  emptyIncomeMessage: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  emptyIncomeText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  emptyIncomeSubtext: {
+    fontSize: 13,
+    color: '#4B5563',
+    textAlign: 'center',
+  },
+  // Category list title
+  categoryListTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    marginBottom: 12,
+  },
+  categoryHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  // Breakdown Modal styles
+  breakdownModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  breakdownModalContent: {
+    backgroundColor: '#1F1333',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  breakdownModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2E1A47',
+  },
+  breakdownModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  breakdownList: {
+    maxHeight: 400,
+  },
+  breakdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2E1A4750',
+  },
+  breakdownItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#F59E0B20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  breakdownItemDetails: {
+    flex: 1,
+  },
+  breakdownItemName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  breakdownItemMeta: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  breakdownItemMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  breakdownItemPercent: {
+    fontSize: 11,
+    color: '#6B7280',
+    backgroundColor: '#2E1A47',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  breakdownItemAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  needsEvidenceBadge: {
+    backgroundColor: '#F59E0B20',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  needsEvidenceText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#F59E0B',
+  },
+  breakdownModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  breakdownCloseButton: {
+    flex: 1,
+    backgroundColor: '#2E1A47',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  breakdownCloseButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  breakdownEditButton: {
+    flex: 1,
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  breakdownEditButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  // Running tax card styles
+  runningTaxCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#10B98130',
+  },
+  runningTaxLabelContainer: {
+    flex: 1,
+  },
+  runningTaxSubLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  // Info button styles
+  infoButton: {
+    marginLeft: 'auto',
+    padding: 4,
+  },
+  // No data hint styles
+  noDataHint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#2E1A47',
+    borderRadius: 8,
+    padding: 10,
+    gap: 8,
+    marginTop: 8,
+  },
+  noDataHintText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 16,
+  },
+  // Info modal styles
+  infoModalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  infoModalText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  infoModalHighlight: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#10B98115',
+    borderRadius: 8,
+    padding: 12,
+    gap: 10,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#10B98120',
+  },
+  infoModalHighlightText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#10B981',
+    lineHeight: 18,
+  },
+  infoModalNote: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  // Tax breakdown row styles
+  taxBreakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#2E1A47',
+  },
+  taxBreakdownItem: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  // Gifted items card styles
+  giftedItemsCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B30',
+  },
+  giftedItemsCount: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  // Total income row styles
+  totalIncomeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#10B98115',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#10B98120',
+  },
+  totalIncomeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  totalIncomeAmount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  // Export button styles
+  exportButton: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  exportButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  exportButtonText: {
+    flex: 1,
+    marginLeft: 12,
   },
 });

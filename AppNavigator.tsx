@@ -13,6 +13,8 @@ import TransactionCategorizationScreen from './screens/transactions/TransactionC
 import QualifyTransactionListScreen from './screens/transactions/QualifyTransactionListScreen';
 import QualifyTransactionsScreen from './screens/transactions/QualifyTransactionsScreen';
 import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
+import EditTransactionScreen from './screens/transactions/EditTransactionScreen';
+import CategorizedTransactionsScreen from './screens/transactions/CategorizedTransactionsScreen';
 import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import OverviewScreen from './screens/overview/OverviewScreen';
@@ -28,6 +30,8 @@ type RootStackParamList = {
   QualifyTransactionList: undefined;
   QualifyTransactions: { transaction: any };
   AddEvidence: { transaction: any };
+  EditTransaction: { transactionId: string; transactionType: string };
+  CategorizedTransactions: { filterType?: string };
   GiftedTracker: undefined;
   TaxChecklist: undefined;
   Profile: undefined;
@@ -36,6 +40,7 @@ type RootStackParamList = {
 type TabParamList = {
   Actions: undefined;
   Overview: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -70,6 +75,17 @@ function MainTabs() {
           tabBarIcon: ({ color, size }) => (
             <View style={styles.tabIconContainer}>
               <Ionicons name="pie-chart" size={size} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <View style={styles.tabIconContainer}>
+              <Ionicons name="person" size={size} color={color} />
             </View>
           ),
         }}
@@ -195,6 +211,14 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
+        />
+        <Stack.Screen
+          name="EditTransaction"
+          component={EditTransactionScreen}
+        />
+        <Stack.Screen
+          name="CategorizedTransactions"
+          component={CategorizedTransactionsScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

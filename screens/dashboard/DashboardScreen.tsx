@@ -237,7 +237,7 @@ export default function DashboardScreen({ navigation }: any) {
             <Ionicons name="gift" size={32} color="#fff" />
           </View>
           <View style={styles.primaryText}>
-            <Text style={styles.primaryTitle}>Gifted Tracker</Text>
+            <Text style={styles.primaryTitle}>Track Gifts</Text>
             <Text style={styles.giftedSubtitle}>Track PR packages & gifts</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#fff" />

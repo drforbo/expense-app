@@ -406,6 +406,8 @@ export default function TransactionCategorizationScreen({
       if ((categorization as any).isSplit && (categorization as any).splits) {
         // Save both split portions as separate transactions
         const splits = (categorization as any).splits;
+        // Determine if this is income (negative amount from bank statement)
+        const isIncome = transactions[currentIndex].amount < 0;
 
         for (let i = 0; i < splits.length; i++) {
           const split = splits[i];
@@ -424,6 +426,7 @@ export default function TransactionCategorizationScreen({
               explanation: split.explanation,
               tax_deductible: split.taxDeductible,
               user_answers: answers,
+              transaction_type: isIncome ? 'income' : 'expense',
             }, {
               onConflict: 'user_id,source_transaction_id'
             });
@@ -438,6 +441,9 @@ export default function TransactionCategorizationScreen({
         console.log('✅ Split transaction saved to database');
       } else {
         // Save regular single-purpose transaction
+        // Determine if this is income (negative amount from bank statement)
+        const isIncome = transactions[currentIndex].amount < 0;
+
         const { error } = await supabase
           .from('categorized_transactions')
           .upsert({
@@ -453,6 +459,7 @@ export default function TransactionCategorizationScreen({
             explanation: categorization.explanation,
             tax_deductible: categorization.taxDeductible,
             user_answers: answers,
+            transaction_type: isIncome ? 'income' : 'expense',
           }, {
             onConflict: 'user_id,source_transaction_id'
           });

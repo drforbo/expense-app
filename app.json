@@ -2,6 +2,7 @@
   "expo": {
     "name": "expense-app",
     "slug": "expense-app",
+    "scheme": "bopp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.expenseapp"
+      "bundleIdentifier": "com.getbopp.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,14 +24,15 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.expenseapp"
+      "package": "com.getbopp.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font",
-      "expo-mail-composer"
+      "expo-mail-composer",
+      "expo-web-browser"
     ]
   }
 }

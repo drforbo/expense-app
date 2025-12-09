@@ -38,7 +38,6 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [customWorkType, setCustomWorkType] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState(1000);
   const [receivesGiftedItems, setReceivesGiftedItems] = useState(false);
-  const [hasInternationalIncome, setHasInternationalIncome] = useState(false);
   const [trackingGoal, setTrackingGoal] = useState<string>('');
   const [hasOtherEmployment, setHasOtherEmployment] = useState<boolean | null>(null);
   const [employmentIncome, setEmploymentIncome] = useState(30000);
@@ -152,6 +151,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           has_other_employment: hasOtherEmployment,
           employment_income: hasOtherEmployment ? employmentIncome : null,
           student_loan_plan: studentLoanPlan,
+          tax_residency_country: taxResidencyCountry,
+          is_digital_nomad: isDigitalNomad,
+          foreign_income_countries: foreignIncomeCountries,
         }, {
           onConflict: 'user_id'
         });
@@ -360,16 +362,6 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             {receivesGiftedItems && <Ionicons name="checkmark" size={16} color="#fff" />}
           </View>
           <Text style={styles.checkboxLabel}>I receive gifted items/products</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.checkbox}
-          onPress={() => setHasInternationalIncome(!hasInternationalIncome)}
-        >
-          <View style={[styles.checkboxBox, hasInternationalIncome && styles.checkboxBoxChecked]}>
-            {hasInternationalIncome && <Ionicons name="checkmark" size={16} color="#fff" />}
-          </View>
-          <Text style={styles.checkboxLabel}>I have international income</Text>
         </TouchableOpacity>
       </View>
 
@@ -815,5 +807,110 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Tax residency styles
+  optionButtonSelected: {
+    borderWidth: 2,
+    borderColor: '#7C3AED',
+    backgroundColor: '#7C3AED15',
+  },
+  optionSubtext: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  foreignCountriesSection: {
+    marginTop: 24,
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+  },
+  foreignCountriesLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  foreignCountriesHint: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 16,
+  },
+  countryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  countryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  countryChipSelected: {
+    borderColor: '#7C3AED',
+    backgroundColor: '#7C3AED20',
+  },
+  countryFlag: {
+    fontSize: 18,
+  },
+  countryName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
+  },
+  countryNameSelected: {
+    color: '#fff',
+  },
+  skipLink: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  skipLinkText: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
+  noticeCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#F59E0B40',
+  },
+  noticeTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  noticeText: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: 8,
+  },
+  helpNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 24,
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  helpNoteText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    flex: 1,
+    lineHeight: 18,
   },
 });

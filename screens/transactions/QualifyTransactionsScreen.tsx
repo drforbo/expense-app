@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,16 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+interface EmailHint {
+  subject: string;
+  from: string;
+  date: string;
+  snippet: string;
+  relevance: string;
+}
 
 interface Transaction {
   id: string;
@@ -43,6 +53,12 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [businessUseExplanation, setBusinessUseExplanation] = useState(transaction?.business_use_explanation || '');
   const [contentLink, setContentLink] = useState(transaction?.content_link || '');
+
+  // Email memory jogger state
+  const [emailHints, setEmailHints] = useState<EmailHint[]>([]);
+  const [loadingEmailHints, setLoadingEmailHints] = useState(false);
+  const [hasGmailConnected, setHasGmailConnected] = useState(false);
+  const [showEmailHints, setShowEmailHints] = useState(false);
 
   const pickImage = async (source: 'camera' | 'library') => {
     try {
@@ -247,9 +263,86 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   };
 
   // If no transaction passed, go back
+  useEffect(() => {
+    if (!transaction) {
+      navigation.goBack();
+    }
+  }, [transaction, navigation]);
+
+  // Check Gmail connection and fetch email hints on mount
+  useEffect(() => {
+    if (transaction) {
+      checkGmailConnectionAndFetchHints();
+    }
+  }, [transaction]);
+
+  const checkGmailConnectionAndFetchHints = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Check if Gmail is connected
+      const statusResponse = await fetch(`${API_URL}/api/gmail/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ user_id: session.user.id }),
+      });
+
+      const statusData = await statusResponse.json();
+      setHasGmailConnected(statusData.connected);
+
+      // If connected, fetch email hints for this transaction
+      if (statusData.connected) {
+        fetchEmailHints(session);
+      }
+    } catch (error) {
+      console.error('Error checking Gmail connection:', error);
+    }
+  };
+
+  const fetchEmailHints = async (session: any) => {
+    setLoadingEmailHints(true);
+    try {
+      const response = await fetch(`${API_URL}/api/gmail/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          user_id: session.user.id,
+          merchant_name: transaction.merchant_name,
+          amount: transaction.amount,
+          transaction_date: transaction.transaction_date,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.matches) {
+        setEmailHints(data.matches);
+        if (data.matches.length > 0) {
+          setShowEmailHints(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching email hints:', error);
+    } finally {
+      setLoadingEmailHints(false);
+    }
+  };
+
   if (!transaction) {
-    navigation.goBack();
-    return null;
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7C3AED" />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -274,6 +367,59 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           </View>
           <Text style={styles.explanation}>{transaction.explanation}</Text>
         </View>
+
+        {/* Email Memory Jogger */}
+        {hasGmailConnected && (
+          <View style={styles.memoryJoggerSection}>
+            <TouchableOpacity
+              style={styles.memoryJoggerHeader}
+              onPress={() => setShowEmailHints(!showEmailHints)}
+            >
+              <View style={styles.memoryJoggerTitleRow}>
+                <Ionicons name="bulb" size={20} color="#F59E0B" />
+                <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
+                {loadingEmailHints && <ActivityIndicator size="small" color="#F59E0B" style={{ marginLeft: 8 }} />}
+              </View>
+              <Ionicons
+                name={showEmailHints ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color="#9CA3AF"
+              />
+            </TouchableOpacity>
+
+            {showEmailHints && (
+              <View style={styles.memoryJoggerContent}>
+                {emailHints.length > 0 ? (
+                  <>
+                    <Text style={styles.memoryJoggerSubtitle}>
+                      Found {emailHints.length} related email{emailHints.length !== 1 ? 's' : ''}:
+                    </Text>
+                    {emailHints.map((hint, index) => (
+                      <View key={index} style={styles.emailHintCard}>
+                        <View style={styles.emailHintHeader}>
+                          <Ionicons name="mail" size={16} color="#7C3AED" />
+                          <Text style={styles.emailHintFrom} numberOfLines={1}>{hint.from}</Text>
+                        </View>
+                        <Text style={styles.emailHintSubject} numberOfLines={2}>{hint.subject}</Text>
+                        <Text style={styles.emailHintSnippet} numberOfLines={3}>{hint.snippet}</Text>
+                        <View style={styles.emailHintFooter}>
+                          <Text style={styles.emailHintDate}>{hint.date}</Text>
+                          <View style={styles.emailHintRelevance}>
+                            <Text style={styles.emailHintRelevanceText}>{hint.relevance}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                ) : loadingEmailHints ? (
+                  <Text style={styles.memoryJoggerSubtitle}>Searching your emails...</Text>
+                ) : (
+                  <Text style={styles.memoryJoggerSubtitle}>No related emails found</Text>
+                )}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Receipt Upload */}
         <View style={styles.section}>
@@ -418,6 +564,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E1A47',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -470,6 +621,89 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     lineHeight: 20,
+  },
+  // Memory Jogger Styles
+  memoryJoggerSection: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    marginBottom: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F59E0B30',
+  },
+  memoryJoggerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  memoryJoggerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  memoryJoggerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F59E0B',
+  },
+  memoryJoggerContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  memoryJoggerSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 12,
+  },
+  emailHintCard: {
+    backgroundColor: '#2E1A47',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  emailHintHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  emailHintFrom: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    flex: 1,
+  },
+  emailHintSubject: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 6,
+  },
+  emailHintSnippet: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  emailHintFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  emailHintDate: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  emailHintRelevance: {
+    backgroundColor: '#10B98120',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  emailHintRelevanceText: {
+    fontSize: 11,
+    color: '#10B981',
+    fontWeight: '500',
   },
   section: {
     marginBottom: 24,

@@ -28,6 +28,7 @@ interface GiftedItem {
   photo_url?: string;
   notes?: string;
   received_date: string;
+  received_from?: string;
   created_at: string;
 }
 
@@ -369,9 +370,9 @@ export default function GiftedTrackerScreen({ navigation }: any) {
       onPress={() => openEditModal(item)}
       activeOpacity={0.7}
     >
-      {(item.photo_url || photoUrl) && (
+      {item.photo_url && (
         <Image
-          source={{ uri: item.photo_url || photoUrl }}
+          source={{ uri: item.photo_url }}
           style={styles.itemImage}
           resizeMode="cover"
         />
