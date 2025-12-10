@@ -26,6 +26,9 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
+// Feature flag - set to true when Gmail OAuth is verified by Google
+const GMAIL_INTEGRATION_ENABLED = false;
+
 interface EmailConnection {
   provider: string;
   email: string;
@@ -2123,71 +2126,75 @@ export default function ProfileScreen({ navigation }: any) {
           )}
         </TouchableOpacity>
 
-        {/* Connected Services */}
-        <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Connected Services</Text>
-        <Text style={styles.sectionSubtitle}>Connect your email to help identify transactions</Text>
+        {/* Connected Services - Hidden until Gmail OAuth is verified */}
+        {GMAIL_INTEGRATION_ENABLED && (
+          <>
+            <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Connected Services</Text>
+            <Text style={styles.sectionSubtitle}>Connect your email to help identify transactions</Text>
 
-        <View style={styles.accountCard}>
-          {/* Gmail Connection */}
-          <TouchableOpacity
-            style={styles.accountRow}
-            onPress={gmailConnection ? handleDisconnectGmail : handleConnectGmail}
-            disabled={connectingGmail}
-          >
-            <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? '#10B98120' : '#EA433520' }]}>
-                {connectingGmail ? (
-                  <ActivityIndicator size="small" color="#EA4335" />
-                ) : (
+            <View style={styles.accountCard}>
+              {/* Gmail Connection */}
+              <TouchableOpacity
+                style={styles.accountRow}
+                onPress={gmailConnection ? handleDisconnectGmail : handleConnectGmail}
+                disabled={connectingGmail}
+              >
+                <View style={styles.accountRowLeft}>
+                  <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? '#10B98120' : '#EA433520' }]}>
+                    {connectingGmail ? (
+                      <ActivityIndicator size="small" color="#EA4335" />
+                    ) : (
+                      <Ionicons
+                        name={gmailConnection ? 'checkmark-circle' : 'logo-google'}
+                        size={20}
+                        color={gmailConnection ? '#10B981' : '#EA4335'}
+                      />
+                    )}
+                  </View>
+                  <View>
+                    <Text style={styles.accountRowText}>Gmail</Text>
+                    {gmailConnection ? (
+                      <Text style={styles.accountRowSubtext}>{gmailConnection.email}</Text>
+                    ) : (
+                      <Text style={styles.accountRowSubtext}>Not connected</Text>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.connectionStatus}>
+                  {gmailConnection ? (
+                    <Text style={[styles.connectionStatusText, { color: '#10B981' }]}>Connected</Text>
+                  ) : (
+                    <Text style={[styles.connectionStatusText, { color: '#9CA3AF' }]}>Connect</Text>
+                  )}
                   <Ionicons
-                    name={gmailConnection ? 'checkmark-circle' : 'logo-google'}
-                    size={20}
-                    color={gmailConnection ? '#10B981' : '#EA4335'}
+                    name={gmailConnection ? 'close-circle-outline' : 'chevron-forward'}
+                    size={18}
+                    color={gmailConnection ? '#EF4444' : '#6B7280'}
                   />
-                )}
-              </View>
-              <View>
-                <Text style={styles.accountRowText}>Gmail</Text>
-                {gmailConnection ? (
-                  <Text style={styles.accountRowSubtext}>{gmailConnection.email}</Text>
-                ) : (
-                  <Text style={styles.accountRowSubtext}>Not connected</Text>
-                )}
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              {/* Outlook - Coming Soon */}
+              <View style={[styles.accountRow, { opacity: 0.5 }]}>
+                <View style={styles.accountRowLeft}>
+                  <View style={[styles.accountIcon, { backgroundColor: '#0078D420' }]}>
+                    <Ionicons name="mail" size={20} color="#0078D4" />
+                  </View>
+                  <View>
+                    <Text style={styles.accountRowText}>Outlook</Text>
+                    <Text style={styles.accountRowSubtext}>Coming soon</Text>
+                  </View>
+                </View>
               </View>
             </View>
-            <View style={styles.connectionStatus}>
-              {gmailConnection ? (
-                <Text style={[styles.connectionStatusText, { color: '#10B981' }]}>Connected</Text>
-              ) : (
-                <Text style={[styles.connectionStatusText, { color: '#9CA3AF' }]}>Connect</Text>
-              )}
-              <Ionicons
-                name={gmailConnection ? 'close-circle-outline' : 'chevron-forward'}
-                size={18}
-                color={gmailConnection ? '#EF4444' : '#6B7280'}
-              />
-            </View>
-          </TouchableOpacity>
 
-          <View style={styles.divider} />
-
-          {/* Outlook - Coming Soon */}
-          <View style={[styles.accountRow, { opacity: 0.5 }]}>
-            <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#0078D420' }]}>
-                <Ionicons name="mail" size={20} color="#0078D4" />
-              </View>
-              <View>
-                <Text style={styles.accountRowText}>Outlook</Text>
-                <Text style={styles.accountRowSubtext}>Coming soon</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.accountHint}>
-          Connected email accounts help bopp find receipts and invoices to jog your memory when categorizing transactions.
-        </Text>
+            <Text style={styles.accountHint}>
+              Connected email accounts help bopp find receipts and invoices to jog your memory when categorizing transactions.
+            </Text>
+          </>
+        )}
 
         {/* Account Management */}
         <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Account</Text>

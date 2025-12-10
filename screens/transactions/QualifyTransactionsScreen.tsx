@@ -19,6 +19,9 @@ import { supabase } from '../../lib/supabase';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+// Feature flag - set to true when Gmail OAuth is verified by Google
+const GMAIL_INTEGRATION_ENABLED = false;
+
 interface EmailHint {
   subject: string;
   from: string;
@@ -277,6 +280,9 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   }, [transaction]);
 
   const checkGmailConnectionAndFetchHints = async () => {
+    // Skip if Gmail integration is disabled
+    if (!GMAIL_INTEGRATION_ENABLED) return;
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
