@@ -19,17 +19,6 @@ import { supabase } from '../../lib/supabase';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
-// Feature flag - set to true when Gmail OAuth is verified by Google
-const GMAIL_INTEGRATION_ENABLED = false;
-
-interface EmailHint {
-  subject: string;
-  from: string;
-  date: string;
-  snippet: string;
-  relevance: string;
-}
-
 interface Transaction {
   id: string;
   merchant_name: string;
@@ -57,11 +46,8 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   const [businessUseExplanation, setBusinessUseExplanation] = useState(transaction?.business_use_explanation || '');
   const [contentLink, setContentLink] = useState(transaction?.content_link || '');
 
-  // Email memory jogger state
-  const [emailHints, setEmailHints] = useState<EmailHint[]>([]);
-  const [loadingEmailHints, setLoadingEmailHints] = useState(false);
-  const [hasGmailConnected, setHasGmailConnected] = useState(false);
-  const [showEmailHints, setShowEmailHints] = useState(false);
+  // Memory jogger state
+  const [showMemoryJogger, setShowMemoryJogger] = useState(false);
 
   const pickImage = async (source: 'camera' | 'library') => {
     try {
@@ -272,75 +258,6 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
     }
   }, [transaction, navigation]);
 
-  // Check Gmail connection and fetch email hints on mount
-  useEffect(() => {
-    if (transaction) {
-      checkGmailConnectionAndFetchHints();
-    }
-  }, [transaction]);
-
-  const checkGmailConnectionAndFetchHints = async () => {
-    // Skip if Gmail integration is disabled
-    if (!GMAIL_INTEGRATION_ENABLED) return;
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      // Check if Gmail is connected
-      const statusResponse = await fetch(`${API_URL}/api/gmail/status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: session.user.id }),
-      });
-
-      const statusData = await statusResponse.json();
-      setHasGmailConnected(statusData.connected);
-
-      // If connected, fetch email hints for this transaction
-      if (statusData.connected) {
-        fetchEmailHints(session);
-      }
-    } catch (error) {
-      console.error('Error checking Gmail connection:', error);
-    }
-  };
-
-  const fetchEmailHints = async (session: any) => {
-    setLoadingEmailHints(true);
-    try {
-      const response = await fetch(`${API_URL}/api/gmail/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          user_id: session.user.id,
-          merchant_name: transaction.merchant_name,
-          amount: transaction.amount,
-          transaction_date: transaction.transaction_date,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.matches) {
-        setEmailHints(data.matches);
-        if (data.matches.length > 0) {
-          setShowEmailHints(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching email hints:', error);
-    } finally {
-      setLoadingEmailHints(false);
-    }
-  };
-
   if (!transaction) {
     return (
       <SafeAreaView style={styles.container}>
@@ -374,58 +291,75 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           <Text style={styles.explanation}>{transaction.explanation}</Text>
         </View>
 
-        {/* Email Memory Jogger */}
-        {hasGmailConnected && (
-          <View style={styles.memoryJoggerSection}>
-            <TouchableOpacity
-              style={styles.memoryJoggerHeader}
-              onPress={() => setShowEmailHints(!showEmailHints)}
-            >
-              <View style={styles.memoryJoggerTitleRow}>
-                <Ionicons name="bulb" size={20} color="#F59E0B" />
-                <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
-                {loadingEmailHints && <ActivityIndicator size="small" color="#F59E0B" style={{ marginLeft: 8 }} />}
-              </View>
-              <Ionicons
-                name={showEmailHints ? 'chevron-up' : 'chevron-down'}
-                size={20}
-                color="#9CA3AF"
-              />
-            </TouchableOpacity>
+        {/* Memory Jogger - Search suggestions */}
+        <View style={styles.memoryJoggerSection}>
+          <TouchableOpacity
+            style={styles.memoryJoggerHeader}
+            onPress={() => setShowMemoryJogger(!showMemoryJogger)}
+          >
+            <View style={styles.memoryJoggerTitleRow}>
+              <Ionicons name="bulb" size={20} color="#F59E0B" />
+              <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
+            </View>
+            <Ionicons
+              name={showMemoryJogger ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color="#9CA3AF"
+            />
+          </TouchableOpacity>
 
-            {showEmailHints && (
-              <View style={styles.memoryJoggerContent}>
-                {emailHints.length > 0 ? (
-                  <>
-                    <Text style={styles.memoryJoggerSubtitle}>
-                      Found {emailHints.length} related email{emailHints.length !== 1 ? 's' : ''}:
-                    </Text>
-                    {emailHints.map((hint, index) => (
-                      <View key={index} style={styles.emailHintCard}>
-                        <View style={styles.emailHintHeader}>
-                          <Ionicons name="mail" size={16} color="#7C3AED" />
-                          <Text style={styles.emailHintFrom} numberOfLines={1}>{hint.from}</Text>
-                        </View>
-                        <Text style={styles.emailHintSubject} numberOfLines={2}>{hint.subject}</Text>
-                        <Text style={styles.emailHintSnippet} numberOfLines={3}>{hint.snippet}</Text>
-                        <View style={styles.emailHintFooter}>
-                          <Text style={styles.emailHintDate}>{hint.date}</Text>
-                          <View style={styles.emailHintRelevance}>
-                            <Text style={styles.emailHintRelevanceText}>{hint.relevance}</Text>
-                          </View>
-                        </View>
-                      </View>
-                    ))}
-                  </>
-                ) : loadingEmailHints ? (
-                  <Text style={styles.memoryJoggerSubtitle}>Searching your emails...</Text>
-                ) : (
-                  <Text style={styles.memoryJoggerSubtitle}>No related emails found</Text>
+          {showMemoryJogger && transaction && (
+            <View style={styles.memoryJoggerContent}>
+              <Text style={styles.memoryJoggerSubtitle}>
+                Can't find your receipt? Try searching your email or messages:
+              </Text>
+
+              <View style={styles.searchSuggestions}>
+                <Text style={styles.searchSuggestionLabel}>Search terms to try:</Text>
+
+                <View style={styles.searchTermChip}>
+                  <Ionicons name="search" size={14} color="#7C3AED" />
+                  <Text style={styles.searchTermText}>{transaction.merchant_name}</Text>
+                </View>
+
+                <View style={styles.searchTermChip}>
+                  <Ionicons name="search" size={14} color="#7C3AED" />
+                  <Text style={styles.searchTermText}>£{Math.abs(transaction.amount).toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.searchTermChip}>
+                  <Ionicons name="search" size={14} color="#7C3AED" />
+                  <Text style={styles.searchTermText}>
+                    {transaction.merchant_name} {new Date(transaction.transaction_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                  </Text>
+                </View>
+
+                {transaction.category_name && (
+                  <View style={styles.searchTermChip}>
+                    <Ionicons name="search" size={14} color="#7C3AED" />
+                    <Text style={styles.searchTermText}>{transaction.category_name} receipt</Text>
+                  </View>
                 )}
               </View>
-            )}
-          </View>
-        )}
+
+              <View style={styles.searchTips}>
+                <Text style={styles.searchTipTitle}>Where to look:</Text>
+                <View style={styles.searchTipRow}>
+                  <Ionicons name="mail-outline" size={16} color="#6B7280" />
+                  <Text style={styles.searchTipText}>Email inbox & receipts folder</Text>
+                </View>
+                <View style={styles.searchTipRow}>
+                  <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                  <Text style={styles.searchTipText}>WhatsApp & iMessage</Text>
+                </View>
+                <View style={styles.searchTipRow}>
+                  <Ionicons name="images-outline" size={16} color="#6B7280" />
+                  <Text style={styles.searchTipText}>Photos app (screenshots)</Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
 
         {/* Receipt Upload */}
         <View style={styles.section}>
@@ -710,6 +644,52 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#10B981',
     fontWeight: '500',
+  },
+  // Search suggestions styles
+  searchSuggestions: {
+    marginBottom: 16,
+  },
+  searchSuggestionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    marginBottom: 10,
+  },
+  searchTermChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2E1A47',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    gap: 8,
+  },
+  searchTermText: {
+    fontSize: 14,
+    color: '#fff',
+    flex: 1,
+  },
+  searchTips: {
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    padding: 14,
+  },
+  searchTipTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    marginBottom: 10,
+  },
+  searchTipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  searchTipText: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
   section: {
     marginBottom: 24,
