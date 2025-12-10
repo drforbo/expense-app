@@ -10,6 +10,7 @@ import {
   TextInput,
   Image,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -48,6 +49,13 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
   // Memory jogger state
   const [showMemoryJogger, setShowMemoryJogger] = useState(false);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedText(text);
+    setTimeout(() => setCopiedText(null), 1500);
+  };
 
   const pickImage = async (source: 'camera' | 'library') => {
     try {
@@ -315,31 +323,66 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
               </Text>
 
               <View style={styles.searchSuggestions}>
-                <Text style={styles.searchSuggestionLabel}>Search terms to try:</Text>
+                <Text style={styles.searchSuggestionLabel}>Tap to copy:</Text>
 
-                <View style={styles.searchTermChip}>
-                  <Ionicons name="search" size={14} color="#7C3AED" />
+                {/* Simple merchant name - works everywhere */}
+                <TouchableOpacity
+                  style={[styles.searchTermChip, copiedText === transaction.merchant_name && styles.searchTermChipCopied]}
+                  onPress={() => copyToClipboard(transaction.merchant_name)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name={copiedText === transaction.merchant_name ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === transaction.merchant_name ? "#10B981" : "#7C3AED"} />
                   <Text style={styles.searchTermText}>{transaction.merchant_name}</Text>
-                </View>
+                  {copiedText === transaction.merchant_name && <Text style={styles.copiedBadge}>Copied!</Text>}
+                </TouchableOpacity>
 
-                <View style={styles.searchTermChip}>
-                  <Ionicons name="search" size={14} color="#7C3AED" />
-                  <Text style={styles.searchTermText}>£{Math.abs(transaction.amount).toFixed(2)}</Text>
-                </View>
+                {/* Amount variations - try with and without £ symbol */}
+                {(() => {
+                  const amountOnly = Math.abs(transaction.amount).toFixed(2);
+                  return (
+                    <TouchableOpacity
+                      style={[styles.searchTermChip, copiedText === amountOnly && styles.searchTermChipCopied]}
+                      onPress={() => copyToClipboard(amountOnly)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? "#10B981" : "#7C3AED"} />
+                      <Text style={styles.searchTermText}>{amountOnly}</Text>
+                      {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
+                    </TouchableOpacity>
+                  );
+                })()}
 
-                <View style={styles.searchTermChip}>
-                  <Ionicons name="search" size={14} color="#7C3AED" />
-                  <Text style={styles.searchTermText}>
-                    {transaction.merchant_name} {new Date(transaction.transaction_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                  </Text>
-                </View>
+                {/* Merchant + amount combo */}
+                {(() => {
+                  const merchantAmount = `${transaction.merchant_name} ${Math.abs(transaction.amount).toFixed(2)}`;
+                  return (
+                    <TouchableOpacity
+                      style={[styles.searchTermChip, copiedText === merchantAmount && styles.searchTermChipCopied]}
+                      onPress={() => copyToClipboard(merchantAmount)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? "#10B981" : "#7C3AED"} />
+                      <Text style={styles.searchTermText}>{merchantAmount}</Text>
+                      {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
+                    </TouchableOpacity>
+                  );
+                })()}
 
-                {transaction.category_name && (
-                  <View style={styles.searchTermChip}>
-                    <Ionicons name="search" size={14} color="#7C3AED" />
-                    <Text style={styles.searchTermText}>{transaction.category_name} receipt</Text>
-                  </View>
-                )}
+                {/* Receipt/order/confirmation keywords */}
+                {(() => {
+                  const receiptSearch = `${transaction.merchant_name} receipt OR order OR confirmation`;
+                  return (
+                    <TouchableOpacity
+                      style={[styles.searchTermChip, copiedText === receiptSearch && styles.searchTermChipCopied]}
+                      onPress={() => copyToClipboard(receiptSearch)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? "#10B981" : "#7C3AED"} />
+                      <Text style={styles.searchTermText} numberOfLines={1}>{transaction.merchant_name} receipt OR order</Text>
+                      {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
+                    </TouchableOpacity>
+                  );
+                })()}
               </View>
 
               <View style={styles.searchTips}>
@@ -661,14 +704,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E1A47',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginBottom: 8,
-    gap: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  searchTermChipCopied: {
+    backgroundColor: '#10B98115',
+    borderColor: '#10B981',
   },
   searchTermText: {
     fontSize: 14,
     color: '#fff',
     flex: 1,
+  },
+  copiedBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10B981',
   },
   searchTips: {
     backgroundColor: '#2E1A47',
