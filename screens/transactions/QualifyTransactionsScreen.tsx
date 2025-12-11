@@ -46,6 +46,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [businessUseExplanation, setBusinessUseExplanation] = useState(transaction?.business_use_explanation || '');
   const [contentLink, setContentLink] = useState(transaction?.content_link || '');
+  const [noReceiptMode, setNoReceiptMode] = useState(false);
 
   // Memory jogger state
   const [showMemoryJogger, setShowMemoryJogger] = useState(false);
@@ -210,14 +211,24 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
   };
 
   const handleSave = async () => {
-    if (!receiptImage) {
-      Alert.alert('Receipt required', 'Please add a receipt image');
-      return;
-    }
-
-    if (!businessUseExplanation.trim()) {
-      Alert.alert('Explanation required', 'Please explain the business use');
-      return;
+    // In no-receipt mode, require detailed explanation (50+ chars)
+    if (noReceiptMode) {
+      if (businessUseExplanation.trim().length < 50) {
+        Alert.alert(
+          'More detail needed',
+          'Without a receipt, HMRC requires a detailed explanation. Please provide at least 50 characters describing: what was purchased, from whom, and the business purpose.'
+        );
+        return;
+      }
+    } else {
+      if (!receiptImage) {
+        Alert.alert('Receipt required', 'Please add a receipt image or select "No Receipt Available"');
+        return;
+      }
+      if (!businessUseExplanation.trim()) {
+        Alert.alert('Explanation required', 'Please explain the business use');
+        return;
+      }
     }
 
     try {
@@ -226,9 +237,10 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
       const { error } = await supabase
         .from('categorized_transactions')
         .update({
-          receipt_image_url: receiptImage,
+          receipt_image_url: noReceiptMode ? null : receiptImage,
           business_use_explanation: businessUseExplanation.trim(),
           content_link: contentLink.trim() || null,
+          evidence_type: noReceiptMode ? 'note_only' : 'receipt',
           qualified: true,
           qualified_at: new Date().toISOString(),
         })
@@ -406,10 +418,37 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
         {/* Receipt Upload */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Receipt *</Text>
-          <Text style={styles.sectionSubtitle}>HMRC requires proof of purchase</Text>
+          <Text style={styles.sectionTitle}>Receipt {noReceiptMode ? '(Skipped)' : '*'}</Text>
+          <Text style={styles.sectionSubtitle}>
+            {noReceiptMode
+              ? 'You\'ve selected to proceed without a receipt'
+              : 'HMRC requires proof of purchase'}
+          </Text>
 
-          {receiptImage ? (
+          {noReceiptMode ? (
+            <View style={styles.noReceiptWarning}>
+              <View style={styles.noReceiptWarningHeader}>
+                <Ionicons name="alert-circle" size={24} color="#F59E0B" />
+                <Text style={styles.noReceiptWarningTitle}>No Receipt Mode</Text>
+              </View>
+              <Text style={styles.noReceiptWarningText}>
+                HMRC allows claims without receipts if you provide detailed notes. However:
+              </Text>
+              <View style={styles.noReceiptWarningList}>
+                <Text style={styles.noReceiptWarningItem}>• Keep note-only claims to ~5% of expenses</Text>
+                <Text style={styles.noReceiptWarningItem}>• Include: what, where, when, and why</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.addReceiptInstead}
+                onPress={() => {
+                  setNoReceiptMode(false);
+                }}
+              >
+                <Ionicons name="receipt-outline" size={18} color="#7C3AED" />
+                <Text style={styles.addReceiptInsteadText}>Add a receipt instead</Text>
+              </TouchableOpacity>
+            </View>
+          ) : receiptImage ? (
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
@@ -466,6 +505,27 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                 <Ionicons name="document-text" size={24} color="#7C3AED" />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
+
+              {/* No Receipt Option */}
+              <TouchableOpacity
+                style={styles.noReceiptButton}
+                onPress={() => {
+                  Alert.alert(
+                    'No Receipt Available?',
+                    'HMRC allows expense claims without receipts if you provide detailed notes. This should only be used occasionally.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Continue Without Receipt',
+                        onPress: () => setNoReceiptMode(true)
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="document-lock-outline" size={20} color="#9CA3AF" />
+                <Text style={styles.noReceiptButtonText}>I don't have a receipt</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -479,20 +539,34 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
         {/* Business Use Explanation */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Business Use Explanation *</Text>
+          <Text style={styles.sectionTitle}>
+            {noReceiptMode ? 'Detailed Expense Notes *' : 'Business Use Explanation *'}
+          </Text>
           <Text style={styles.sectionSubtitle}>
-            Explain how this expense relates to your business
+            {noReceiptMode
+              ? 'Required: describe what was purchased, from whom, when, and the business purpose (min 50 characters)'
+              : 'Explain how this expense relates to your business'}
           </Text>
           <TextInput
-            style={styles.textInput}
-            placeholder="e.g., Camera lens for filming YouTube videos"
+            style={[styles.textInput, noReceiptMode && styles.textInputNoReceipt]}
+            placeholder={noReceiptMode
+              ? "e.g., Purchased USB-C cable from Currys PC World on 15th March for connecting camera to MacBook for video editing. Lost receipt but have bank statement showing transaction."
+              : "e.g., Camera lens for filming YouTube videos"}
             placeholderTextColor="#64748B"
             value={businessUseExplanation}
             onChangeText={setBusinessUseExplanation}
             multiline
-            numberOfLines={4}
+            numberOfLines={noReceiptMode ? 6 : 4}
             textAlignVertical="top"
           />
+          {noReceiptMode && (
+            <Text style={styles.charCount}>
+              {businessUseExplanation.length}/50 characters minimum
+              {businessUseExplanation.length >= 50 && (
+                <Text style={styles.charCountOk}> ✓</Text>
+              )}
+            </Text>
+          )}
         </View>
 
         {/* Content Link */}
@@ -790,6 +864,66 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#7C3AED30',
   },
+  noReceiptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+  },
+  noReceiptButtonText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textDecorationLine: 'underline',
+  },
+  noReceiptWarning: {
+    backgroundColor: '#F59E0B15',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F59E0B40',
+  },
+  noReceiptWarningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  noReceiptWarningTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F59E0B',
+  },
+  noReceiptWarningText: {
+    fontSize: 14,
+    color: '#D1D5DB',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  noReceiptWarningList: {
+    marginBottom: 16,
+  },
+  noReceiptWarningItem: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  addReceiptInstead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: '#7C3AED20',
+    borderRadius: 8,
+  },
+  addReceiptInsteadText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
   pdfPreview: {
     width: '100%',
     height: 200,
@@ -864,6 +998,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#7C3AED30',
     minHeight: 120,
+  },
+  textInputNoReceipt: {
+    minHeight: 160,
+    borderColor: '#F59E0B40',
+  },
+  charCount: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 8,
+    textAlign: 'right',
+  },
+  charCountOk: {
+    color: '#10B981',
   },
   actionButtons: {
     gap: 12,

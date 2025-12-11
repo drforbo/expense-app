@@ -13,6 +13,7 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -70,6 +71,16 @@ export default function TransactionCategorizationScreen({
   const textInputRef = useRef<TextInput>(null);
   const feedbackInputRef = useRef<TextInput>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Memory jogger state
+  const [showMemoryJogger, setShowMemoryJogger] = useState(false);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedText(text);
+    setTimeout(() => setCopiedText(null), 1500);
+  };
 
   useEffect(() => {
     loadUserProfile();
@@ -640,6 +651,111 @@ export default function TransactionCategorizationScreen({
               ]}>
                 {isIncome ? '+' : ''}£{Math.abs(currentTransaction?.amount || 0).toFixed(2)}
               </Text>
+            </View>
+
+            {/* Memory Jogger - Search suggestions */}
+            <View style={styles.memoryJoggerSection}>
+              <TouchableOpacity
+                style={styles.memoryJoggerHeader}
+                onPress={() => setShowMemoryJogger(!showMemoryJogger)}
+              >
+                <View style={styles.memoryJoggerTitleRow}>
+                  <Ionicons name="bulb" size={20} color="#F59E0B" />
+                  <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
+                </View>
+                <Ionicons
+                  name={showMemoryJogger ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+
+              {showMemoryJogger && currentTransaction && (
+                <View style={styles.memoryJoggerContent}>
+                  <Text style={styles.memoryJoggerSubtitle}>
+                    Need help remembering? Search your email or messages:
+                  </Text>
+
+                  <View style={styles.searchSuggestions}>
+                    <Text style={styles.searchSuggestionLabel}>Tap to copy:</Text>
+
+                    {/* Merchant name */}
+                    <TouchableOpacity
+                      style={[styles.searchTermChip, copiedText === (currentTransaction.merchant_name || currentTransaction.name) && styles.searchTermChipCopied]}
+                      onPress={() => copyToClipboard(currentTransaction.merchant_name || currentTransaction.name)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "#10B981" : "#7C3AED"} />
+                      <Text style={styles.searchTermText}>{currentTransaction.merchant_name || currentTransaction.name}</Text>
+                      {copiedText === (currentTransaction.merchant_name || currentTransaction.name) && <Text style={styles.copiedBadge}>Copied!</Text>}
+                    </TouchableOpacity>
+
+                    {/* Amount */}
+                    {(() => {
+                      const amountOnly = Math.abs(currentTransaction.amount).toFixed(2);
+                      return (
+                        <TouchableOpacity
+                          style={[styles.searchTermChip, copiedText === amountOnly && styles.searchTermChipCopied]}
+                          onPress={() => copyToClipboard(amountOnly)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? "#10B981" : "#7C3AED"} />
+                          <Text style={styles.searchTermText}>{amountOnly}</Text>
+                          {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
+                        </TouchableOpacity>
+                      );
+                    })()}
+
+                    {/* Merchant + amount */}
+                    {(() => {
+                      const merchantAmount = `${currentTransaction.merchant_name || currentTransaction.name} ${Math.abs(currentTransaction.amount).toFixed(2)}`;
+                      return (
+                        <TouchableOpacity
+                          style={[styles.searchTermChip, copiedText === merchantAmount && styles.searchTermChipCopied]}
+                          onPress={() => copyToClipboard(merchantAmount)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? "#10B981" : "#7C3AED"} />
+                          <Text style={styles.searchTermText}>{merchantAmount}</Text>
+                          {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
+                        </TouchableOpacity>
+                      );
+                    })()}
+
+                    {/* Receipt search */}
+                    {(() => {
+                      const receiptSearch = `${currentTransaction.merchant_name || currentTransaction.name} receipt OR order OR confirmation`;
+                      return (
+                        <TouchableOpacity
+                          style={[styles.searchTermChip, copiedText === receiptSearch && styles.searchTermChipCopied]}
+                          onPress={() => copyToClipboard(receiptSearch)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? "#10B981" : "#7C3AED"} />
+                          <Text style={styles.searchTermText} numberOfLines={1}>{currentTransaction.merchant_name || currentTransaction.name} receipt OR order</Text>
+                          {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
+                        </TouchableOpacity>
+                      );
+                    })()}
+                  </View>
+
+                  <View style={styles.searchTips}>
+                    <Text style={styles.searchTipTitle}>Where to look:</Text>
+                    <View style={styles.searchTipRow}>
+                      <Ionicons name="mail-outline" size={16} color="#6B7280" />
+                      <Text style={styles.searchTipText}>Email inbox & receipts folder</Text>
+                    </View>
+                    <View style={styles.searchTipRow}>
+                      <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                      <Text style={styles.searchTipText}>WhatsApp & iMessage</Text>
+                    </View>
+                    <View style={styles.searchTipRow}>
+                      <Ionicons name="images-outline" size={16} color="#6B7280" />
+                      <Text style={styles.searchTipText}>Photos app (screenshots)</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
             </View>
 
             {/* Questions or Result */}
@@ -1378,5 +1494,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
+  },
+  // Memory Jogger Styles
+  memoryJoggerSection: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    marginBottom: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F59E0B30',
+  },
+  memoryJoggerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  memoryJoggerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  memoryJoggerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#F59E0B',
+  },
+  memoryJoggerContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  memoryJoggerSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 12,
+  },
+  searchSuggestions: {
+    marginBottom: 16,
+  },
+  searchSuggestionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    marginBottom: 10,
+  },
+  searchTermChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2E1A47',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  searchTermChipCopied: {
+    backgroundColor: '#10B98115',
+    borderColor: '#10B981',
+  },
+  searchTermText: {
+    fontSize: 14,
+    color: '#fff',
+    flex: 1,
+  },
+  copiedBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  searchTips: {
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    padding: 14,
+  },
+  searchTipTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    marginBottom: 10,
+  },
+  searchTipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  searchTipText: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 });
