@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +34,17 @@ interface UserProfile {
   student_loan_plan?: string;
 }
 
+interface TrackingStats {
+  uncategorizedCount: number;
+  categorizedIncomeCount: number;
+  categorizedExpenseCount: number;
+  unqualifiedExpenseCount: number;
+  giftedItemsCount: number;
+  totalTransactions: number;
+}
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
 const CATEGORY_COLORS = {
   registration: '#7C3AED',
   tracking: '#3B82F6',
@@ -52,11 +64,62 @@ export default function TaxChecklistScreen({ navigation }: any) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
+  const [trackingStats, setTrackingStats] = useState<TrackingStats>({
+    uncategorizedCount: 0,
+    categorizedIncomeCount: 0,
+    categorizedExpenseCount: 0,
+    unqualifiedExpenseCount: 0,
+    giftedItemsCount: 0,
+    totalTransactions: 0,
+  });
 
   useEffect(() => {
     fetchProfileAndChecklist();
     loadCompletedItems();
+    fetchTrackingStats();
   }, []);
+
+  const fetchTrackingStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch uncategorized count from server
+      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const uncategorizedData = await response.json();
+
+      // Fetch categorized transactions
+      const { data: categorized } = await supabase
+        .from('categorized_transactions')
+        .select('transaction_type, qualified')
+        .eq('user_id', user.id);
+
+      const incomeCount = categorized?.filter(t => t.transaction_type === 'income').length || 0;
+      const expenseCount = categorized?.filter(t => t.transaction_type === 'expense').length || 0;
+      const unqualifiedCount = categorized?.filter(t => t.transaction_type === 'expense' && !t.qualified).length || 0;
+
+      // Fetch gifted items count
+      const { data: giftedItems } = await supabase
+        .from('gifted_items')
+        .select('id')
+        .eq('user_id', user.id);
+
+      setTrackingStats({
+        uncategorizedCount: uncategorizedData.count || 0,
+        categorizedIncomeCount: incomeCount,
+        categorizedExpenseCount: expenseCount,
+        unqualifiedExpenseCount: unqualifiedCount,
+        giftedItemsCount: giftedItems?.length || 0,
+        totalTransactions: (uncategorizedData.count || 0) + (categorized?.length || 0),
+      });
+    } catch (error) {
+      console.error('Error fetching tracking stats:', error);
+    }
+  };
 
   const loadCompletedItems = async () => {
     try {
@@ -182,16 +245,6 @@ export default function TaxChecklistScreen({ navigation }: any) {
         relevantTo: ['international'],
         priority: 'high',
       });
-
-      items.push({
-        id: 'foreign_tax',
-        title: 'Check double taxation agreements',
-        description: 'Understand if you need to pay tax in multiple countries and how to claim relief.',
-        category: 'preparation',
-        completed: false,
-        relevantTo: ['international'],
-        priority: 'medium',
-      });
     }
 
     // Tax deadline items
@@ -293,16 +346,6 @@ export default function TaxChecklistScreen({ navigation }: any) {
     }
 
     // Preparation items
-    items.push({
-      id: 'review_allowances',
-      title: 'Check available allowances',
-      description: 'Review trading allowance (£1,000), capital allowances, and other deductions you can claim.',
-      category: 'preparation',
-      completed: false,
-      relevantTo: ['all'],
-      priority: 'medium',
-    });
-
     items.push({
       id: 'export_records',
       title: 'Export your records',
@@ -407,23 +450,210 @@ export default function TaxChecklistScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Progress Card */}
-      <View style={styles.progressCard}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
-          <Text style={styles.progressCount}>{completedCount}/{totalCount}</Text>
-        </View>
-        <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBar, { width: `${progress}%` }]} />
-        </View>
-        <Text style={styles.progressText}>
-          {completedCount === totalCount
-            ? "All done! You're on top of your taxes."
-            : `${totalCount - completedCount} item${totalCount - completedCount !== 1 ? 's' : ''} remaining`}
-        </Text>
-      </View>
-
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* In Progress with bopp - Achievement Card */}
+        <View style={styles.achievementCard}>
+          <View style={styles.achievementHeader}>
+            <View style={styles.achievementIconContainer}>
+              <Ionicons name="rocket" size={24} color="#7C3AED" />
+            </View>
+            <View style={styles.achievementHeaderText}>
+              <Text style={styles.achievementTitle}>In Progress with bopp</Text>
+              <Text style={styles.achievementSubtitle}>Tax Year 2024/25</Text>
+            </View>
+          </View>
+
+          {/* Track Income Card */}
+          <TouchableOpacity
+            style={styles.trackingCard}
+            onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'income' })}
+          >
+            <View style={styles.trackingHeader}>
+              <View style={[styles.trackingIconContainer, { backgroundColor: '#10B98120' }]}>
+                <Ionicons name="trending-up" size={20} color="#10B981" />
+              </View>
+              <View style={styles.trackingInfo}>
+                <Text style={styles.trackingLabel}>Track all income sources</Text>
+                <Text style={styles.trackingStatus}>
+                  {trackingStats.categorizedIncomeCount > 0
+                    ? `${trackingStats.categorizedIncomeCount} income transaction${trackingStats.categorizedIncomeCount !== 1 ? 's' : ''} tracked`
+                    : 'Start tracking your income'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            </View>
+            {trackingStats.categorizedIncomeCount > 0 && (
+              <View style={styles.trackingProgressContainer}>
+                <View style={[styles.trackingProgressBar, { backgroundColor: '#10B98130' }]}>
+                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#10B981' }]} />
+                </View>
+                <View style={styles.trackingBadge}>
+                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Text style={styles.trackingBadgeText}>Active</Text>
+                </View>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Categorize Expenses Card */}
+          <TouchableOpacity
+            style={styles.trackingCard}
+            onPress={() => {
+              if (trackingStats.uncategorizedCount > 0) {
+                navigation.navigate('TransactionList');
+              } else {
+                navigation.navigate('CategorizedTransactions', { filterType: 'expense' });
+              }
+            }}
+          >
+            <View style={styles.trackingHeader}>
+              <View style={[styles.trackingIconContainer, { backgroundColor: '#7C3AED20' }]}>
+                <Ionicons name="receipt-outline" size={20} color="#7C3AED" />
+              </View>
+              <View style={styles.trackingInfo}>
+                <Text style={styles.trackingLabel}>Categorize business expenses</Text>
+                <Text style={styles.trackingStatus}>
+                  {trackingStats.uncategorizedCount > 0
+                    ? `${trackingStats.uncategorizedCount} pending • ${trackingStats.categorizedExpenseCount} done`
+                    : trackingStats.categorizedExpenseCount > 0
+                      ? `${trackingStats.categorizedExpenseCount} expense${trackingStats.categorizedExpenseCount !== 1 ? 's' : ''} categorized`
+                      : 'Upload transactions to get started'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            </View>
+            {(trackingStats.uncategorizedCount > 0 || trackingStats.categorizedExpenseCount > 0) && (
+              <View style={styles.trackingProgressContainer}>
+                <View style={[styles.trackingProgressBar, { backgroundColor: '#7C3AED30' }]}>
+                  <View
+                    style={[
+                      styles.trackingProgressFill,
+                      {
+                        width: trackingStats.totalTransactions > 0
+                          ? `${Math.round((trackingStats.categorizedExpenseCount / (trackingStats.categorizedExpenseCount + trackingStats.uncategorizedCount)) * 100)}%`
+                          : '0%',
+                        backgroundColor: '#7C3AED'
+                      }
+                    ]}
+                  />
+                </View>
+                {trackingStats.uncategorizedCount > 0 ? (
+                  <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
+                    <Ionicons name="time" size={14} color="#F59E0B" />
+                    <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                      {trackingStats.uncategorizedCount} pending
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.trackingBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Text style={styles.trackingBadgeText}>All done</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Qualify Expenses Card */}
+          {trackingStats.categorizedExpenseCount > 0 && (
+            <TouchableOpacity
+              style={styles.trackingCard}
+              onPress={() => navigation.navigate('QualifyTransactionList')}
+            >
+              <View style={styles.trackingHeader}>
+                <View style={[styles.trackingIconContainer, { backgroundColor: '#F59E0B20' }]}>
+                  <Ionicons name="document-text-outline" size={20} color="#F59E0B" />
+                </View>
+                <View style={styles.trackingInfo}>
+                  <Text style={styles.trackingLabel}>Add receipts & evidence</Text>
+                  <Text style={styles.trackingStatus}>
+                    {trackingStats.unqualifiedExpenseCount > 0
+                      ? `${trackingStats.unqualifiedExpenseCount} expense${trackingStats.unqualifiedExpenseCount !== 1 ? 's' : ''} need evidence`
+                      : 'All expenses qualified'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              </View>
+              <View style={styles.trackingProgressContainer}>
+                <View style={[styles.trackingProgressBar, { backgroundColor: '#F59E0B30' }]}>
+                  <View
+                    style={[
+                      styles.trackingProgressFill,
+                      {
+                        width: `${trackingStats.categorizedExpenseCount > 0
+                          ? Math.round(((trackingStats.categorizedExpenseCount - trackingStats.unqualifiedExpenseCount) / trackingStats.categorizedExpenseCount) * 100)
+                          : 0}%`,
+                        backgroundColor: trackingStats.unqualifiedExpenseCount === 0 ? '#10B981' : '#F59E0B'
+                      }
+                    ]}
+                  />
+                </View>
+                {trackingStats.unqualifiedExpenseCount === 0 ? (
+                  <View style={styles.trackingBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Text style={styles.trackingBadgeText}>HMRC ready</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
+                    <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                      {Math.round(((trackingStats.categorizedExpenseCount - trackingStats.unqualifiedExpenseCount) / trackingStats.categorizedExpenseCount) * 100)}% qualified
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Gifted Items Card */}
+          {profile?.receives_gifted_items && (
+            <TouchableOpacity
+              style={styles.trackingCard}
+              onPress={() => navigation.navigate('GiftedTracker')}
+            >
+              <View style={styles.trackingHeader}>
+                <View style={[styles.trackingIconContainer, { backgroundColor: '#EC489920' }]}>
+                  <Ionicons name="gift-outline" size={20} color="#EC4899" />
+                </View>
+                <View style={styles.trackingInfo}>
+                  <Text style={styles.trackingLabel}>Track gifted items</Text>
+                  <Text style={styles.trackingStatus}>
+                    {trackingStats.giftedItemsCount > 0
+                      ? `${trackingStats.giftedItemsCount} item${trackingStats.giftedItemsCount !== 1 ? 's' : ''} logged`
+                      : 'Log PR packages & gifts'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              </View>
+              {trackingStats.giftedItemsCount > 0 && (
+                <View style={styles.trackingProgressContainer}>
+                  <View style={[styles.trackingProgressBar, { backgroundColor: '#EC489930' }]}>
+                    <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#EC4899' }]} />
+                  </View>
+                  <View style={styles.trackingBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Text style={styles.trackingBadgeText}>Active</Text>
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Overall Checklist Progress Card */}
+        <View style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>Tax Checklist Progress</Text>
+            <Text style={styles.progressCount}>{completedCount}/{totalCount}</Text>
+          </View>
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${progress}%` }]} />
+          </View>
+          <Text style={styles.progressText}>
+            {completedCount === totalCount
+              ? "All done! You're on top of your taxes."
+              : `${totalCount - completedCount} item${totalCount - completedCount !== 1 ? 's' : ''} remaining`}
+          </Text>
+        </View>
         {categoryOrder.map(category => {
           const items = groupedItems[category];
           if (!items || items.length === 0) return null;
@@ -481,6 +711,57 @@ export default function TaxChecklistScreen({ navigation }: any) {
             </View>
           );
         })}
+
+        {/* Personalized Info Card */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoCardHeader}>
+            <View style={styles.infoCardIcon}>
+              <Ionicons name="information-circle" size={24} color="#3B82F6" />
+            </View>
+            <Text style={styles.infoCardTitle}>Other things on your tax return</Text>
+          </View>
+          <Text style={styles.infoCardDescription}>
+            Depending on your situation, you may also see these on your Self Assessment:
+          </Text>
+
+          <View style={styles.infoLinks}>
+            {profile?.student_loan_plan && profile.student_loan_plan !== 'none' && (
+              <TouchableOpacity
+                style={styles.infoLink}
+                onPress={() => Linking.openURL('https://www.gov.uk/repaying-your-student-loan/what-you-pay')}
+              >
+                <Text style={styles.infoLinkText}>Student loan repayments</Text>
+                <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              </TouchableOpacity>
+            )}
+
+            {profile?.has_international_income && (
+              <TouchableOpacity
+                style={styles.infoLink}
+                onPress={() => Linking.openURL('https://www.gov.uk/tax-foreign-income/taxed-twice')}
+              >
+                <Text style={styles.infoLinkText}>Foreign tax relief</Text>
+                <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.infoLink}
+              onPress={() => Linking.openURL('https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2024-to-2025')}
+            >
+              <Text style={styles.infoLinkText}>National Insurance contributions</Text>
+              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.infoLink}
+              onPress={() => Linking.openURL('https://www.gov.uk/self-assessment-tax-returns')}
+            >
+              <Text style={styles.infoLinkText}>Self Assessment overview</Text>
+              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -530,7 +811,6 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   progressCard: {
-    marginHorizontal: 20,
     backgroundColor: '#1F1333',
     borderRadius: 16,
     padding: 20,
@@ -569,6 +849,104 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+  // Achievement Card Styles
+  achievementCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  achievementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  achievementIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#7C3AED20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  achievementHeaderText: {
+    flex: 1,
+  },
+  achievementTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  achievementSubtitle: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  // Tracking Card Styles
+  trackingCard: {
+    backgroundColor: '#2E1A47',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  trackingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  trackingIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  trackingInfo: {
+    flex: 1,
+  },
+  trackingLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  trackingStatus: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  trackingProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 10,
+  },
+  trackingProgressBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  trackingProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  trackingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B98120',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  trackingBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#10B981',
   },
   scrollView: {
     flex: 1,
@@ -672,5 +1050,55 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FF6B6B',
     fontWeight: '500',
+  },
+  infoCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F630',
+  },
+  infoCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoCardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#3B82F620',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    flex: 1,
+  },
+  infoCardDescription: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  infoLinks: {
+    gap: 8,
+  },
+  infoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    padding: 14,
+  },
+  infoLinkText: {
+    fontSize: 14,
+    color: '#7C3AED',
+    fontWeight: '600',
   },
 });

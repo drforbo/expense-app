@@ -567,16 +567,6 @@ export default function ProfileScreen({ navigation }: any) {
         });
       }
 
-      items.push({
-        id: 'foreign_tax_credit',
-        title: 'Claim Foreign Tax Credit Relief',
-        description: 'If tax was withheld abroad, you may be able to claim relief on your UK tax return to avoid paying tax twice on the same income.',
-        category: 'preparation',
-        completed: false,
-        relevantTo: ['international'],
-        priority: 'medium',
-      });
-
       // Digital nomad specific
       if (userProfile?.is_digital_nomad) {
         items.push({
@@ -661,16 +651,6 @@ export default function ProfileScreen({ navigation }: any) {
     }
 
     // Preparation items
-    items.push({
-      id: 'review_allowances',
-      title: 'Check available allowances',
-      description: 'Review trading allowance (£1,000), capital allowances, and other deductions you can claim.',
-      category: 'preparation',
-      completed: false,
-      relevantTo: ['all'],
-      priority: 'medium',
-    });
-
     items.push({
       id: 'export_records',
       title: 'Export your records',
@@ -1819,6 +1799,58 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         );
       })}
+
+      {/* Personalized Info Card */}
+      <View style={styles.infoCard}>
+        <View style={styles.infoCardHeader}>
+          <View style={styles.infoCardIcon}>
+            <Ionicons name="information-circle" size={24} color="#3B82F6" />
+          </View>
+          <Text style={styles.infoCardTitle}>Other things on your tax return</Text>
+        </View>
+        <Text style={styles.infoCardDescription}>
+          Depending on your situation, you may also see these on your Self Assessment:
+        </Text>
+
+        <View style={styles.infoLinks}>
+          {studentLoanPlan && studentLoanPlan !== 'none' && (
+            <TouchableOpacity
+              style={styles.infoLink}
+              onPress={() => Linking.openURL('https://www.gov.uk/repaying-your-student-loan/what-you-pay')}
+            >
+              <Text style={styles.infoLinkText}>Student loan repayments</Text>
+              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            </TouchableOpacity>
+          )}
+
+          {hasInternationalIncome && (
+            <TouchableOpacity
+              style={styles.infoLink}
+              onPress={() => Linking.openURL('https://www.gov.uk/tax-foreign-income/taxed-twice')}
+            >
+              <Text style={styles.infoLinkText}>Foreign tax relief</Text>
+              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.infoLink}
+            onPress={() => Linking.openURL('https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2024-to-2025')}
+          >
+            <Text style={styles.infoLinkText}>National Insurance contributions</Text>
+            <Ionicons name="open-outline" size={14} color="#7C3AED" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.infoLink}
+            onPress={() => Linking.openURL('https://www.gov.uk/self-assessment-tax-returns')}
+          >
+            <Text style={styles.infoLinkText}>Self Assessment overview</Text>
+            <Ionicons name="open-outline" size={14} color="#7C3AED" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -3358,5 +3390,56 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     lineHeight: 18,
+  },
+  // Info Card Styles
+  infoCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#3B82F630',
+  },
+  infoCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoCardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#3B82F620',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    flex: 1,
+  },
+  infoCardDescription: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  infoLinks: {
+    gap: 8,
+  },
+  infoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#2E1A47',
+    borderRadius: 10,
+    padding: 14,
+  },
+  infoLinkText: {
+    fontSize: 14,
+    color: '#7C3AED',
+    fontWeight: '600',
   },
 });
