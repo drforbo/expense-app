@@ -15,6 +15,7 @@ import QualifyTransactionsScreen from './screens/transactions/QualifyTransaction
 import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
 import EditTransactionScreen from './screens/transactions/EditTransactionScreen';
 import CategorizedTransactionsScreen from './screens/transactions/CategorizedTransactionsScreen';
+import SubscriptionReviewScreen from './screens/transactions/SubscriptionReviewScreen';
 import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import OverviewScreen from './screens/overview/OverviewScreen';
@@ -26,7 +27,8 @@ type RootStackParamList = {
   MainTabs: undefined;
   UploadStatement: undefined;
   TransactionList: undefined;
-  TransactionCategorization: { transaction?: any; allTransactions?: any[]; preGeneratedQuestions?: any };
+  TransactionCategorization: { transaction?: any; allTransactions?: any[]; preGeneratedQuestions?: any; batchMode?: boolean; batchMerchant?: string };
+  SubscriptionReview: { subscriptions: any[] };
   QualifyTransactionList: undefined;
   QualifyTransactions: { transaction: any };
   AddEvidence: { transaction: any };
@@ -219,6 +221,10 @@ export default function AppNavigator() {
         <Stack.Screen
           name="CategorizedTransactions"
           component={CategorizedTransactionsScreen}
+        />
+        <Stack.Screen
+          name="SubscriptionReview"
+          component={SubscriptionReviewScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

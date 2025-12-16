@@ -40,13 +40,33 @@ interface Categorization {
   taxDeductible: boolean;
 }
 
+interface Suggestion {
+  type: string;
+  message: string;
+  normalizedMerchant: string;
+  similarTransaction?: {
+    amount: number;
+    date: string;
+    categoryId: string;
+    categoryName: string;
+    businessPercent: number;
+  };
+  suggestedCategoryId: string;
+  suggestedCategoryName: string;
+  suggestedBusinessPercent: number;
+  typicalAnswers?: Record<string, string>;
+  confidence: number;
+  occurrenceCount: number;
+  isVariable: boolean;
+}
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
 
 export default function TransactionCategorizationScreen({
   route,
   navigation
 }: any) {
-  const { transaction, allTransactions, preGeneratedQuestions } = route.params || {};
+  const { transaction, allTransactions, preGeneratedQuestions, batchMode, batchMerchant } = route.params || {};
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,6 +82,21 @@ export default function TransactionCategorizationScreen({
   const [feedback, setFeedback] = useState('');
   const [recategorizing, setRecategorizing] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+
+  // Smart suggestion state
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [showSuggestion, setShowSuggestion] = useState(true);
+  const [usingSuggestion, setUsingSuggestion] = useState(false);
+
+  // Same as Above state - tracks the last categorization for quick apply
+  const [lastCategorization, setLastCategorization] = useState<{
+    categoryId: string;
+    categoryName: string;
+    businessPercent: number;
+    explanation: string;
+    taxDeductible: boolean;
+    answers: Record<string, string>;
+  } | null>(null);
 
   // Helper to detect if current transaction is income
   const currentTransaction = transactions[currentIndex] || transaction;
@@ -133,7 +168,11 @@ export default function TransactionCategorizationScreen({
 
       // If a specific transaction was passed, use it directly
       if (transaction) {
-        setTransactions([transaction]);
+        // In batch mode, use allTransactions; otherwise just the single transaction
+        const txnsToUse = allTransactions && allTransactions.length > 0
+          ? allTransactions
+          : [transaction];
+        setTransactions(txnsToUse);
         setLoading(false);
 
         // Use pre-generated questions if available, otherwise generate them
@@ -141,7 +180,7 @@ export default function TransactionCategorizationScreen({
           console.log('✅ Using pre-generated Q1 (instant load!)');
           setQuestions(preGeneratedQuestions);
         } else {
-          await generateQuestions(transaction);
+          await generateQuestions(txnsToUse[0]);
         }
       } else {
         // Otherwise load all transactions
@@ -151,9 +190,12 @@ export default function TransactionCategorizationScreen({
       console.error('Error in loadUserProfile:', error);
       // If specific transaction provided, still try to use it
       if (transaction) {
-        setTransactions([transaction]);
+        const txnsToUse = allTransactions && allTransactions.length > 0
+          ? allTransactions
+          : [transaction];
+        setTransactions(txnsToUse);
         setLoading(false);
-        await generateQuestions(transaction);
+        await generateQuestions(txnsToUse[0]);
       } else {
         await loadTransactions();
       }
@@ -195,9 +237,230 @@ export default function TransactionCategorizationScreen({
     }
   };
 
+  // Fetch smart suggestion for a transaction
+  const fetchSuggestion = async (transaction: Transaction) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const response = await fetch(`${API_URL}/api/get_categorization_suggestions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          transaction
+        }),
+      });
+
+      const data = await response.json();
+      if (data.hasSuggestion && data.suggestion) {
+        console.log('💡 Got suggestion for', transaction.merchant_name);
+        return data.suggestion as Suggestion;
+      }
+      return null;
+    } catch (error) {
+      console.log('Warning: Failed to fetch suggestion', error);
+      return null;
+    }
+  };
+
+  // Handle accepting a suggestion
+  const handleUseSuggestion = async () => {
+    if (!suggestion) return;
+
+    try {
+      setUsingSuggestion(true);
+      setShowSuggestion(false);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        return;
+      }
+
+      const currentTxn = transactions[currentIndex] || transaction;
+      const isIncomeTransaction = currentTxn.amount < 0;
+
+      // Save the transaction with the suggested categorization
+      const { error } = await supabase
+        .from('categorized_transactions')
+        .upsert({
+          user_id: user.id,
+          source_transaction_id: currentTxn.transaction_id,
+          source_type: 'pdf_upload',
+          merchant_name: currentTxn.merchant_name || currentTxn.name,
+          amount: Math.abs(currentTxn.amount),
+          transaction_date: currentTxn.date,
+          category_id: suggestion.suggestedCategoryId,
+          category_name: suggestion.suggestedCategoryName,
+          business_percent: suggestion.suggestedBusinessPercent,
+          explanation: `Based on previous ${suggestion.suggestedCategoryName} categorization`,
+          tax_deductible: suggestion.suggestedBusinessPercent > 0,
+          user_answers: suggestion.typicalAnswers || {},
+          transaction_type: isIncomeTransaction ? 'income' : 'expense',
+          categorization_source: 'suggestion_accepted'
+        }, {
+          onConflict: 'user_id,source_transaction_id'
+        });
+
+      if (error) {
+        console.error('Error saving transaction:', error);
+        Alert.alert('Error', 'Failed to save transaction');
+        return;
+      }
+
+      // Update merchant pattern
+      try {
+        await fetch(`${API_URL}/api/update_merchant_pattern`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            transaction: currentTxn,
+            categorization: {
+              categoryId: suggestion.suggestedCategoryId,
+              categoryName: suggestion.suggestedCategoryName,
+              businessPercent: suggestion.suggestedBusinessPercent,
+              userAnswers: suggestion.typicalAnswers || {}
+            },
+            categorization_source: 'suggestion_accepted'
+          }),
+        });
+      } catch (patternError) {
+        console.log('Warning: Failed to update merchant pattern', patternError);
+      }
+
+      console.log('✅ Transaction saved using suggestion');
+
+      // Move to next transaction
+      if (transaction) {
+        navigation.goBack();
+      } else {
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < transactions.length) {
+          setCurrentIndex(nextIndex);
+          setSuggestion(null);
+          setShowSuggestion(true);
+          setUsingSuggestion(false);
+          await generateQuestions(transactions[nextIndex]);
+        } else {
+          Alert.alert('Done!', 'All transactions categorized', [
+            { text: 'OK', onPress: () => navigation.goBack() }
+          ]);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error using suggestion:', error);
+      Alert.alert('Error', error.message || 'Failed to save transaction');
+    } finally {
+      setUsingSuggestion(false);
+    }
+  };
+
+  // Handle rejecting suggestion (use normal flow)
+  const handleDifferentThisTime = () => {
+    setShowSuggestion(false);
+  };
+
+  // Handle "Same as Above" - apply the last categorization to current transaction
+  const handleSameAsAbove = async () => {
+    if (!lastCategorization) return;
+
+    try {
+      setProcessing(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in');
+        return;
+      }
+
+      const currentTxn = transactions[currentIndex];
+      const isIncomeTransaction = currentTxn.amount < 0;
+
+      // Save with the same categorization as the previous transaction
+      const { error } = await supabase
+        .from('categorized_transactions')
+        .upsert({
+          user_id: user.id,
+          source_transaction_id: currentTxn.transaction_id,
+          source_type: 'pdf_upload',
+          merchant_name: currentTxn.merchant_name || currentTxn.name,
+          amount: Math.abs(currentTxn.amount),
+          transaction_date: currentTxn.date,
+          category_id: lastCategorization.categoryId,
+          category_name: lastCategorization.categoryName,
+          business_percent: lastCategorization.businessPercent,
+          explanation: lastCategorization.explanation,
+          tax_deductible: lastCategorization.taxDeductible,
+          user_answers: lastCategorization.answers,
+          transaction_type: isIncomeTransaction ? 'income' : 'expense',
+          categorization_source: 'same_as_above'
+        }, {
+          onConflict: 'user_id,source_transaction_id'
+        });
+
+      if (error) {
+        console.error('Error saving transaction:', error);
+        Alert.alert('Error', 'Failed to save transaction');
+        return;
+      }
+
+      // Update merchant pattern
+      try {
+        await fetch(`${API_URL}/api/update_merchant_pattern`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            transaction: currentTxn,
+            categorization: {
+              categoryId: lastCategorization.categoryId,
+              categoryName: lastCategorization.categoryName,
+              businessPercent: lastCategorization.businessPercent,
+              userAnswers: lastCategorization.answers
+            },
+            categorization_source: 'same_as_above'
+          }),
+        });
+      } catch (patternError) {
+        console.log('Warning: Failed to update merchant pattern', patternError);
+      }
+
+      console.log('✅ Transaction saved using Same as Above');
+
+      // Move to next transaction
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < transactions.length) {
+        setCurrentIndex(nextIndex);
+        setCategorization(null);
+        setAnswers({});
+        setQuestions([]);
+        setShowSuggestion(true);
+        await generateQuestions(transactions[nextIndex]);
+      } else {
+        Alert.alert('Done!', `All ${transactions.length} transactions categorized`, [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      }
+    } catch (error: any) {
+      console.error('Error in Same as Above:', error);
+      Alert.alert('Error', error.message || 'Failed to save transaction');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const generateQuestions = async (transaction: Transaction, previousAnswers: Record<string, string> = {}) => {
     try {
       setProcessing(true);
+
+      // Fetch suggestion for this transaction (only on first load, not follow-ups)
+      if (Object.keys(previousAnswers).length === 0) {
+        const newSuggestion = await fetchSuggestion(transaction);
+        setSuggestion(newSuggestion);
+        setShowSuggestion(true);
+      }
 
       const response = await fetch(`${API_URL}/api/generate_questions`, {
         method: 'POST',
@@ -482,6 +745,39 @@ export default function TransactionCategorizationScreen({
         }
 
         console.log('✅ Transaction saved to database');
+
+        // Store this categorization for "Same as Above" feature
+        setLastCategorization({
+          categoryId: categorization.categoryId,
+          categoryName: categorization.categoryName,
+          businessPercent: categorization.businessPercent,
+          explanation: categorization.explanation,
+          taxDeductible: categorization.taxDeductible,
+          answers: { ...answers }
+        });
+
+        // Update merchant pattern for learning
+        try {
+          await fetch(`${API_URL}/api/update_merchant_pattern`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.id,
+              transaction: transactions[currentIndex],
+              categorization: {
+                categoryId: categorization.categoryId,
+                categoryName: categorization.categoryName,
+                businessPercent: categorization.businessPercent,
+                userAnswers: answers
+              },
+              categorization_source: 'manual'
+            }),
+          });
+          console.log('📊 Merchant pattern updated');
+        } catch (patternError) {
+          console.log('Warning: Failed to update merchant pattern', patternError);
+          // Don't block the flow if pattern update fails
+        }
       }
 
       // If we came from the transaction list, go back to it (list will auto-refresh via useFocusEffect)
@@ -621,9 +917,14 @@ export default function TransactionCategorizationScreen({
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.progress}>
-              {currentIndex + 1} / {transactions.length}
-            </Text>
+            <View style={styles.progressContainer}>
+              {batchMode && batchMerchant && (
+                <Text style={styles.batchLabel}>{batchMerchant}</Text>
+              )}
+              <Text style={styles.progress}>
+                {currentIndex + 1} / {transactions.length}
+              </Text>
+            </View>
           </View>
 
           {/* Q&A Flow */}
@@ -652,6 +953,87 @@ export default function TransactionCategorizationScreen({
                 {isIncome ? '+' : ''}£{Math.abs(currentTransaction?.amount || 0).toFixed(2)}
               </Text>
             </View>
+
+            {/* Same as Above Card - shows after first categorization */}
+            {lastCategorization && currentIndex > 0 && !categorization && (
+              <View style={styles.sameAsAboveCard}>
+                <View style={styles.sameAsAboveContent}>
+                  <View style={styles.sameAsAboveIcon}>
+                    <Ionicons name="copy-outline" size={20} color="#10B981" />
+                  </View>
+                  <View style={styles.sameAsAboveText}>
+                    <Text style={styles.sameAsAboveTitle}>Same as above?</Text>
+                    <Text style={styles.sameAsAboveDesc}>
+                      {lastCategorization.categoryName} ({lastCategorization.businessPercent}% business)
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.sameAsAboveButton}
+                  onPress={handleSameAsAbove}
+                  disabled={processing}
+                >
+                  {processing ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark" size={18} color="#fff" />
+                      <Text style={styles.sameAsAboveButtonText}>Apply</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Smart Suggestion Card */}
+            {suggestion && showSuggestion && !categorization && (
+              <View style={styles.suggestionCard}>
+                <View style={styles.suggestionHeader}>
+                  <View style={styles.suggestionIconContainer}>
+                    <Ionicons name="sparkles" size={20} color="#7C3AED" />
+                  </View>
+                  <Text style={styles.suggestionTitle}>We remember this</Text>
+                </View>
+
+                <Text style={styles.suggestionMessage}>
+                  {suggestion.message}
+                </Text>
+
+                {suggestion.isVariable && (
+                  <View style={styles.suggestionWarning}>
+                    <Ionicons name="information-circle" size={14} color="#F59E0B" />
+                    <Text style={styles.suggestionWarningText}>
+                      You've categorized this merchant differently before
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.suggestionButtons}>
+                  <TouchableOpacity
+                    style={styles.suggestionAcceptButton}
+                    onPress={handleUseSuggestion}
+                    disabled={usingSuggestion}
+                  >
+                    {usingSuggestion ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                        <Text style={styles.suggestionAcceptText}>Use Same Category</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.suggestionRejectButton}
+                    onPress={handleDifferentThisTime}
+                    disabled={usingSuggestion}
+                  >
+                    <Text style={styles.suggestionRejectText}>Different This Time</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Memory Jogger - Search suggestions */}
             <View style={styles.memoryJoggerSection}>
@@ -1124,6 +1506,68 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#9CA3AF',
   },
+  progressContainer: {
+    alignItems: 'center',
+  },
+  batchLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#7C3AED',
+    marginBottom: 2,
+  },
+  // Same as Above styles
+  sameAsAboveCard: {
+    backgroundColor: '#10B98120',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#10B98140',
+  },
+  sameAsAboveContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sameAsAboveIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B98130',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  sameAsAboveText: {
+    flex: 1,
+  },
+  sameAsAboveTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#10B981',
+    marginBottom: 2,
+  },
+  sameAsAboveDesc: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  sameAsAboveButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sameAsAboveButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
   transactionCard: {
     backgroundColor: '#1F1333',
     borderRadius: 16,
@@ -1494,6 +1938,85 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
+  },
+  // Smart Suggestion Card Styles
+  suggestionCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7C3AED30',
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  suggestionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#7C3AED20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  suggestionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  suggestionMessage: {
+    fontSize: 14,
+    color: '#D1D5DB',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  suggestionWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F59E0B15',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  suggestionWarningText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    flex: 1,
+  },
+  suggestionButtons: {
+    gap: 10,
+  },
+  suggestionAcceptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  suggestionAcceptText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  suggestionRejectButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#4B5563',
+  },
+  suggestionRejectText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
