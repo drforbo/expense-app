@@ -29,6 +29,8 @@ interface UserProfile {
   receives_gifted_items: boolean;
   has_international_income: boolean;
   tracking_goal: string;
+  tax_region?: string;
+  student_loan_plan?: string;
 }
 
 const CATEGORY_COLORS = {
@@ -224,24 +226,53 @@ export default function TaxChecklistScreen({ navigation }: any) {
       dueDate: taxDeadline.toISOString(),
     });
 
-    // Set aside money - calculate based on income
+    // Set aside money - CONSERVATIVE calculation based on income
+    // Uses higher Scottish rates if applicable, plus 5% buffer
     const monthlyIncome = userProfile?.monthly_income || 0;
     const yearlyIncome = monthlyIncome * 12;
-    let taxBand = '20%';
-    let estimatedTax = yearlyIncome * 0.2;
+    const taxRegion = userProfile?.tax_region || 'england';
+    const isScotland = taxRegion === 'scotland';
 
-    if (yearlyIncome > 50270) {
-      taxBand = '40%';
-      estimatedTax = (50270 - 12570) * 0.2 + (yearlyIncome - 50270) * 0.4;
+    // Use higher Scottish rates for conservative estimate
+    const basicRate = isScotland ? 0.21 : 0.20;
+    const higherRate = isScotland ? 0.42 : 0.40;
+
+    let taxBand = isScotland ? '21%' : '20%';
+    let estimatedTax = 0;
+
+    if (yearlyIncome > 12570) {
+      if (yearlyIncome > 50270) {
+        taxBand = isScotland ? '42%' : '40%';
+        estimatedTax = (50270 - 12570) * basicRate + (yearlyIncome - 50270) * higherRate;
+      } else {
+        estimatedTax = (yearlyIncome - 12570) * basicRate;
+      }
     }
-    if (yearlyIncome <= 12570) {
-      estimatedTax = 0;
+
+    // Add student loan repayments if applicable
+    const studentLoan = userProfile?.student_loan_plan || 'none';
+    if (studentLoan !== 'none') {
+      let slThreshold = 0;
+      switch (studentLoan) {
+        case 'plan1': slThreshold = 24990; break;
+        case 'plan2': slThreshold = 27295; break;
+        case 'plan4': slThreshold = 31395; break;
+        case 'plan5': slThreshold = 25000; break;
+        case 'postgrad': slThreshold = 21000; break;
+      }
+      if (yearlyIncome > slThreshold) {
+        const slRate = studentLoan === 'postgrad' ? 0.06 : 0.09;
+        estimatedTax += (yearlyIncome - slThreshold) * slRate;
+      }
     }
+
+    // Apply 5% conservative buffer - ensures users save enough
+    estimatedTax = estimatedTax * 1.05;
 
     items.push({
       id: 'set_aside',
       title: 'Set aside money for tax',
-      description: `Based on your income, consider saving ~${Math.round(estimatedTax / 12)}/month for tax (${taxBand} bracket).`,
+      description: `Consider saving ~£${Math.round(estimatedTax / 12)}/month (conservative estimate, actual may be lower).`,
       category: 'preparation',
       completed: false,
       relevantTo: ['all'],

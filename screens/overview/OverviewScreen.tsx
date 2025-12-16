@@ -71,7 +71,33 @@ interface UserProfile {
   employment_is_paye: boolean;
   student_loan_plan: string;
   monthly_income: number;
+  tax_region: string;
 }
+
+// Check if tax profile is complete for showing estimates
+// Uses profile_completed flag - set when user explicitly confirms profile in Profile screen
+const calculateTaxProfileCompleteness = (profile: UserProfile | null): { percentage: number; missingFields: string[]; isComplete: boolean } => {
+  if (!profile) return { percentage: 0, missingFields: ['Profile not loaded'], isComplete: false };
+
+  // Primary check: has user explicitly completed their profile?
+  // This flag is only set when user saves from the Profile screen
+  if (profile.profile_completed) {
+    return { percentage: 100, missingFields: [], isComplete: true };
+  }
+
+  // Profile not completed - they need to review and confirm in Profile screen
+  const missingFields = [
+    'Review and confirm your tax settings in Profile',
+  ];
+
+  // Show 75% - they've done onboarding but haven't confirmed profile
+  // This makes it clear there's one more step
+  return {
+    percentage: 75,
+    missingFields: missingFields,
+    isComplete: false,
+  };
+};
 
 export default function OverviewScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
@@ -295,10 +321,12 @@ export default function OverviewScreen({ navigation }: any) {
       // Fetch user profile with all tax-relevant fields
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('monthly_income, tracking_goal, profile_completed, has_other_employment, employment_income, employment_is_paye, student_loan_plan')
+        .select('monthly_income, tracking_goal, profile_completed, has_other_employment, employment_income, employment_is_paye, student_loan_plan, tax_region')
         .eq('user_id', user.id)
         .single();
 
+      console.log('📊 Profile data:', JSON.stringify(profile, null, 2));
+      console.log('📊 profile_completed value:', profile?.profile_completed);
       setUserProfile(profile);
 
       // Calculate months of data based on transaction dates
@@ -311,11 +339,12 @@ export default function OverviewScreen({ navigation }: any) {
       }
       const hasEnoughData = monthsOfData >= 3;
 
-      // Tax calculation helper function
+      // Tax calculation helper function - CONSERVATIVE estimates (intentionally higher)
       const calculateTax = (taxableProfit: number, profile: any) => {
         let tax = 0;
         const personalAllowance = 12570;
         const basicRateLimit = 50270;
+        const taxRegion = profile?.tax_region || 'england';
 
         if (profile?.tracking_goal === 'limited_company') {
           return 0;
@@ -329,36 +358,39 @@ export default function OverviewScreen({ navigation }: any) {
           adjustedAllowance = Math.max(0, personalAllowance - ((totalIncome - 100000) / 2));
         }
 
+        // Scottish tax rates are higher - use these for Scotland
+        const isScotland = taxRegion === 'scotland';
+
         if (profile?.has_other_employment && employmentIncome > 0) {
           if (employmentIncome >= basicRateLimit) {
-            tax = taxableProfit * 0.4;
+            tax = taxableProfit * (isScotland ? 0.42 : 0.4); // Scottish higher rate is 42%
           } else if (employmentIncome > personalAllowance) {
             const roomInBasicBand = basicRateLimit - employmentIncome;
             if (taxableProfit <= roomInBasicBand) {
-              tax = taxableProfit * 0.2;
+              tax = taxableProfit * (isScotland ? 0.21 : 0.2); // Scottish basic rate is 21%
             } else {
-              tax = (roomInBasicBand * 0.2) + ((taxableProfit - roomInBasicBand) * 0.4);
+              tax = (roomInBasicBand * (isScotland ? 0.21 : 0.2)) + ((taxableProfit - roomInBasicBand) * (isScotland ? 0.42 : 0.4));
             }
           } else {
             const unusedAllowance = personalAllowance - employmentIncome;
             const taxableAfterAllowance = Math.max(0, taxableProfit - unusedAllowance);
             if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
-              tax = taxableAfterAllowance * 0.2;
+              tax = taxableAfterAllowance * (isScotland ? 0.21 : 0.2);
             } else {
               const basicRatePortion = basicRateLimit - personalAllowance;
               const higherRatePortion = taxableAfterAllowance - basicRatePortion;
-              tax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+              tax = (basicRatePortion * (isScotland ? 0.21 : 0.2)) + (higherRatePortion * (isScotland ? 0.42 : 0.4));
             }
           }
         } else {
           if (taxableProfit > adjustedAllowance) {
             const taxableAfterAllowance = taxableProfit - adjustedAllowance;
             if (taxableAfterAllowance <= (basicRateLimit - personalAllowance)) {
-              tax = taxableAfterAllowance * 0.2;
+              tax = taxableAfterAllowance * (isScotland ? 0.21 : 0.2);
             } else {
               const basicRatePortion = basicRateLimit - personalAllowance;
               const higherRatePortion = taxableAfterAllowance - basicRatePortion;
-              tax = (basicRatePortion * 0.2) + (higherRatePortion * 0.4);
+              tax = (basicRatePortion * (isScotland ? 0.21 : 0.2)) + (higherRatePortion * (isScotland ? 0.42 : 0.4));
             }
           }
         }
@@ -372,7 +404,7 @@ export default function OverviewScreen({ navigation }: any) {
           }
         }
 
-        // Student loan
+        // Student loan - includes Plan 5
         if (profile?.student_loan_plan && profile.student_loan_plan !== 'none') {
           const totalIncomeForSL = taxableProfit + employmentIncome;
           let slThreshold = 0;
@@ -382,6 +414,7 @@ export default function OverviewScreen({ navigation }: any) {
             case 'plan1': slThreshold = 22015; break;
             case 'plan2': slThreshold = 27295; break;
             case 'plan4': slThreshold = 27660; break;
+            case 'plan5': slThreshold = 25000; break; // Plan 5 (2023+)
             case 'postgrad': slThreshold = 21000; slRate = 0.06; break;
           }
 
@@ -393,6 +426,10 @@ export default function OverviewScreen({ navigation }: any) {
             }
           }
         }
+
+        // Apply 5% conservative buffer - ensures users save enough
+        // Better to overestimate than leave them short at tax time
+        tax = tax * 1.05;
 
         return tax;
       };
@@ -567,23 +604,6 @@ export default function OverviewScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Completion Prompt */}
-        {userProfile && !userProfile.profile_completed && userProfile.tracking_goal !== 'limited_company' && (
-          <TouchableOpacity
-            style={styles.profilePromptCard}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <View style={styles.profilePromptIcon}>
-              <Ionicons name="person-circle" size={24} color="#7C3AED" />
-            </View>
-            <View style={styles.profilePromptText}>
-              <Text style={styles.profilePromptTitle}>Complete your profile</Text>
-              <Text style={styles.profilePromptSubtitle}>Get a more accurate tax estimate</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-        )}
-
         {/* Tax Estimate Card - Different for Limited Company */}
         {userProfile?.tracking_goal === 'limited_company' ? (
           <View style={styles.limitedCompanyCard}>
@@ -602,96 +622,149 @@ export default function OverviewScreen({ navigation }: any) {
               <Text style={styles.comingSoonText}>Coming soon to bopp</Text>
             </View>
           </View>
-        ) : (
-          <>
-            {/* Estimated Tax Card - Based on Onboarding */}
-            <View style={styles.taxCard}>
-              <View style={styles.taxHeader}>
-                <View style={styles.taxIconContainer}>
-                  <Ionicons name="calculator" size={24} color="#F59E0B" />
+        ) : (() => {
+          const profileCompleteness = calculateTaxProfileCompleteness(userProfile);
+
+          return profileCompleteness.isComplete ? (
+            <>
+              {/* Estimated Tax Card - Based on Onboarding */}
+              <View style={styles.taxCard}>
+                <View style={styles.taxHeader}>
+                  <View style={styles.taxIconContainer}>
+                    <Ionicons name="calculator" size={24} color="#F59E0B" />
+                  </View>
+                  <Text style={styles.taxLabel}>
+                    {userProfile?.has_other_employment && userProfile?.employment_is_paye
+                      ? 'Estimated Additional Tax'
+                      : 'Estimated Annual Tax'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.infoButton}
+                    onPress={() => setShowEstimateInfo(true)}
+                  >
+                    <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.taxLabel}>
-                  {userProfile?.has_other_employment && userProfile?.employment_is_paye
-                    ? 'Estimated Additional Tax'
-                    : 'Estimated Annual Tax'}
+                <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
+                <Text style={styles.taxNote}>
+                  Based on your expected monthly income of {formatCurrency(userProfile?.monthly_income || 0)}
                 </Text>
-                <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => setShowEstimateInfo(true)}
-                >
-                  <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
-              <Text style={styles.taxNote}>
-                Based on your expected monthly income of {formatCurrency(userProfile?.monthly_income || 0)}
-              </Text>
-              {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
-                <View style={styles.payeInfoContainer}>
-                  <View style={styles.payeInfoRow}>
-                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                    <Text style={styles.payeInfoText}>
-                      Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
+                {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
+                  <View style={styles.payeInfoContainer}>
+                    <View style={styles.payeInfoRow}>
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      <Text style={styles.payeInfoText}>
+                        Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
+                      </Text>
+                    </View>
+                    <Text style={styles.payeInfoDetail}>
+                      This estimate is only for the additional tax you'll owe on your side hustle profits via Self Assessment
                     </Text>
                   </View>
-                  <Text style={styles.payeInfoDetail}>
-                    This estimate is only for the additional tax you'll owe on your side hustle profits via Self Assessment
-                  </Text>
-                </View>
-              )}
-              {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
-                <View style={styles.taxInfoRow}>
-                  <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
-                  <Text style={styles.taxInfoText}>
-                    Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
-                  </Text>
-                </View>
-              )}
-            </View>
+                )}
+                {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
+                  <View style={styles.taxInfoRow}>
+                    <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
+                    <Text style={styles.taxInfoText}>
+                      Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
+                    </Text>
+                  </View>
+                )}
+              </View>
 
-            {/* Running Total Tax Card - Based on Actual Transactions */}
-            <View style={styles.runningTaxCard}>
-              <View style={styles.taxHeader}>
-                <View style={[styles.taxIconContainer, { backgroundColor: '#10B98120' }]}>
-                  <Ionicons name="trending-up" size={24} color="#10B981" />
+              {/* Running Total Tax Card - Based on Actual Transactions */}
+              <View style={styles.runningTaxCard}>
+                <View style={styles.taxHeader}>
+                  <View style={[styles.taxIconContainer, { backgroundColor: '#10B98120' }]}>
+                    <Ionicons name="trending-up" size={24} color="#10B981" />
+                  </View>
+                  <View style={styles.runningTaxLabelContainer}>
+                    <Text style={styles.taxLabel}>Tax on Tracked Income</Text>
+                    <Text style={styles.runningTaxSubLabel}>
+                      {summary.monthsOfData > 0 ? `${summary.monthsOfData} month${summary.monthsOfData !== 1 ? 's' : ''} of data` : 'No data yet'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.runningTaxLabelContainer}>
-                  <Text style={styles.taxLabel}>Tax on Tracked Income</Text>
-                  <Text style={styles.runningTaxSubLabel}>
-                    {summary.monthsOfData > 0 ? `${summary.monthsOfData} month${summary.monthsOfData !== 1 ? 's' : ''} of data` : 'No data yet'}
+                <Text style={[styles.taxAmount, { color: '#10B981' }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
+                <Text style={styles.taxNote}>
+                  Tax Year {summary.taxYear} • Based on {formatCurrency(Math.max(0, (summary.businessIncome + summary.giftedItemsTotal) - summary.businessExpenses))} taxable profit
+                </Text>
+                <View style={styles.taxBreakdownRow}>
+                  <Text style={styles.taxBreakdownItem}>
+                    Income: {formatCurrency(summary.businessIncome + summary.giftedItemsTotal)}
                   </Text>
+                  <Text style={styles.taxBreakdownItem}>
+                    Expenses: {formatCurrency(summary.businessExpenses)}
+                  </Text>
+                </View>
+                {(summary.businessIncome + summary.giftedItemsTotal) === 0 && (
+                  <View style={styles.noDataHint}>
+                    <Ionicons name="bulb-outline" size={14} color="#6B7280" />
+                    <Text style={styles.noDataHintText}>
+                      Start categorizing income transactions to see your actual tax liability
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.disclaimerContainer}>
+                <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+                <Text style={styles.disclaimerText}>
+                  These are estimates only, not financial advice. Consult an accountant for accurate figures.
+                </Text>
+              </View>
+            </>
+          ) : (
+            /* Profile Incomplete - Show completion card instead of estimates */
+            <TouchableOpacity
+              style={styles.profileIncompleteCard}
+              onPress={() => navigation.navigate('Profile')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.profileIncompleteHeader}>
+                <View style={styles.profileIncompleteIconContainer}>
+                  <Ionicons name="calculator-outline" size={28} color="#7C3AED" />
+                </View>
+                <View style={styles.profileIncompleteHeaderText}>
+                  <Text style={styles.profileIncompleteTitle}>Complete your profile</Text>
+                  <Text style={styles.profileIncompleteSubtitle}>to see your tax estimate</Text>
                 </View>
               </View>
-              <Text style={[styles.taxAmount, { color: '#10B981' }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
-              <Text style={styles.taxNote}>
-                Tax Year {summary.taxYear} • Based on {formatCurrency(Math.max(0, (summary.businessIncome + summary.giftedItemsTotal) - summary.businessExpenses))} taxable profit
-              </Text>
-              <View style={styles.taxBreakdownRow}>
-                <Text style={styles.taxBreakdownItem}>
-                  Income: {formatCurrency(summary.businessIncome + summary.giftedItemsTotal)}
-                </Text>
-                <Text style={styles.taxBreakdownItem}>
-                  Expenses: {formatCurrency(summary.businessExpenses)}
-                </Text>
-              </View>
-              {(summary.businessIncome + summary.giftedItemsTotal) === 0 && (
-                <View style={styles.noDataHint}>
-                  <Ionicons name="bulb-outline" size={14} color="#6B7280" />
-                  <Text style={styles.noDataHintText}>
-                    Start categorizing income transactions to see your actual tax liability
-                  </Text>
-                </View>
-              )}
-            </View>
 
-            <View style={styles.disclaimerContainer}>
-              <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
-              <Text style={styles.disclaimerText}>
-                These are estimates only, not financial advice. Consult an accountant for accurate figures.
-              </Text>
-            </View>
-          </>
-        )}
+              {/* Progress Bar */}
+              <View style={styles.profileProgressContainer}>
+                <View style={styles.profileProgressHeader}>
+                  <Text style={styles.profileProgressLabel}>Profile completeness</Text>
+                  <Text style={styles.profileProgressPercentage}>{profileCompleteness.percentage}%</Text>
+                </View>
+                <View style={styles.profileProgressBarBg}>
+                  <View
+                    style={[
+                      styles.profileProgressBarFill,
+                      { width: `${profileCompleteness.percentage}%` }
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {/* Missing fields */}
+              <View style={styles.missingFieldsContainer}>
+                <Text style={styles.missingFieldsLabel}>Still needed:</Text>
+                {profileCompleteness.missingFields.map((field, index) => (
+                  <View key={index} style={styles.missingFieldItem}>
+                    <Ionicons name="ellipse-outline" size={8} color="#9CA3AF" />
+                    <Text style={styles.missingFieldText}>{field}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.profileIncompleteButton}>
+                <Text style={styles.profileIncompleteButtonText}>Complete Profile</Text>
+                <Ionicons name="arrow-forward" size={18} color="#fff" />
+              </View>
+            </TouchableOpacity>
+          );
+        })()}
 
         {/* Income Section - Always shown */}
         <Text style={styles.sectionTitle}>Income</Text>
@@ -996,7 +1069,7 @@ export default function OverviewScreen({ navigation }: any) {
               The data you are about to export is provided for informational purposes only and should not be considered as professional tax, accounting, or financial advice.
             </Text>
             <Text style={styles.disclaimerBody}>
-              We do not guarantee the accuracy, completeness, or suitability of this information for your tax return or any other purpose.
+              Tax estimates shown in the app are intentionally conservative (higher than may be owed) to ensure you save enough. Your actual tax bill may be lower.
             </Text>
             <Text style={styles.disclaimerBody}>
               You are solely responsible for verifying all information and consulting with a qualified accountant or tax professional before submitting any tax returns.
@@ -1169,13 +1242,13 @@ export default function OverviewScreen({ navigation }: any) {
               It projects your annual tax liability based on this figure, giving you a year-end target to plan for.
             </Text>
             <View style={styles.infoModalHighlight}>
-              <Ionicons name="bulb" size={18} color="#10B981" />
+              <Ionicons name="shield-checkmark" size={18} color="#10B981" />
               <Text style={styles.infoModalHighlightText}>
-                After 3+ months of tracking, the "Tax on Tracked Income" below will become a more accurate reflection of your actual tax position based on real transactions.
+                This estimate is intentionally conservative - we'd rather you save a bit too much than be caught short at tax time. Your actual bill may be lower.
               </Text>
             </View>
             <Text style={styles.infoModalNote}>
-              You can update your expected monthly income in your Profile settings.
+              You can update your expected monthly income and tax settings in your Profile.
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, styles.confirmButton, { marginTop: 16 }]}
@@ -1267,6 +1340,109 @@ const styles = StyleSheet.create({
   profilePromptSubtitle: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+  // Profile Incomplete Card Styles
+  profileIncompleteCard: {
+    backgroundColor: '#1F1333',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#7C3AED40',
+  },
+  profileIncompleteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  profileIncompleteIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#7C3AED20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  profileIncompleteHeaderText: {
+    flex: 1,
+  },
+  profileIncompleteTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  profileIncompleteSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  profileProgressContainer: {
+    marginBottom: 16,
+  },
+  profileProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  profileProgressLabel: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  profileProgressPercentage: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  profileProgressBarBg: {
+    height: 8,
+    backgroundColor: '#2E1A47',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  profileProgressBarFill: {
+    height: '100%',
+    backgroundColor: '#7C3AED',
+    borderRadius: 4,
+  },
+  missingFieldsContainer: {
+    backgroundColor: '#2E1A4780',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 16,
+  },
+  missingFieldsLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  missingFieldItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  missingFieldText: {
+    fontSize: 14,
+    color: '#D1D5DB',
+  },
+  profileIncompleteButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  profileIncompleteButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   limitedCompanyCard: {
     backgroundColor: '#1F1333',

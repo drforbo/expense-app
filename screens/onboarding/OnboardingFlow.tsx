@@ -625,7 +625,7 @@ Ready to get started? Let's make tax simple.`;
             <Text style={styles.featureEmoji}>📊</Text>
             <Text style={styles.featureTitle}>Know Your Numbers</Text>
             <Text style={styles.featureText}>
-              See exactly how much to set aside for tax. No surprises in January.
+              See how much to set aside for tax. We estimate high so you're never caught short.
             </Text>
           </View>
 

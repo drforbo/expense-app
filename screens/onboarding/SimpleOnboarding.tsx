@@ -146,14 +146,12 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           time_commitment: 'full_time', // Default
           monthly_income: monthlyIncome,
           receives_gifted_items: receivesGiftedItems,
-          has_international_income: hasInternationalIncome,
+          has_international_income: false, // Default - can be updated in profile
           tracking_goal: trackingGoal,
           has_other_employment: hasOtherEmployment,
           employment_income: hasOtherEmployment ? employmentIncome : null,
           student_loan_plan: studentLoanPlan,
-          tax_residency_country: taxResidencyCountry,
-          is_digital_nomad: isDigitalNomad,
-          foreign_income_countries: foreignIncomeCountries,
+          profile_completed: false, // Must be set to true via Profile screen
         }, {
           onConflict: 'user_id'
         });

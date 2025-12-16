@@ -57,6 +57,8 @@ interface UserProfile {
   tax_residency_country?: string;
   is_digital_nomad?: boolean;
   foreign_income_countries?: string[];
+  // UK tax region (different income tax bands)
+  tax_region?: string;
 }
 
 type WorkFromHomeOption = 'always' | 'mostly' | 'sometimes' | 'rarely' | 'never' | null;
@@ -320,6 +322,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [employmentIncome, setEmploymentIncome] = useState(30000);
   const [employmentIsPaye, setEmploymentIsPaye] = useState(true);
   const [studentLoanPlan, setStudentLoanPlan] = useState('none');
+  const [taxRegion, setTaxRegion] = useState('england');
   const [trackingGoal, setTrackingGoal] = useState('sole_trader');
   const [workType, setWorkType] = useState('content_creation');
   const [customWorkType, setCustomWorkType] = useState('');
@@ -618,24 +621,26 @@ export default function ProfileScreen({ navigation }: any) {
       dueDate: taxDeadline.toISOString(),
     });
 
-    // Set aside money
+    // Set aside money - CONSERVATIVE calculation
     const monthlyIncomeVal = userProfile?.monthly_income || 0;
     const yearlyIncome = monthlyIncomeVal * 12;
-    let taxBand = '20%';
-    let estimatedTax = yearlyIncome * 0.2;
+    let estimatedTax = 0;
 
-    if (yearlyIncome > 50270) {
-      taxBand = '40%';
-      estimatedTax = (50270 - 12570) * 0.2 + (yearlyIncome - 50270) * 0.4;
+    if (yearlyIncome > 12570) {
+      if (yearlyIncome > 50270) {
+        estimatedTax = (50270 - 12570) * 0.2 + (yearlyIncome - 50270) * 0.4;
+      } else {
+        estimatedTax = (yearlyIncome - 12570) * 0.2;
+      }
     }
-    if (yearlyIncome <= 12570) {
-      estimatedTax = 0;
-    }
+
+    // Apply 5% conservative buffer
+    estimatedTax = estimatedTax * 1.05;
 
     items.push({
       id: 'set_aside',
       title: 'Set aside money for tax',
-      description: `Based on your income, consider saving ~${Math.round(estimatedTax / 12)}/month for tax (${taxBand} bracket).`,
+      description: `Consider saving ~£${Math.round(estimatedTax / 12)}/month (conservative estimate, actual may be lower).`,
       category: 'preparation',
       completed: false,
       relevantTo: ['all'],
@@ -740,6 +745,7 @@ export default function ProfileScreen({ navigation }: any) {
       setEmploymentIncome(data.employment_income || 30000);
       setEmploymentIsPaye(data.employment_is_paye !== false); // Default to true
       setStudentLoanPlan(data.student_loan_plan || 'none');
+      setTaxRegion(data.tax_region || 'england');
       setTrackingGoal(data.tracking_goal || 'sole_trader');
       setWorkType(data.work_type || 'content_creation');
       setCustomWorkType(data.custom_work_type || '');
@@ -819,6 +825,7 @@ export default function ProfileScreen({ navigation }: any) {
           employment_income: hasOtherEmployment ? employmentIncome : null,
           employment_is_paye: hasOtherEmployment ? employmentIsPaye : null,
           student_loan_plan: studentLoanPlan,
+          tax_region: taxRegion,
           tracking_goal: trackingGoal,
           work_type: workType,
           custom_work_type: workType === 'other' ? customWorkType : null,
@@ -875,9 +882,20 @@ export default function ProfileScreen({ navigation }: any) {
       plan1: 'Plan 1',
       plan2: 'Plan 2',
       plan4: 'Plan 4 (Scotland)',
+      plan5: 'Plan 5',
       postgrad: 'Postgraduate',
     };
     return labels[plan] || plan;
+  };
+
+  const getTaxRegionLabel = (region: string) => {
+    const labels: Record<string, string> = {
+      england: 'England',
+      wales: 'Wales',
+      scotland: 'Scotland',
+      northern_ireland: 'Northern Ireland',
+    };
+    return labels[region] || region;
   };
 
   const getWorkFromHomeLabel = (option: WorkFromHomeOption) => {
@@ -1368,8 +1386,9 @@ export default function ProfileScreen({ navigation }: any) {
               {[
                 { value: 'none', label: 'No student loan' },
                 { value: 'plan1', label: 'Plan 1 (started before 2012)' },
-                { value: 'plan2', label: 'Plan 2 (started 2012 or later)' },
+                { value: 'plan2', label: 'Plan 2 (started 2012-2023)' },
                 { value: 'plan4', label: 'Plan 4 (Scotland)' },
+                { value: 'plan5', label: 'Plan 5 (started 2023 or later)' },
                 { value: 'postgrad', label: 'Postgraduate loan' },
               ].map((option) => (
                 <TouchableOpacity
@@ -1383,6 +1402,39 @@ export default function ProfileScreen({ navigation }: any) {
                   {studentLoanPlan === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
                 </TouchableOpacity>
               ))}
+            </View>
+          </>
+        );
+
+      case 'taxRegion':
+        return (
+          <>
+            <Text style={styles.modalTitle}>Tax Region</Text>
+            <Text style={styles.modalSubtitle}>Where do you live for tax purposes?</Text>
+            <View style={styles.optionsList}>
+              {[
+                { value: 'england', label: 'England' },
+                { value: 'wales', label: 'Wales' },
+                { value: 'scotland', label: 'Scotland' },
+                { value: 'northern_ireland', label: 'Northern Ireland' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.optionItem, taxRegion === option.value && styles.optionItemActive]}
+                  onPress={() => setTaxRegion(option.value)}
+                >
+                  <Text style={[styles.optionText, taxRegion === option.value && styles.optionTextActive]}>
+                    {option.label}
+                  </Text>
+                  {taxRegion === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.taxDisclaimerBox}>
+              <Ionicons name="information-circle-outline" size={18} color="#6B7280" />
+              <Text style={styles.taxDisclaimerText}>
+                Tax estimates are intentionally conservative based on student loan and tax region only. Other factors (pension contributions, marriage allowance, etc.) could reduce your actual liability - you may owe less than shown.
+              </Text>
             </View>
           </>
         );
@@ -1895,6 +1947,19 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Student Loan</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getStudentLoanLabel(studentLoanPlan)}</Text>
+              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => openEditModal('taxRegion')}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.infoLabel}>Tax Region</Text>
+            <View style={styles.infoValueRow}>
+              <Text style={styles.infoValue}>{getTaxRegionLabel(taxRegion)}</Text>
               <Ionicons name="chevron-forward" size={16} color="#6B7280" />
             </View>
           </TouchableOpacity>
@@ -3278,5 +3343,20 @@ const styles = StyleSheet.create({
   countryPickerNameSelected: {
     color: '#7C3AED',
     fontWeight: '600',
+  },
+  taxDisclaimerBox: {
+    flexDirection: 'row',
+    backgroundColor: '#2E1A47',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  taxDisclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#9CA3AF',
+    lineHeight: 18,
   },
 });
