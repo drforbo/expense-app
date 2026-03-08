@@ -1,70 +1,69 @@
-// Bopp Design System - Duolingo Energy
+// Bopp Design System v2 — Clash Display + Satoshi
 export const colors = {
-  // Primary palette
-  deepPurple: '#2E1A47',
-  darkPurple: '#1F0E35',
-  electricViolet: '#7C3AED',
-  lightViolet: '#9D50ED',
-  coral: '#FF6B6B',
-  
-  // Neutrals
-  white: '#FFFFFF',
-  lightGray: '#F5F5F5',
-  mediumGray: '#9CA3AF',
-  darkGray: '#374151',
-  
-  // Functional
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  
-  // Glass effects
-  glassWhite: 'rgba(255, 255, 255, 0.1)',
-  glassBorder: 'rgba(255, 255, 255, 0.2)',
+  // Brand
+  parchment: '#F5F2EC',   // app background
+  ink:       '#0D0D0D',   // primary text, buttons
+  volt:      '#E8FF47',   // primary accent — every positive action
+  ember:     '#FF4D1C',   // urgency, deadlines, CTAs
+  mist:      '#C8C4BA',   // dividers, disabled, captions
+  dark:      '#141414',   // dark cards
+
+  // UI
+  white:     '#FFFFFF',
+  midGrey:   '#6B6866',
+  card:      '#FFFFFF',
+
+  // Tags
+  tagVoltBg:    '#F5FFB0',
+  tagVoltText:  '#5A6800',
+  tagEmberBg:   '#FFE4DC',
+  tagEmberText: '#C02800',
+  tagBlueBg:    '#E0ECFF',
+  tagBlueText:  '#1A3A8C',
+  tagGreenBg:   '#D4F5E8',
+  tagGreenText: '#0A6040',
+  tagInkBg:     '#0D0D0D',
+  tagInkText:   '#E8FF47',
 };
 
 export const fonts = {
-  display: 'Outfit_800ExtraBold',
-  body: 'Inter_500Medium',
+  display:      'ClashDisplay-Bold',       // headings, logo, numbers
+  displaySemi:  'ClashDisplay-SemiBold',   // subheadings, labels
+  displayMed:   'ClashDisplay-Medium',     // UI labels
+  body:         'Satoshi-Regular',         // body text, captions
+  bodyBold:     'Satoshi-Bold',            // body emphasis
 };
 
 export const spacing = {
-  xs: 8,
-  sm: 12,
-  md: 16,
-  lg: 24,
-  xl: 32,
+  xs:  8,
+  sm:  12,
+  md:  16,
+  lg:  24,
+  xl:  32,
   xxl: 48,
 };
 
 export const borderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 20,
-  xl: 30,
+  xs:   2,
+  sm:   4,
+  md:   8,
+  lg:   12,
   full: 9999,
 };
 
 export const shadows = {
   sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowColor: '#0D0D0D',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
   },
   md: {
-    shadowColor: colors.electricViolet,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  lg: {
-    shadowColor: colors.electricViolet,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
-    elevation: 12,
+    shadowColor: '#0D0D0D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
 };

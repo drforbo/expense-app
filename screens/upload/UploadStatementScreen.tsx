@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -117,7 +118,7 @@ export default function UploadStatementScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Bank Statements</Text>
         <View style={{ width: 40 }} />
@@ -133,7 +134,7 @@ export default function UploadStatementScreen({ navigation }: any) {
         >
           {isUploading ? (
             <View style={styles.uploadingContent}>
-              <ActivityIndicator color="#fff" size="large" />
+              <ActivityIndicator color={colors.white} size="large" />
               <Text style={styles.uploadingText}>{getUploadStatusText()}</Text>
               <Text style={styles.uploadingSubtext}>{uploadState.filename}</Text>
               <Text style={styles.uploadingHint}>You can navigate away</Text>
@@ -141,7 +142,7 @@ export default function UploadStatementScreen({ navigation }: any) {
           ) : (
             <>
               <View style={styles.uploadIconContainer}>
-                <Ionicons name="cloud-upload" size={40} color="#fff" />
+                <Ionicons name="cloud-upload" size={40} color={colors.white} />
               </View>
               <Text style={styles.uploadText}>Upload PDF Statement</Text>
               <Text style={styles.uploadSubtext}>Supports most UK bank formats</Text>
@@ -151,7 +152,7 @@ export default function UploadStatementScreen({ navigation }: any) {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#7C3AED" />
+          <Ionicons name="information-circle" size={20} color={colors.tagBlueText} />
           <Text style={styles.infoText}>
             Download your bank statement as PDF from your banking app or website, then upload it here.
           </Text>
@@ -162,11 +163,11 @@ export default function UploadStatementScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color="#7C3AED" />
+            <ActivityIndicator color={colors.ember} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color="#4B5563" />
+            <Ionicons name="document-outline" size={48} color={colors.midGrey} />
             <Text style={styles.emptyText}>No statements uploaded yet</Text>
             <Text style={styles.emptySubtext}>Upload your first bank statement to get started</Text>
           </View>
@@ -174,7 +175,7 @@ export default function UploadStatementScreen({ navigation }: any) {
           statements.map((stmt) => (
             <View key={stmt.id} style={styles.statementCard}>
               <View style={styles.statementIcon}>
-                <Ionicons name="document-text" size={24} color="#7C3AED" />
+                <Ionicons name="document-text" size={24} color={colors.ember} />
               </View>
               <View style={styles.statementInfo}>
                 <Text style={styles.statementName} numberOfLines={1}>{stmt.filename}</Text>
@@ -184,7 +185,7 @@ export default function UploadStatementScreen({ navigation }: any) {
               </View>
               <View style={[
                 styles.statusBadge,
-                { backgroundColor: stmt.status === 'completed' ? '#10B981' : '#F59E0B' }
+                { backgroundColor: stmt.status === 'completed' ? colors.tagGreenText : colors.ember }
               ]}>
                 <Text style={styles.statusText}>
                   {stmt.status === 'completed' ? 'Done' : 'Processing'}
@@ -201,107 +202,112 @@ export default function UploadStatementScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.mist,
+    backgroundColor: colors.white,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.mist,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.ink,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: spacing.lg,
   },
   uploadButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 20,
-    padding: 32,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    padding: spacing.xl,
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    marginBottom: spacing.lg,
+    ...shadows.md,
   },
   uploadButtonDisabled: {
-    backgroundColor: '#5B21B6',
+    backgroundColor: colors.mist,
   },
   uploadIconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   uploadText: {
+    fontFamily: fonts.display,
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    color: colors.white,
     marginBottom: 4,
   },
   uploadSubtext: {
+    fontFamily: fonts.body,
     fontSize: 14,
     color: 'rgba(255,255,255,0.7)',
   },
   uploadingContent: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: spacing.lg,
   },
   uploadingText: {
+    fontFamily: fonts.bodyBold,
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 16,
+    color: colors.white,
+    marginTop: spacing.md,
   },
   uploadingSubtext: {
+    fontFamily: fonts.body,
     fontSize: 14,
     color: 'rgba(255,255,255,0.7)',
     marginTop: 4,
   },
   uploadingHint: {
+    fontFamily: fonts.body,
     fontSize: 12,
     color: 'rgba(255,255,255,0.5)',
-    marginTop: 12,
+    marginTop: spacing.sm,
     fontStyle: 'italic',
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.tagBlueBg,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     alignItems: 'flex-start',
     gap: 12,
   },
   infoText: {
     flex: 1,
+    fontFamily: fonts.body,
     fontSize: 14,
-    color: '#A78BFA',
+    color: colors.tagBlueText,
     lineHeight: 20,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 16,
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.ink,
+    marginBottom: spacing.md,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   loadingContainer: {
     padding: 40,
@@ -310,17 +316,19 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     padding: 40,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    ...shadows.sm,
   },
   emptyText: {
-    color: '#9CA3AF',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
     fontSize: 16,
-    fontWeight: '500',
-    marginTop: 16,
+    marginTop: spacing.md,
   },
   emptySubtext: {
-    color: '#6B7280',
+    fontFamily: fonts.body,
+    color: colors.mist,
     fontSize: 14,
     marginTop: 4,
     textAlign: 'center',
@@ -328,16 +336,17 @@ const styles = StyleSheet.create({
   statementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
   },
   statementIcon: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.tagEmberBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -346,24 +355,25 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   statementName: {
+    fontFamily: fonts.bodyBold,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    color: colors.ink,
     marginBottom: 4,
   },
   statementMeta: {
+    fontFamily: fonts.body,
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   statusBadge: {
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   statusText: {
+    fontFamily: fonts.bodyBold,
     fontSize: 11,
-    fontWeight: '600',
-    color: '#fff',
+    color: colors.white,
     textTransform: 'uppercase',
   },
 });

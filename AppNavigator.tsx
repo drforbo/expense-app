@@ -4,10 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './lib/supabase';
+import { colors } from './lib/theme';
 import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
+import SettingsScreen from './screens/settings/SettingsScreen';
 import TransactionListScreen from './screens/transactions/TransactionListScreen';
 import TransactionCategorizationScreen from './screens/transactions/TransactionCategorizationScreen';
 import QualifyTransactionListScreen from './screens/transactions/QualifyTransactionListScreen';
@@ -16,10 +17,8 @@ import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
 import EditTransactionScreen from './screens/transactions/EditTransactionScreen';
 import CategorizedTransactionsScreen from './screens/transactions/CategorizedTransactionsScreen';
 import SubscriptionReviewScreen from './screens/transactions/SubscriptionReviewScreen';
-import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
-import OverviewScreen from './screens/overview/OverviewScreen';
-import TaxChecklistScreen from './screens/overview/TaxChecklistScreen';
+import TaxEstimateScreen from './screens/tax/TaxEstimateScreen';
 import ProfileScreen from './screens/profile/ProfileScreen';
 
 type RootStackParamList = {
@@ -34,15 +33,13 @@ type RootStackParamList = {
   AddEvidence: { transaction: any };
   EditTransaction: { transactionId: string; transactionType: string };
   CategorizedTransactions: { filterType?: string };
-  GiftedTracker: undefined;
-  TaxChecklist: undefined;
+  TaxEstimate: undefined;
   Profile: undefined;
 };
 
 type TabParamList = {
-  Actions: undefined;
-  Overview: undefined;
-  Profile: undefined;
+  Transactions: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -54,41 +51,26 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#7C3AED',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: colors.orange,
+        tabBarInactiveTintColor: colors.midGrey,
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
       <Tab.Screen
-        name="Actions"
+        name="Transactions"
         component={DashboardScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons name="flash" size={size} color={color} />
-            </View>
+            <Ionicons name="flash" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
-        name="Overview"
-        component={OverviewScreen}
+        name="Settings"
+        component={SettingsScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons name="pie-chart" size={size} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons name="person" size={size} color={color} />
-            </View>
+            <Ionicons name="person-circle-outline" size={size} color={color} />
           ),
         }}
       />
@@ -103,14 +85,9 @@ export default function AppNavigator() {
   useEffect(() => {
     checkOnboardingStatus();
 
-    // Listen for auth state changes (e.g., logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
-
       if (event === 'SIGNED_OUT') {
-        console.log('User signed out, resetting to onboarding');
         setIsOnboarded(false);
-        // Reset navigation to Onboarding screen
         if (navigationRef.current) {
           navigationRef.current.reset({
             index: 0,
@@ -120,15 +97,22 @@ export default function AppNavigator() {
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkOnboardingStatus = async () => {
     try {
-      const completed = await AsyncStorage.getItem('onboarding_completed');
-      setIsOnboarded(completed === 'true');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setIsOnboarded(false);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .single();
+      setIsOnboarded(!!profile);
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       setIsOnboarded(false);
@@ -137,9 +121,7 @@ export default function AppNavigator() {
 
   const handleOnboardingComplete = async () => {
     try {
-      await AsyncStorage.setItem('onboarding_completed', 'true');
       setIsOnboarded(true);
-      // Navigate to MainTabs after onboarding is complete
       if (navigationRef.current) {
         navigationRef.current.reset({
           index: 0,
@@ -147,14 +129,11 @@ export default function AppNavigator() {
         });
       }
     } catch (error) {
-      console.error('Error saving onboarding status:', error);
+      console.error('Error completing onboarding:', error);
     }
   };
 
-  if (isOnboarded === null) {
-    // Loading state - you can add a splash screen here later
-    return null;
-  }
+  if (isOnboarded === null) return null;
 
   return (
     <NavigationContainer ref={navigationRef}>
@@ -162,70 +141,25 @@ export default function AppNavigator() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: '#2E1A47' },
+          contentStyle: { backgroundColor: colors.cream },
         }}
         initialRouteName={isOnboarded ? 'MainTabs' : 'Onboarding'}
       >
         <Stack.Screen name="Onboarding">
-          {(props) => (
-            <SimpleOnboarding
-              onComplete={handleOnboardingComplete}
-            />
-          )}
+          {() => <SimpleOnboarding onComplete={handleOnboardingComplete} />}
         </Stack.Screen>
-        <Stack.Screen
-          name="MainTabs"
-          component={MainTabs}
-          options={{ animation: 'fade' }}
-        />
-        <Stack.Screen
-          name="TransactionList"
-          component={TransactionListScreen}
-        />
-        <Stack.Screen
-          name="TransactionCategorization"
-          component={TransactionCategorizationScreen}
-        />
-        <Stack.Screen
-          name="QualifyTransactionList"
-          component={QualifyTransactionListScreen}
-        />
-        <Stack.Screen
-          name="QualifyTransactions"
-          component={QualifyTransactionsScreen}
-        />
-        <Stack.Screen
-          name="AddEvidence"
-          component={AddEvidenceScreen}
-        />
-        <Stack.Screen
-          name="GiftedTracker"
-          component={GiftedTrackerScreen}
-        />
-        <Stack.Screen
-          name="UploadStatement"
-          component={UploadStatementScreen}
-        />
-        <Stack.Screen
-          name="TaxChecklist"
-          component={TaxChecklistScreen}
-        />
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-        />
-        <Stack.Screen
-          name="EditTransaction"
-          component={EditTransactionScreen}
-        />
-        <Stack.Screen
-          name="CategorizedTransactions"
-          component={CategorizedTransactionsScreen}
-        />
-        <Stack.Screen
-          name="SubscriptionReview"
-          component={SubscriptionReviewScreen}
-        />
+        <Stack.Screen name="MainTabs" component={MainTabs} options={{ animation: 'fade' }} />
+        <Stack.Screen name="UploadStatement" component={UploadStatementScreen} />
+        <Stack.Screen name="TransactionList" component={TransactionListScreen} />
+        <Stack.Screen name="TransactionCategorization" component={TransactionCategorizationScreen} />
+        <Stack.Screen name="QualifyTransactionList" component={QualifyTransactionListScreen} />
+        <Stack.Screen name="QualifyTransactions" component={QualifyTransactionsScreen} />
+        <Stack.Screen name="AddEvidence" component={AddEvidenceScreen} />
+        <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
+        <Stack.Screen name="CategorizedTransactions" component={CategorizedTransactionsScreen} />
+        <Stack.Screen name="SubscriptionReview" component={SubscriptionReviewScreen} />
+        <Stack.Screen name="TaxEstimate" component={TaxEstimateScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -233,24 +167,21 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#1F1333',
-    borderTopWidth: 0,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#F0EDE8',
     paddingTop: 8,
     paddingBottom: 28,
     height: 90,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowColor: colors.charcoal,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 10,
   },
   tabLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  tabIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
   },
 });

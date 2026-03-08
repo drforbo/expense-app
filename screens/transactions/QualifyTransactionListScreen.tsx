@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
   id: string;
@@ -95,7 +96,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color={colors.ember} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -106,7 +107,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.ink} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Qualify Transactions</Text>
           <View style={{ width: 24 }} />
@@ -114,7 +115,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
 
         <View style={styles.centerContainer}>
           <View style={styles.emptyStateIcon}>
-            <Ionicons name="shield-checkmark" size={64} color="#10B981" />
+            <Ionicons name="shield-checkmark" size={64} color={colors.tagGreenText} />
           </View>
           <Text style={styles.emptyStateTitle}>All done!</Text>
           <Text style={styles.emptyStateText}>
@@ -136,7 +137,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Qualify Transactions</Text>
         <View style={{ width: 24 }} />
@@ -160,7 +161,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
             activeOpacity={0.7}
           >
             <View style={styles.transactionIcon}>
-              <Ionicons name="receipt-outline" size={24} color="#10B981" />
+              <Ionicons name="receipt-outline" size={24} color={colors.tagGreenText} />
             </View>
 
             <View style={styles.transactionDetails}>
@@ -179,7 +180,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
               <Text style={styles.transactionAmount}>
                 £{Math.abs(transaction.amount).toFixed(2)}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#64748B" />
+              <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
         ))}
@@ -191,33 +192,36 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#2E1A47',
+    padding: spacing.lg,
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.mist,
+    backgroundColor: colors.white,
   },
   headerTitle: {
+    fontFamily: fonts.display,
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    color: colors.ink,
   },
   statsBar: {
-    backgroundColor: '#1F1333',
-    marginHorizontal: 20,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.dark,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     flexDirection: 'row',
     justifyContent: 'center',
   },
@@ -225,35 +229,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
+    fontFamily: fonts.display,
     fontSize: 32,
-    fontWeight: '700',
-    color: '#10B981',
+    color: colors.volt,
     marginBottom: 4,
   },
   statLabel: {
+    fontFamily: fonts.body,
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.mist,
   },
   scrollView: {
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   transactionItem: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    ...shadows.sm,
   },
   transactionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: '#10B98120',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.tagGreenBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -262,18 +268,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   merchantName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.ink,
     marginBottom: 4,
   },
   transactionDate: {
+    fontFamily: fonts.body,
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   categoryName: {
+    fontFamily: fonts.body,
     fontSize: 11,
-    color: '#10B981',
+    color: colors.tagGreenText,
     marginTop: 2,
   },
   transactionRight: {
@@ -282,45 +290,47 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   transactionAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.ink,
   },
   loadingText: {
-    marginTop: 16,
+    fontFamily: fonts.body,
+    marginTop: spacing.md,
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   emptyStateIcon: {
     width: 100,
     height: 100,
-    borderRadius: 50,
-    backgroundColor: '#10B98120',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.tagGreenBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   emptyStateTitle: {
+    fontFamily: fonts.display,
     fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
+    color: colors.ink,
     marginBottom: 8,
   },
   emptyStateText: {
+    fontFamily: fonts.body,
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   button: {
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    padding: 16,
-    paddingHorizontal: 32,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
   },
   buttonText: {
+    fontFamily: fonts.bodyBold,
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    color: colors.white,
   },
 });
