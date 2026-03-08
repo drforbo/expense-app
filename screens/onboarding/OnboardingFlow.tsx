@@ -18,6 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import Markdown from 'react-native-markdown-display';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -41,31 +43,31 @@ type Screen = 'workType' | 'timeCommitment' | 'income' | 'goal' | 'personalizedG
 export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowProps) {
   const [currentScreen, setCurrentScreen] = useState<Screen>('workType');
   const [screenHistory, setScreenHistory] = useState<Screen[]>([]);
-  
+
   const [workType, setWorkType] = useState<string>('');
   const [customWorkType, setCustomWorkType] = useState<string>('');
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [timeCommitment, setTimeCommitment] = useState<string>('');
   const [trackingGoal, setTrackingGoal] = useState<string>('');
-  
+
   // Income question states
   const [incomeQuestionIndex, setIncomeQuestionIndex] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(1000);
   const [receivesGiftedItems, setReceivesGiftedItems] = useState<boolean | null>(null);
   const [hasInternationalIncome, setHasInternationalIncome] = useState<boolean | null>(null);
-  
+
   // Personalized guide states
   const [personalizedGuide, setPersonalizedGuide] = useState('');
   const [guideLoading, setGuideLoading] = useState(false);
   const [guideError, setGuideError] = useState<string | null>(null);
-  
+
   // bopp helps screen loading
   const [boppScreenLoading, setBoppScreenLoading] = useState(false);
-  
+
   // Scroll refs
   const guideScrollRef = useRef<ScrollView>(null);
   const boppScrollRef = useRef<ScrollView>(null);
-  
+
   // Animation refs
   const guideFadeAnim = useRef(new Animated.Value(0)).current;
   const boppFadeAnim = useRef(new Animated.Value(0)).current;
@@ -100,8 +102,6 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       console.log('   hasInternationalIncome:', hasInternationalIncome);
 
       // Call your backend server
-      const API_URL = 'http://192.168.1.129:3000';
-      
       const payload = {
         workType: customWorkType || workType,
         timeCommitment,
@@ -112,36 +112,24 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       };
 
       console.log('📤 FRONTEND - Full payload:', JSON.stringify(payload, null, 2));
-      
-      const response = await fetch(`${API_URL}/api/generate-guide`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate guide');
-      }
-
-      const data = await response.json();
+      const data = await apiPost('/api/generate-guide', payload);
       const generatedGuide = data.guide;
-      
+
       console.log('✅ FRONTEND - Received guide');
 
       // Add artificial delay to show loading state
       setTimeout(() => {
         setPersonalizedGuide(generatedGuide);
         setGuideLoading(false);
-        
+
         // Start fade-in animation
         Animated.timing(guideFadeAnim, {
           toValue: 1,
           duration: 600,
           useNativeDriver: true,
         }).start();
-        
+
         // Scroll to top when guide is loaded
         setTimeout(() => {
           guideScrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -153,7 +141,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingFlowPro
       setGuideError('Unable to generate your personalized guide.');
       setPersonalizedGuide(getGenericGuide());
       setGuideLoading(false);
-      
+
       // Fade in even on error
       Animated.timing(guideFadeAnim, {
         toValue: 1,
@@ -177,7 +165,7 @@ Ready to get started? Let's make tax simple.`;
 
   const handleSelection = (value: string, nextScreen?: Screen) => {
     console.log('Selection:', value, 'Next screen:', nextScreen);
-    
+
     if (currentScreen === 'workType') {
       if (value === 'other') {
         setWorkType(value);
@@ -241,18 +229,18 @@ Ready to get started? Let's make tax simple.`;
     boppFadeAnim.setValue(0); // Reset animation
     setScreenHistory([...screenHistory, currentScreen]);
     setCurrentScreen('howBoppHelps');
-    
+
     // Simulate loading
     setTimeout(() => {
       setBoppScreenLoading(false);
-      
+
       // Start fade-in animation
       Animated.timing(boppFadeAnim, {
         toValue: 1,
         duration: 600,
         useNativeDriver: true,
       }).start();
-      
+
       // Scroll to top when loaded
       setTimeout(() => {
         boppScrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -331,7 +319,7 @@ Ready to get started? Let's make tax simple.`;
       setShowOtherInput(false);
       setCustomWorkType('');
     }
-    
+
     if (previousScreen === 'income') {
       setIncomeQuestionIndex(0);
     }
@@ -340,12 +328,12 @@ Ready to get started? Let's make tax simple.`;
   const getProgressPercentage = () => {
     const screens = ['workType', 'timeCommitment', 'income', 'goal', 'personalizedGuide', 'howBoppHelps'];
     let screenIndex = screens.indexOf(currentScreen);
-    
+
     if (currentScreen === 'income') {
       const subProgress = incomeQuestionIndex / 3;
       return ((screenIndex + subProgress) / screens.length) * 100;
     }
-    
+
     return ((screenIndex + 1) / screens.length) * 100;
   };
 
@@ -356,11 +344,11 @@ Ready to get started? Let's make tax simple.`;
           <Text style={styles.questionText}>
             How much do you earn roughly per month?
           </Text>
-          
+
           <View style={styles.sliderContainer}>
             <Text style={styles.incomeDisplay}>{formatCurrency(monthlyIncome)}</Text>
             <Text style={styles.incomeSubtext}>per month</Text>
-            
+
             <Slider
               style={styles.slider}
               minimumValue={0}
@@ -368,11 +356,11 @@ Ready to get started? Let's make tax simple.`;
               step={100}
               value={monthlyIncome}
               onValueChange={setMonthlyIncome}
-              minimumTrackTintColor="#7C3AED"
-              maximumTrackTintColor="rgba(255,255,255,0.2)"
-              thumbTintColor="#FF6B6B"
+              minimumTrackTintColor={colors.ink}
+              maximumTrackTintColor={colors.mist}
+              thumbTintColor={colors.ember}
             />
-            
+
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabel}>£0</Text>
               <Text style={styles.sliderLabel}>£15k+</Text>
@@ -381,7 +369,7 @@ Ready to get started? Let's make tax simple.`;
 
           <TouchableOpacity style={styles.continueButton} onPress={handleIncomeNext}>
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
         </View>
       );
@@ -393,7 +381,7 @@ Ready to get started? Let's make tax simple.`;
           <Text style={styles.questionText}>
             Do you receive gifted items?
           </Text>
-          
+
           <Text style={styles.questionSubtext}>
             Products or services you receive for free in exchange for content
           </Text>
@@ -439,7 +427,7 @@ Ready to get started? Let's make tax simple.`;
           <Text style={styles.questionText}>
             Do you receive income or gifted items from businesses outside the UK?
           </Text>
-          
+
           <Text style={styles.questionSubtext}>
             Sponsorships, affiliate income, or gifts from international companies
           </Text>
@@ -486,7 +474,7 @@ Ready to get started? Let's make tax simple.`;
     if (guideLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
           <Text style={styles.loadingText}>
             Creating your personalized guide...
           </Text>
@@ -499,7 +487,7 @@ Ready to get started? Let's make tax simple.`;
 
     return (
       <Animated.View style={{ flex: 1, opacity: guideFadeAnim }}>
-        <ScrollView 
+        <ScrollView
           ref={guideScrollRef}
           style={styles.guideScrollView}
           contentContainerStyle={styles.guideScrollContent}
@@ -527,14 +515,14 @@ Ready to get started? Let's make tax simple.`;
 
           <TouchableOpacity style={styles.continueButton} onPress={handleGuideComplete}>
             <Text style={styles.continueButtonText}>How can bopp help?</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.regenerateButton} 
+          <TouchableOpacity
+            style={styles.regenerateButton}
             onPress={() => generatePersonalizedGuide(trackingGoal)}
           >
-            <Ionicons name="refresh" size={16} color="#fff" style={{ marginRight: 8 }} />
+            <Ionicons name="refresh" size={16} color={colors.midGrey} style={{ marginRight: 8 }} />
             <Text style={styles.regenerateButtonText}>Regenerate guide</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -546,7 +534,7 @@ Ready to get started? Let's make tax simple.`;
     if (boppScreenLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
           <Text style={styles.loadingText}>
             Personalizing your experience...
           </Text>
@@ -559,7 +547,7 @@ Ready to get started? Let's make tax simple.`;
 
     return (
       <Animated.View style={{ flex: 1, opacity: boppFadeAnim }}>
-        <ScrollView 
+        <ScrollView
           ref={boppScrollRef}
           style={styles.guideScrollView}
           contentContainerStyle={styles.guideScrollContent}
@@ -577,7 +565,7 @@ Ready to get started? Let's make tax simple.`;
             <Text style={styles.featureEmoji}>✨</Text>
             <Text style={styles.featureTitle}>Personalized for Your Work</Text>
             <Text style={styles.featureText}>
-              {workType === 'content_creation' 
+              {workType === 'content_creation'
                 ? 'We know the difference between a Ring Light and a night out. bopp asks "what did you film?" not boring tax questions.'
                 : 'bopp learns what you do and categorizes expenses automatically - no tax jargon required.'}
             </Text>
@@ -631,7 +619,7 @@ Ready to get started? Let's make tax simple.`;
 
           <View style={styles.highlightBox}>
             <Text style={styles.highlightText}>
-              {monthlyIncome < 2000 
+              {monthlyIncome < 2000
                 ? '⚠️ Creators earning under £2k have been fined up to £1,200 for late filing'
                 : monthlyIncome < 5000
                 ? '⚠️ Creators earning £2-5k have been fined up to £3,000 for incorrect returns'
@@ -641,10 +629,10 @@ Ready to get started? Let's make tax simple.`;
 
           <TouchableOpacity style={styles.continueButton} onPress={handleBoppComplete}>
             <Text style={styles.continueButtonText}>Try bopp</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
 
-          
+
         </ScrollView>
       </Animated.View>
     );
@@ -652,13 +640,13 @@ Ready to get started? Let's make tax simple.`;
 
   const renderScreen = () => {
     console.log('Rendering screen:', currentScreen);
-    
+
     switch (currentScreen) {
       case 'workType':
         return (
           <View style={styles.screenContainer}>
             <Text style={styles.questionText}>What is your hustle?</Text>
-            
+
             {!showOtherInput ? (
               <>
                 <OptionButton
@@ -690,7 +678,7 @@ Ready to get started? Let's make tax simple.`;
                   value={customWorkType}
                   onChangeText={setCustomWorkType}
                   placeholder="e.g., dog walking, consulting"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.midGrey}
                   autoFocus
                   onSubmitEditing={handleOtherSubmit}
                   returnKeyType="done"
@@ -704,7 +692,7 @@ Ready to get started? Let's make tax simple.`;
                   disabled={!customWorkType.trim()}
                 >
                   <Text style={styles.otherSubmitText}>Continue</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#fff" />
+                  <Ionicons name="arrow-forward" size={20} color={colors.white} />
                 </TouchableOpacity>
               </View>
             )}
@@ -780,7 +768,7 @@ Ready to get started? Let's make tax simple.`;
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={goBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.ink} />
           </TouchableOpacity>
         </View>
 
@@ -830,14 +818,14 @@ const OptionButton: React.FC<OptionButtonProps> = ({
     >
       <View style={styles.optionContent}>
         <View style={styles.optionIconContainer}>
-          <Ionicons name={icon} size={24} color="#FF6B6B" />
+          <Ionicons name={icon} size={24} color={colors.ember} />
         </View>
         <View style={styles.optionTextContainer}>
           <Text style={styles.optionText}>{text}</Text>
           {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+      <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
     </TouchableOpacity>
   );
 };
@@ -845,27 +833,28 @@ const OptionButton: React.FC<OptionButtonProps> = ({
 // Markdown styles
 const markdownStyles: any = {
   body: {
-    color: '#FFFFFF',
+    color: colors.ink,
   },
   heading1: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 24,
-    fontWeight: '700' as '700',
+    fontFamily: fonts.display,
     marginTop: 0,
     marginBottom: 16,
   },
   heading2: {
-    color: '#FF6B6B',
+    color: colors.ember,
     fontSize: 18,
-    fontWeight: '700' as '700',
+    fontFamily: fonts.display,
     marginTop: 20,
     marginBottom: 12,
   },
   paragraph: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   bullet_list: {
     marginBottom: 12,
@@ -878,51 +867,54 @@ const markdownStyles: any = {
     marginBottom: 8,
   },
   bullet_list_icon: {
-    color: '#7C3AED',
+    color: colors.ink,
     fontSize: 16,
     marginRight: 8,
   },
   ordered_list_icon: {
-    color: '#7C3AED',
+    color: colors.ink,
     fontSize: 16,
     marginRight: 8,
   },
   bullet_list_content: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 16,
     lineHeight: 24,
     flex: 1,
+    fontFamily: fonts.body,
   },
   ordered_list_content: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 16,
     lineHeight: 24,
     flex: 1,
+    fontFamily: fonts.body,
   },
   strong: {
-    fontWeight: '700' as '700',
-    color: '#FF6B6B',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   em: {
     fontStyle: 'italic' as 'italic',
-    color: '#FFFFFF',
+    color: colors.ink,
   },
   text: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 16,
     lineHeight: 24,
+    fontFamily: fonts.body,
   },
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   backButton: {
     width: 40,
@@ -931,52 +923,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#4B5563',
-    borderRadius: 2,
+    backgroundColor: colors.mist,
+    borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#7C3AED',
-    borderRadius: 2,
+    backgroundColor: colors.ink,
+    borderRadius: borderRadius.xs,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.lg,
     paddingBottom: 40,
   },
   screenContainer: {
-    paddingTop: 20,
+    paddingTop: spacing.lg,
   },
   questionText: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 32,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xl,
     lineHeight: 36,
   },
   questionSubtext: {
     fontSize: 16,
-    color: '#fff',
-    opacity: 0.6,
-    marginBottom: 32,
+    color: colors.midGrey,
+    marginBottom: spacing.xl,
     lineHeight: 24,
+    fontFamily: fonts.body,
   },
   optionButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    ...shadows.sm,
   },
   optionContent: {
     flexDirection: 'row',
@@ -986,63 +979,66 @@ const styles = StyleSheet.create({
   optionIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#2E1A47',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   optionTextContainer: {
     flex: 1,
   },
   optionText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 2,
   },
   optionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   otherInputContainer: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    ...shadows.sm,
   },
   otherLabel: {
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 12,
-    fontWeight: '600',
+    color: colors.ink,
+    marginBottom: spacing.sm,
+    fontFamily: fonts.displaySemi,
   },
   otherInput: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    color: colors.ink,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: colors.ink,
+    fontFamily: fonts.body,
   },
   otherSubmitButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   otherSubmitButtonDisabled: {
-    backgroundColor: '#4B5563',
+    backgroundColor: colors.mist,
     opacity: 0.5,
   },
   otherSubmitText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
   sliderContainer: {
     alignItems: 'center',
@@ -1050,15 +1046,15 @@ const styles = StyleSheet.create({
   },
   incomeDisplay: {
     fontSize: 56,
-    fontWeight: '900',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   incomeSubtext: {
     fontSize: 18,
-    color: '#FFFFFF',
-    opacity: 0.6,
+    color: colors.midGrey,
     marginBottom: 40,
+    fontFamily: fonts.body,
   },
   slider: {
     width: '100%',
@@ -1068,52 +1064,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
   sliderLabel: {
     fontSize: 14,
-    color: '#FFFFFF',
-    opacity: 0.5,
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   continueButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ember,
     paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   continueButtonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 18,
-    fontWeight: '700',
-    marginRight: 8,
+    fontFamily: fonts.display,
+    marginRight: spacing.xs,
   },
   yesNoContainer: {
-    gap: 16,
+    gap: spacing.md,
   },
   yesNoButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingVertical: 24,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    backgroundColor: colors.white,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
     borderWidth: 2,
     borderColor: 'transparent',
+    ...shadows.sm,
   },
   yesNoButtonSelected: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#FF6B6B',
+    backgroundColor: colors.ink,
+    borderColor: colors.ember,
   },
   yesNoText: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: fonts.displaySemi,
     textAlign: 'center',
-    opacity: 0.7,
   },
   yesNoTextSelected: {
-    opacity: 1,
+    color: colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -1122,127 +1118,124 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   loadingText: {
-    color: '#FFFFFF',
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: '600',
-    marginTop: 24,
+    fontFamily: fonts.displaySemi,
+    marginTop: spacing.lg,
     textAlign: 'center',
   },
   loadingSubtext: {
-    color: '#FFFFFF',
+    color: colors.midGrey,
     fontSize: 16,
-    opacity: 0.6,
-    marginTop: 12,
+    marginTop: spacing.sm,
     textAlign: 'center',
+    fontFamily: fonts.body,
   },
   guideScrollView: {
     flex: 1,
   },
   guideScrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: 40,
   },
   guideHeader: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   guideEmoji: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   guideTitle: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   guideSubtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
-    opacity: 0.7,
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: fonts.body,
   },
   guideContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: colors.white,
     borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.3)',
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   errorContainer: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: '#FFF0ED',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   errorText: {
-    color: '#FF6B6B',
+    color: colors.ember,
     fontSize: 14,
     textAlign: 'center',
+    fontFamily: fonts.body,
   },
   regenerateButton: {
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
   regenerateButtonText: {
-    color: '#FFFFFF',
+    color: colors.midGrey,
     fontSize: 14,
-    opacity: 0.6,
+    fontFamily: fonts.body,
   },
   boppFeatureCard: {
-    backgroundColor: 'rgba(124, 58, 237, 0.15)',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(124, 58, 237, 0.3)',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   featureEmoji: {
     fontSize: 32,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   featureTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   featureText: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: colors.midGrey,
     lineHeight: 22,
-    opacity: 0.9,
+    fontFamily: fonts.body,
   },
   highlightBox: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 107, 107, 0.4)',
+    backgroundColor: '#FFF0ED',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
   },
   highlightText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: colors.ember,
+    fontFamily: fonts.displaySemi,
     textAlign: 'center',
     lineHeight: 22,
   },
   skipButton: {
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: spacing.sm,
   },
   skipButtonText: {
-    color: '#FFFFFF',
+    color: colors.midGrey,
     fontSize: 14,
-    opacity: 0.5,
+    fontFamily: fonts.body,
   },
 });

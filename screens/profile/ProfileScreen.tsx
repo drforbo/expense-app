@@ -16,13 +16,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { supabase } from '../../lib/supabase';
+import { API_URL } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 
 // Required for web browser redirect
 WebBrowser.maybeCompleteAuthSession();
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
@@ -85,10 +85,10 @@ interface TrackingStats {
 }
 
 const CATEGORY_COLORS = {
-  registration: '#7C3AED',
-  tracking: '#3B82F6',
-  deadline: '#FF6B6B',
-  preparation: '#10B981',
+  registration: colors.ink,
+  tracking: colors.tagBlueText,
+  deadline: colors.ember,
+  preparation: colors.tagGreenText,
 };
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -1004,6 +1004,7 @@ export default function ProfileScreen({ navigation }: any) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'bypass-tunnel-reminder': 'true',
         },
         body: JSON.stringify({ user_id: session.user.id }),
       });
@@ -1062,6 +1063,7 @@ export default function ProfileScreen({ navigation }: any) {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
+            'bypass-tunnel-reminder': 'true',
           },
           body: JSON.stringify({
             user_id: session.user.id,
@@ -1116,6 +1118,7 @@ export default function ProfileScreen({ navigation }: any) {
                 headers: {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${session.access_token}`,
+                  'bypass-tunnel-reminder': 'true',
                 },
                 body: JSON.stringify({ user_id: session.user.id }),
               });
@@ -1212,7 +1215,7 @@ export default function ProfileScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ink} />
         </View>
       </SafeAreaView>
     );
@@ -1260,9 +1263,9 @@ export default function ProfileScreen({ navigation }: any) {
               step={100}
               value={monthlyIncome}
               onValueChange={setMonthlyIncome}
-              minimumTrackTintColor="#7C3AED"
-              maximumTrackTintColor="rgba(255,255,255,0.2)"
-              thumbTintColor="#FF6B6B"
+              minimumTrackTintColor={colors.ink}
+              maximumTrackTintColor={colors.mist}
+              thumbTintColor={colors.ember}
             />
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabelText}>£0</Text>
@@ -1284,7 +1287,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={[styles.optionText, !hasOtherEmployment && styles.optionTextActive]}>
                   No, just my side hustle
                 </Text>
-                {!hasOtherEmployment && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                {!hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.ink} />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.optionItem, hasOtherEmployment && styles.optionItemActive]}
@@ -1293,7 +1296,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={[styles.optionText, hasOtherEmployment && styles.optionTextActive]}>
                   Yes, I have a day job
                 </Text>
-                {hasOtherEmployment && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                {hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.ink} />}
               </TouchableOpacity>
             </View>
             {hasOtherEmployment && (
@@ -1306,7 +1309,7 @@ export default function ProfileScreen({ navigation }: any) {
                       onPress={() => setEmploymentIsPaye(true)}
                     >
                       <View style={styles.optionWithIcon}>
-                        <Ionicons name="card-outline" size={20} color={employmentIsPaye ? '#7C3AED' : '#9CA3AF'} />
+                        <Ionicons name="card-outline" size={20} color={employmentIsPaye ? colors.ink : colors.midGrey} />
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.optionText, employmentIsPaye && styles.optionTextActive]}>
                             PAYE (employee)
@@ -1314,14 +1317,14 @@ export default function ProfileScreen({ navigation }: any) {
                           <Text style={styles.optionHint}>Tax deducted from salary automatically</Text>
                         </View>
                       </View>
-                      {employmentIsPaye && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                      {employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.optionItem, !employmentIsPaye && styles.optionItemActive]}
                       onPress={() => setEmploymentIsPaye(false)}
                     >
                       <View style={styles.optionWithIcon}>
-                        <Ionicons name="document-text-outline" size={20} color={!employmentIsPaye ? '#7C3AED' : '#9CA3AF'} />
+                        <Ionicons name="document-text-outline" size={20} color={!employmentIsPaye ? colors.ink : colors.midGrey} />
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.optionText, !employmentIsPaye && styles.optionTextActive]}>
                             Contractor/Freelance
@@ -1329,7 +1332,7 @@ export default function ProfileScreen({ navigation }: any) {
                           <Text style={styles.optionHint}>I invoice and pay my own tax</Text>
                         </View>
                       </View>
-                      {!employmentIsPaye && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                      {!employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1343,9 +1346,9 @@ export default function ProfileScreen({ navigation }: any) {
                     step={5000}
                     value={employmentIncome}
                     onValueChange={setEmploymentIncome}
-                    minimumTrackTintColor="#7C3AED"
-                    maximumTrackTintColor="rgba(255,255,255,0.2)"
-                    thumbTintColor="#FF6B6B"
+                    minimumTrackTintColor={colors.ink}
+                    maximumTrackTintColor={colors.mist}
+                    thumbTintColor={colors.ember}
                   />
                   <View style={styles.sliderLabels}>
                     <Text style={styles.sliderLabelText}>£10k</Text>
@@ -1379,7 +1382,7 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, studentLoanPlan === option.value && styles.optionTextActive]}>
                     {option.label}
                   </Text>
-                  {studentLoanPlan === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                  {studentLoanPlan === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1406,12 +1409,12 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, taxRegion === option.value && styles.optionTextActive]}>
                     {option.label}
                   </Text>
-                  {taxRegion === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                  {taxRegion === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                 </TouchableOpacity>
               ))}
             </View>
             <View style={styles.taxDisclaimerBox}>
-              <Ionicons name="information-circle-outline" size={18} color="#6B7280" />
+              <Ionicons name="information-circle-outline" size={18} color={colors.midGrey} />
               <Text style={styles.taxDisclaimerText}>
                 Tax estimates are intentionally conservative based on student loan and tax region only. Other factors (pension contributions, marriage allowance, etc.) could reduce your actual liability - you may owe less than shown.
               </Text>
@@ -1436,12 +1439,12 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setTrackingGoal(option.value)}
                 >
                   <View style={styles.optionWithIcon}>
-                    <Ionicons name={option.icon as any} size={20} color={trackingGoal === option.value ? '#7C3AED' : '#9CA3AF'} />
+                    <Ionicons name={option.icon as any} size={20} color={trackingGoal === option.value ? colors.ink : colors.midGrey} />
                     <Text style={[styles.optionText, trackingGoal === option.value && styles.optionTextActive]}>
                       {option.label}
                     </Text>
                   </View>
-                  {trackingGoal === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                  {trackingGoal === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1466,12 +1469,12 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setWorkType(option.value)}
                 >
                   <View style={styles.optionWithIcon}>
-                    <Ionicons name={option.icon as any} size={20} color={workType === option.value ? '#7C3AED' : '#9CA3AF'} />
+                    <Ionicons name={option.icon as any} size={20} color={workType === option.value ? colors.ink : colors.midGrey} />
                     <Text style={[styles.optionText, workType === option.value && styles.optionTextActive]}>
                       {option.label}
                     </Text>
                   </View>
-                  {workType === option.value && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
+                  {workType === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1484,7 +1487,7 @@ export default function ProfileScreen({ navigation }: any) {
                     value={customWorkType}
                     onChangeText={setCustomWorkType}
                     placeholder="e.g., dog walking, consulting"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={colors.midGrey}
                   />
                 </View>
               </View>
@@ -1503,7 +1506,7 @@ export default function ProfileScreen({ navigation }: any) {
                 onPress={() => setReceivesGiftedItems(!receivesGiftedItems)}
               >
                 <View style={[styles.checkbox, receivesGiftedItems && styles.checkboxChecked]}>
-                  {receivesGiftedItems && <Ionicons name="checkmark" size={16} color="#fff" />}
+                  {receivesGiftedItems && <Ionicons name="checkmark" size={16} color={colors.white} />}
                 </View>
                 <View style={styles.checkboxContent}>
                   <Text style={styles.checkboxLabel}>I receive gifted items/products</Text>
@@ -1516,7 +1519,7 @@ export default function ProfileScreen({ navigation }: any) {
                 onPress={() => setHasInternationalIncome(!hasInternationalIncome)}
               >
                 <View style={[styles.checkbox, hasInternationalIncome && styles.checkboxChecked]}>
-                  {hasInternationalIncome && <Ionicons name="checkmark" size={16} color="#fff" />}
+                  {hasInternationalIncome && <Ionicons name="checkmark" size={16} color={colors.white} />}
                 </View>
                 <View style={styles.checkboxContent}>
                   <Text style={styles.checkboxLabel}>I have international income</Text>
@@ -1544,7 +1547,7 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.achievementCard}>
         <View style={styles.achievementHeader}>
           <View style={styles.achievementIconContainer}>
-            <Ionicons name="rocket" size={24} color="#7C3AED" />
+            <Ionicons name="rocket" size={24} color={colors.ink} />
           </View>
           <View style={styles.achievementHeaderText}>
             <Text style={styles.achievementTitle}>In Progress with bopp</Text>
@@ -1558,8 +1561,8 @@ export default function ProfileScreen({ navigation }: any) {
           onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'income' })}
         >
           <View style={styles.trackingHeader}>
-            <View style={[styles.trackingIconContainer, { backgroundColor: '#10B98120' }]}>
-              <Ionicons name="trending-up" size={20} color="#10B981" />
+            <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagGreenBg }]}>
+              <Ionicons name="trending-up" size={20} color={colors.tagGreenText} />
             </View>
             <View style={styles.trackingInfo}>
               <Text style={styles.trackingLabel}>Track all income sources</Text>
@@ -1569,15 +1572,15 @@ export default function ProfileScreen({ navigation }: any) {
                   : 'Start tracking your income'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </View>
           {trackingStats.categorizedIncomeCount > 0 && (
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: '#10B98130' }]}>
-                <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#10B981' }]} />
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagGreenBg }]}>
+                <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.tagGreenText }]} />
               </View>
               <View style={styles.trackingBadge}>
-                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                 <Text style={styles.trackingBadgeText}>Active</Text>
               </View>
             </View>
@@ -1596,8 +1599,8 @@ export default function ProfileScreen({ navigation }: any) {
           }}
         >
           <View style={styles.trackingHeader}>
-            <View style={[styles.trackingIconContainer, { backgroundColor: '#7C3AED20' }]}>
-              <Ionicons name="receipt-outline" size={20} color="#7C3AED" />
+            <View style={[styles.trackingIconContainer, { backgroundColor: colors.parchment }]}>
+              <Ionicons name="receipt-outline" size={20} color={colors.ink} />
             </View>
             <View style={styles.trackingInfo}>
               <Text style={styles.trackingLabel}>Categorize business expenses</Text>
@@ -1609,11 +1612,11 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'Upload transactions to get started'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </View>
           {(trackingStats.uncategorizedCount > 0 || trackingStats.categorizedExpenseCount > 0) && (
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: '#7C3AED30' }]}>
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.mist }]}>
                 <View
                   style={[
                     styles.trackingProgressFill,
@@ -1621,21 +1624,21 @@ export default function ProfileScreen({ navigation }: any) {
                       width: trackingStats.totalTransactions > 0
                         ? `${Math.round((trackingStats.categorizedExpenseCount / (trackingStats.categorizedExpenseCount + trackingStats.uncategorizedCount)) * 100)}%`
                         : '0%',
-                      backgroundColor: '#7C3AED'
+                      backgroundColor: colors.ink
                     }
                   ]}
                 />
               </View>
               {trackingStats.uncategorizedCount > 0 ? (
-                <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
-                  <Ionicons name="time" size={14} color="#F59E0B" />
-                  <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
+                  <Ionicons name="time" size={14} color={colors.ember} />
+                  <Text style={[styles.trackingBadgeText, { color: colors.tagEmberText }]}>
                     {trackingStats.uncategorizedCount} pending
                   </Text>
                 </View>
               ) : (
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                   <Text style={styles.trackingBadgeText}>All done</Text>
                 </View>
               )}
@@ -1650,8 +1653,8 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => navigation.navigate('QualifyTransactionList')}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: '#F59E0B20' }]}>
-                <Ionicons name="document-text-outline" size={20} color="#F59E0B" />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
+                <Ionicons name="document-text-outline" size={20} color={colors.ember} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Add receipts & evidence</Text>
@@ -1661,28 +1664,28 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'All expenses qualified'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
             </View>
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: '#F59E0B30' }]}>
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
                 <View
                   style={[
                     styles.trackingProgressFill,
                     {
                       width: `${expenseProgress}%`,
-                      backgroundColor: expenseProgress === 100 ? '#10B981' : '#F59E0B'
+                      backgroundColor: expenseProgress === 100 ? colors.tagGreenText : colors.ember
                     }
                   ]}
                 />
               </View>
               {trackingStats.unqualifiedExpenseCount === 0 ? (
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                   <Text style={styles.trackingBadgeText}>HMRC ready</Text>
                 </View>
               ) : (
-                <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
-                  <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
+                  <Text style={[styles.trackingBadgeText, { color: colors.tagEmberText }]}>
                     {expenseProgress}% qualified
                   </Text>
                 </View>
@@ -1698,8 +1701,8 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => navigation.navigate('GiftedTracker')}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: '#EC489920' }]}>
-                <Ionicons name="gift-outline" size={20} color="#EC4899" />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
+                <Ionicons name="gift-outline" size={20} color={colors.ember} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Track gifted items</Text>
@@ -1709,15 +1712,15 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'Log PR packages & gifts'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
             </View>
             {trackingStats.giftedItemsCount > 0 && (
               <View style={styles.trackingProgressContainer}>
-                <View style={[styles.trackingProgressBar, { backgroundColor: '#EC489930' }]}>
-                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#EC4899' }]} />
+                <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
+                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.ember }]} />
                 </View>
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                   <Text style={styles.trackingBadgeText}>Active</Text>
                 </View>
               </View>
@@ -1766,7 +1769,7 @@ export default function ProfileScreen({ navigation }: any) {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.clCheckbox, isCompleted && styles.clCheckboxChecked]}>
-                    {isCompleted && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    {isCompleted && <Ionicons name="checkmark" size={16} color={colors.white} />}
                   </View>
                   <View style={styles.clItemContent}>
                     <View style={styles.clItemHeader}>
@@ -1784,7 +1787,7 @@ export default function ProfileScreen({ navigation }: any) {
                     </Text>
                     {item.dueDate && !isCompleted && (
                       <View style={styles.dueDateContainer}>
-                        <Ionicons name="calendar-outline" size={12} color="#FF6B6B" />
+                        <Ionicons name="calendar-outline" size={12} color={colors.ember} />
                         <Text style={styles.dueDateText}>
                           Due: {new Date(item.dueDate).toLocaleDateString('en-GB', {
                             day: 'numeric', month: 'short', year: 'numeric'
@@ -1804,7 +1807,7 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.infoCard}>
         <View style={styles.infoCardHeader}>
           <View style={styles.infoCardIcon}>
-            <Ionicons name="information-circle" size={24} color="#3B82F6" />
+            <Ionicons name="information-circle" size={24} color={colors.tagBlueText} />
           </View>
           <Text style={styles.infoCardTitle}>Other things on your tax return</Text>
         </View>
@@ -1819,7 +1822,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/repaying-your-student-loan/what-you-pay')}
             >
               <Text style={styles.infoLinkText}>Student loan repayments</Text>
-              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              <Ionicons name="open-outline" size={14} color={colors.ink} />
             </TouchableOpacity>
           )}
 
@@ -1829,7 +1832,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/tax-foreign-income/taxed-twice')}
             >
               <Text style={styles.infoLinkText}>Foreign tax relief</Text>
-              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              <Ionicons name="open-outline" size={14} color={colors.ink} />
             </TouchableOpacity>
           )}
 
@@ -1838,7 +1841,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => Linking.openURL('https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2024-to-2025')}
           >
             <Text style={styles.infoLinkText}>National Insurance contributions</Text>
-            <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            <Ionicons name="open-outline" size={14} color={colors.ink} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1846,7 +1849,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => Linking.openURL('https://www.gov.uk/self-assessment-tax-returns')}
           >
             <Text style={styles.infoLinkText}>Self Assessment overview</Text>
-            <Ionicons name="open-outline" size={14} color="#7C3AED" />
+            <Ionicons name="open-outline" size={14} color={colors.ink} />
           </TouchableOpacity>
         </View>
       </View>
@@ -1859,47 +1862,19 @@ export default function ProfileScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'profile' && styles.tabActive]}
-          onPress={() => setActiveTab('profile')}
-        >
-          <Ionicons
-            name="person-outline"
-            size={18}
-            color={activeTab === 'profile' ? '#7C3AED' : '#9CA3AF'}
-          />
-          <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>Account</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'checklist' && styles.tabActive]}
-          onPress={() => setActiveTab('checklist')}
-        >
-          <Ionicons
-            name="checkbox-outline"
-            size={18}
-            color={activeTab === 'checklist' ? '#10B981' : '#9CA3AF'}
-          />
-          <Text style={[styles.tabText, activeTab === 'checklist' && styles.tabTextActive]}>Tax Checklist</Text>
-          {completedCount < totalCount && (
-            <View style={styles.tabBadge}>
-              <Text style={styles.tabBadgeText}>{totalCount - completedCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'checklist' ? renderChecklistTab() : (
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Profile Completion */}
         {!isProfileComplete && (
           <View style={styles.completionCard}>
             <View style={styles.completionHeader}>
-              <Ionicons name="person-circle" size={24} color="#7C3AED" />
+              <Ionicons name="person-circle" size={24} color={colors.ink} />
               <Text style={styles.completionTitle}>Complete Your Profile</Text>
             </View>
             <Text style={styles.completionSubtitle}>
@@ -1923,7 +1898,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Side Hustle</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getWorkTypeLabel(workType, customWorkType)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -1936,7 +1911,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Monthly Income</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{formatCurrency(monthlyIncome)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -1949,7 +1924,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Registration</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getRegistrationLabel(trackingGoal)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -1966,7 +1941,7 @@ export default function ProfileScreen({ navigation }: any) {
                   ? `${employmentIsPaye ? 'PAYE' : 'Contractor'} (${formatCurrency(employmentIncome)}/yr)`
                   : 'No'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -1979,7 +1954,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Student Loan</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getStudentLoanLabel(studentLoanPlan)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -1992,7 +1967,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Tax Region</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getTaxRegionLabel(taxRegion)}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2012,7 +1987,7 @@ export default function ProfileScreen({ navigation }: any) {
                     ].filter(Boolean).join(', ')
                   : 'None'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
         </View>
@@ -2142,7 +2117,7 @@ export default function ProfileScreen({ navigation }: any) {
                     ? `${foreignIncomeCountries.length} ${foreignIncomeCountries.length === 1 ? 'country' : 'countries'} selected`
                     : 'Select countries'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-down" size={20} color={colors.midGrey} />
               </TouchableOpacity>
 
               {foreignIncomeCountries.length > 0 && (
@@ -2157,7 +2132,7 @@ export default function ProfileScreen({ navigation }: any) {
                           onPress={() => setForeignIncomeCountries(prev => prev.filter(c => c !== code))}
                           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                          <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                          <Ionicons name="close-circle" size={18} color={colors.midGrey} />
                         </TouchableOpacity>
                       </View>
                     ) : null;
@@ -2198,7 +2173,7 @@ export default function ProfileScreen({ navigation }: any) {
                 value={travelDetails}
                 onChangeText={setTravelDetails}
                 placeholder="e.g., I travel to London monthly for client meetings, attend 2-3 conferences per year..."
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.midGrey}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -2214,11 +2189,11 @@ export default function ProfileScreen({ navigation }: any) {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <>
               <Text style={styles.saveButtonText}>Save Profile</Text>
-              <Ionicons name="checkmark" size={20} color="#fff" />
+              <Ionicons name="checkmark" size={20} color={colors.white} />
             </>
           )}
         </TouchableOpacity>
@@ -2237,14 +2212,14 @@ export default function ProfileScreen({ navigation }: any) {
                 disabled={connectingGmail}
               >
                 <View style={styles.accountRowLeft}>
-                  <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? '#10B98120' : '#EA433520' }]}>
+                  <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? colors.tagGreenBg : colors.tagEmberBg }]}>
                     {connectingGmail ? (
-                      <ActivityIndicator size="small" color="#EA4335" />
+                      <ActivityIndicator size="small" color={colors.ember} />
                     ) : (
                       <Ionicons
                         name={gmailConnection ? 'checkmark-circle' : 'logo-google'}
                         size={20}
-                        color={gmailConnection ? '#10B981' : '#EA4335'}
+                        color={gmailConnection ? colors.tagGreenText : colors.ember}
                       />
                     )}
                   </View>
@@ -2259,14 +2234,14 @@ export default function ProfileScreen({ navigation }: any) {
                 </View>
                 <View style={styles.connectionStatus}>
                   {gmailConnection ? (
-                    <Text style={[styles.connectionStatusText, { color: '#10B981' }]}>Connected</Text>
+                    <Text style={[styles.connectionStatusText, { color: colors.tagGreenText }]}>Connected</Text>
                   ) : (
-                    <Text style={[styles.connectionStatusText, { color: '#9CA3AF' }]}>Connect</Text>
+                    <Text style={[styles.connectionStatusText, { color: colors.midGrey }]}>Connect</Text>
                   )}
                   <Ionicons
                     name={gmailConnection ? 'close-circle-outline' : 'chevron-forward'}
                     size={18}
-                    color={gmailConnection ? '#EF4444' : '#6B7280'}
+                    color={gmailConnection ? colors.ember : colors.midGrey}
                   />
                 </View>
               </TouchableOpacity>
@@ -2276,8 +2251,8 @@ export default function ProfileScreen({ navigation }: any) {
               {/* Outlook - Coming Soon */}
               <View style={[styles.accountRow, { opacity: 0.5 }]}>
                 <View style={styles.accountRowLeft}>
-                  <View style={[styles.accountIcon, { backgroundColor: '#0078D420' }]}>
-                    <Ionicons name="mail" size={20} color="#0078D4" />
+                  <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
+                    <Ionicons name="mail" size={20} color={colors.ink} />
                   </View>
                   <View>
                     <Text style={styles.accountRowText}>Outlook</Text>
@@ -2299,7 +2274,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Email display */}
         {userEmail && (
           <View style={styles.emailCard}>
-            <Ionicons name="mail-outline" size={18} color="#9CA3AF" />
+            <Ionicons name="mail-outline" size={18} color={colors.midGrey} />
             <Text style={styles.emailText}>{userEmail}</Text>
           </View>
         )}
@@ -2310,12 +2285,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => setShowChangeEmailModal(true)}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#3B82F620' }]}>
-                <Ionicons name="at-outline" size={20} color="#3B82F6" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
+                <Ionicons name="at-outline" size={20} color={colors.tagBlueText} />
               </View>
               <Text style={styles.accountRowText}>Change Email</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2325,12 +2300,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleResetPassword}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#7C3AED20' }]}>
-                <Ionicons name="key-outline" size={20} color="#7C3AED" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
+                <Ionicons name="key-outline" size={20} color={colors.ink} />
               </View>
               <Text style={styles.accountRowText}>Reset Password</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2340,15 +2315,15 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleManageSubscription}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#10B98120' }]}>
-                <Ionicons name="card-outline" size={20} color="#10B981" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagGreenBg }]}>
+                <Ionicons name="card-outline" size={20} color={colors.tagGreenText} />
               </View>
               <View>
                 <Text style={styles.accountRowText}>Subscription</Text>
                 <Text style={styles.accountRowSubtext}>Free Beta</Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </TouchableOpacity>
         </View>
 
@@ -2361,12 +2336,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleContactSupport}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#F59E0B20' }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={20} color="#F59E0B" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagEmberBg }]}>
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ember} />
               </View>
               <Text style={styles.accountRowText}>Contact Support</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color="#6B7280" />
+            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2376,12 +2351,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handlePrivacyPolicy}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#6B728020' }]}>
-                <Ionicons name="shield-checkmark-outline" size={20} color="#9CA3AF" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.midGrey} />
               </View>
               <Text style={styles.accountRowText}>Privacy Policy</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color="#6B7280" />
+            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2391,12 +2366,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleTermsOfService}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#6B728020' }]}>
-                <Ionicons name="document-text-outline" size={20} color="#9CA3AF" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
+                <Ionicons name="document-text-outline" size={20} color={colors.midGrey} />
               </View>
               <Text style={styles.accountRowText}>Terms of Service</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color="#6B7280" />
+            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
           </TouchableOpacity>
         </View>
 
@@ -2409,12 +2384,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleSignOut}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#6B728020' }]}>
-                <Ionicons name="log-out-outline" size={20} color="#9CA3AF" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
+                <Ionicons name="log-out-outline" size={20} color={colors.midGrey} />
               </View>
               <Text style={styles.accountRowText}>Sign Out</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2424,12 +2399,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleDeleteAccount}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: '#EF444420' }]}>
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagEmberBg }]}>
+                <Ionicons name="trash-outline" size={20} color={colors.ember} />
               </View>
-              <Text style={[styles.accountRowText, { color: '#EF4444' }]}>Delete Account</Text>
+              <Text style={[styles.accountRowText, { color: colors.ember }]}>Delete Account</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#EF4444" />
+            <Ionicons name="chevron-forward" size={18} color={colors.ember} />
           </TouchableOpacity>
         </View>
 
@@ -2439,7 +2414,6 @@ export default function ProfileScreen({ navigation }: any) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-      )}
 
       {/* Edit Modal */}
       <Modal
@@ -2491,7 +2465,7 @@ export default function ProfileScreen({ navigation }: any) {
                 value={newEmail}
                 onChangeText={setNewEmail}
                 placeholder="new@email.com"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.midGrey}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -2530,7 +2504,7 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.countryPickerHeader}>
               <Text style={styles.modalTitle}>Select Countries</Text>
               <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
-                <Ionicons name="close" size={24} color="#fff" />
+                <Ionicons name="close" size={24} color={colors.ink} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalSubtitle}>
@@ -2558,7 +2532,7 @@ export default function ProfileScreen({ navigation }: any) {
                       </Text>
                     </View>
                     {isSelected && (
-                      <Ionicons name="checkmark-circle" size={24} color="#7C3AED" />
+                      <Ionicons name="checkmark-circle" size={24} color={colors.ink} />
                     )}
                   </TouchableOpacity>
                 );
@@ -2580,7 +2554,7 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -2588,21 +2562,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.mist,
+    backgroundColor: colors.white,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.mist,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   tabBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
+    marginTop: 16,
     marginBottom: 16,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 4,
+    ...shadows.sm,
   },
   tab: {
     flex: 1,
@@ -2614,18 +2604,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
   },
   tabTextActive: {
-    color: '#fff',
+    color: colors.ink,
   },
   tabBadge: {
-    backgroundColor: '#10B981',
+    backgroundColor: colors.tagGreenText,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
@@ -2634,8 +2624,8 @@ const styles = StyleSheet.create({
   },
   tabBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   scrollView: {
     flex: 1,
@@ -2644,12 +2634,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   completionCard: {
-    backgroundColor: '#7C3AED15',
+    backgroundColor: colors.tagEmberBg,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#7C3AED30',
   },
   completionHeader: {
     flexDirection: 'row',
@@ -2659,12 +2647,12 @@ const styles = StyleSheet.create({
   },
   completionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   completionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -2674,21 +2662,21 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   sectionHint: {
     fontSize: 12,
-    color: '#7C3AED',
+    color: colors.ink,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 16,
     marginTop: -4,
   },
   infoCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     marginBottom: 24,
     overflow: 'hidden',
@@ -2699,11 +2687,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
   },
   infoLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   infoValueRow: {
     flexDirection: 'row',
@@ -2712,17 +2700,17 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.mist,
     marginHorizontal: 16,
   },
   // Account management styles
   accountCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
@@ -2748,18 +2736,18 @@ const styles = StyleSheet.create({
   },
   accountRowText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   accountHint: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     lineHeight: 18,
     paddingHorizontal: 4,
   },
   accountRowSubtext: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginTop: 2,
   },
   connectionStatus: {
@@ -2769,10 +2757,10 @@ const styles = StyleSheet.create({
   },
   connectionStatusText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fonts.body,
   },
   emailCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
@@ -2782,24 +2770,24 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     flex: 1,
   },
   questionCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
   },
   questionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   questionSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 16,
   },
   optionButtonsGrid: {
@@ -2811,34 +2799,34 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderWidth: 2,
     borderColor: 'transparent',
     minWidth: '30%',
     alignItems: 'center',
   },
   optionButtonActive: {
-    backgroundColor: '#7C3AED20',
-    borderColor: '#7C3AED',
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
   },
   optionButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
   },
   optionButtonTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   optionButtonSubtext: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.midGrey,
     marginTop: 2,
   },
   optionButtonSubtextActive: {
-    color: '#9CA3AF',
+    color: colors.mist,
   },
   saveButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -2852,8 +2840,8 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   modalOverlay: {
     flex: 1,
@@ -2861,7 +2849,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -2870,19 +2858,19 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 24,
   },
   modalValue: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ink,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -2896,7 +2884,7 @@ const styles = StyleSheet.create({
   },
   sliderLabelText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
   },
   optionsList: {
     gap: 8,
@@ -2908,13 +2896,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   optionItemActive: {
-    borderColor: '#7C3AED',
-    backgroundColor: '#7C3AED15',
+    borderColor: colors.ink,
+    backgroundColor: colors.parchment,
   },
   optionWithIcon: {
     flexDirection: 'row',
@@ -2923,26 +2911,26 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   optionTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.ink,
+    fontFamily: fonts.bodyBold,
   },
   optionHint: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     marginTop: 2,
   },
   subSection: {
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: colors.mist,
   },
   subSectionLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 8,
   },
   modalButtons: {
@@ -2957,32 +2945,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
   },
   confirmButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#9CA3AF',
+    fontFamily: fonts.display,
+    color: colors.midGrey,
   },
   confirmButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   customInputContainer: {
     marginTop: 8,
   },
   customInput: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: colors.ink,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   checkboxList: {
     gap: 12,
@@ -2994,42 +2982,42 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   checkboxChecked: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   checkboxContent: {
     flex: 1,
   },
   checkboxLabel: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 2,
   },
   checkboxHint: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   // Checklist tab styles - Achievement Card
   achievementCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#7C3AED40',
+    borderColor: colors.mist,
   },
   achievementHeader: {
     flexDirection: 'row',
@@ -3037,13 +3025,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E1A47',
+    borderBottomColor: colors.mist,
   },
   achievementIconContainer: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.volt,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -3053,17 +3041,17 @@ const styles = StyleSheet.create({
   },
   achievementTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 2,
   },
   achievementSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   // Tracking cards within achievement section
   trackingCard: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -3085,13 +3073,13 @@ const styles = StyleSheet.create({
   },
   trackingLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 2,
   },
   trackingStatus: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   trackingProgressContainer: {
     flexDirection: 'row',
@@ -3112,7 +3100,7 @@ const styles = StyleSheet.create({
   trackingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#10B98120',
+    backgroundColor: colors.tagGreenBg,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -3120,17 +3108,17 @@ const styles = StyleSheet.create({
   },
   trackingBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   // Overall progress card
   progressCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -3140,29 +3128,29 @@ const styles = StyleSheet.create({
   },
   progressTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   progressCount: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#10B981',
+    backgroundColor: colors.tagGreenText,
     borderRadius: 4,
   },
   progressText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   categorySection: {
     marginBottom: 20,
@@ -3182,12 +3170,12 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   clItem: {
     flexDirection: 'row',
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
@@ -3200,15 +3188,15 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#4B5563',
+    borderColor: colors.midGrey,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     marginTop: 2,
   },
   clCheckboxChecked: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
+    backgroundColor: colors.tagGreenText,
+    borderColor: colors.tagGreenText,
   },
   clItemContent: {
     flex: 1,
@@ -3221,32 +3209,32 @@ const styles = StyleSheet.create({
   },
   clItemTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     flex: 1,
   },
   clItemTitleCompleted: {
     textDecorationLine: 'line-through',
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   clItemDescription: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 18,
   },
   clItemDescriptionCompleted: {
-    color: '#6B7280',
+    color: colors.midGrey,
   },
   priorityBadge: {
-    backgroundColor: '#FF6B6B20',
+    backgroundColor: colors.tagEmberBg,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
   priorityText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#FF6B6B',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   dueDateContainer: {
     flexDirection: 'row',
@@ -3256,8 +3244,8 @@ const styles = StyleSheet.create({
   },
   dueDateText: {
     fontSize: 12,
-    color: '#FF6B6B',
-    fontWeight: '500',
+    color: colors.ember,
+    fontFamily: fonts.body,
   },
   // Toggle styles
   toggleRow: {
@@ -3273,18 +3261,18 @@ const styles = StyleSheet.create({
     width: 51,
     height: 31,
     borderRadius: 16,
-    backgroundColor: '#3C2A52',
+    backgroundColor: colors.mist,
     padding: 2,
     justifyContent: 'center',
   },
   toggleActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   toggleThumb: {
     width: 27,
     height: 27,
     borderRadius: 14,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
@@ -3294,13 +3282,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#3C2A52',
+    backgroundColor: colors.mist,
     borderRadius: 12,
     padding: 16,
   },
   countrySelectLabel: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   selectedCountriesContainer: {
     flexDirection: 'row',
@@ -3311,7 +3299,7 @@ const styles = StyleSheet.create({
   selectedCountryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3C2A52',
+    backgroundColor: colors.mist,
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -3322,20 +3310,20 @@ const styles = StyleSheet.create({
   },
   selectedCountryName: {
     fontSize: 13,
-    color: '#fff',
+    color: colors.ink,
   },
   // Text area input
   inputLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 8,
   },
   textAreaInput: {
-    backgroundColor: '#3C2A52',
+    backgroundColor: colors.mist,
     borderRadius: 12,
     padding: 16,
     fontSize: 15,
-    color: '#fff',
+    color: colors.ink,
     minHeight: 100,
   },
   // Country picker modal
@@ -3358,7 +3346,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   countryPickerItemSelected: {
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.parchment,
   },
   countryPickerItemLeft: {
     flexDirection: 'row',
@@ -3370,15 +3358,15 @@ const styles = StyleSheet.create({
   },
   countryPickerName: {
     fontSize: 15,
-    color: '#fff',
+    color: colors.ink,
   },
   countryPickerNameSelected: {
-    color: '#7C3AED',
-    fontWeight: '600',
+    color: colors.ink,
+    fontFamily: fonts.bodyBold,
   },
   taxDisclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
@@ -3388,17 +3376,17 @@ const styles = StyleSheet.create({
   taxDisclaimerText: {
     flex: 1,
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 18,
   },
   // Info Card Styles
   infoCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#3B82F630',
+    borderColor: colors.mist,
   },
   infoCardHeader: {
     flexDirection: 'row',
@@ -3409,20 +3397,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#3B82F620',
+    backgroundColor: colors.tagBlueBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   infoCardTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     flex: 1,
   },
   infoCardDescription: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -3433,13 +3421,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.mist,
     borderRadius: 10,
     padding: 14,
   },
   infoLinkText: {
     fontSize: 14,
-    color: '#7C3AED',
-    fontWeight: '600',
+    color: colors.ink,
+    fontFamily: fonts.bodyBold,
   },
 });

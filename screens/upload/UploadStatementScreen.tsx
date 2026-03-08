@@ -14,8 +14,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
 import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiPost } from '../../lib/api';
 
 interface Statement {
   id: string;
@@ -48,13 +47,7 @@ export default function UploadStatementScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const response = await fetch(`${API_URL}/api/get_statements`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-
-      const data = await response.json();
+      const data = await apiPost('/api/get_statements', { user_id: user.id });
       if (Array.isArray(data)) {
         setStatements(data);
       }

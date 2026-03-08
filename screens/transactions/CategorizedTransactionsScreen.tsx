@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
   id: string;
@@ -86,11 +87,11 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
           transactionType: item.transaction_type,
         })}
       >
-        <View style={[styles.transactionIcon, { backgroundColor: isIncome ? '#10B98120' : '#7C3AED20' }]}>
+        <View style={[styles.transactionIcon, { backgroundColor: isIncome ? colors.tagGreenBg : colors.tagEmberBg }]}>
           <Ionicons
             name={isIncome ? 'trending-up' : 'receipt-outline'}
             size={20}
-            color={isIncome ? '#10B981' : '#7C3AED'}
+            color={isIncome ? colors.tagGreenText : colors.ember}
           />
         </View>
 
@@ -106,17 +107,17 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
         </View>
 
         <View style={styles.transactionRight}>
-          <Text style={[styles.transactionAmount, { color: isIncome ? '#10B981' : '#7C3AED' }]}>
+          <Text style={[styles.transactionAmount, { color: isIncome ? colors.tagGreenText : colors.ember }]}>
             {formatCurrency(businessAmount)}
           </Text>
           {!isIncome && !item.qualified && (
             <View style={styles.needsEvidenceBadge}>
-              <Ionicons name="document-text-outline" size={10} color="#F59E0B" />
+              <Ionicons name="document-text-outline" size={10} color={colors.ember} />
             </View>
           )}
         </View>
 
-        <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+        <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
       </TouchableOpacity>
     );
   };
@@ -125,7 +126,7 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Categorized Transactions</Text>
         <View style={{ width: 40 }} />
@@ -146,7 +147,7 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
           <Ionicons
             name="receipt-outline"
             size={16}
-            color={activeFilter === 'expense' ? '#fff' : '#9CA3AF'}
+            color={activeFilter === 'expense' ? colors.white : colors.midGrey}
           />
           <Text style={[styles.filterTabText, activeFilter === 'expense' && styles.filterTabTextActive]}>Expenses</Text>
         </TouchableOpacity>
@@ -157,7 +158,7 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
           <Ionicons
             name="trending-up"
             size={16}
-            color={activeFilter === 'income' ? '#fff' : '#9CA3AF'}
+            color={activeFilter === 'income' ? colors.white : colors.midGrey}
           />
           <Text style={[styles.filterTabText, activeFilter === 'income' && styles.filterTabTextActive]}>Income</Text>
         </TouchableOpacity>
@@ -165,12 +166,12 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
           <Text style={styles.loadingText}>Loading transactions...</Text>
         </View>
       ) : transactions.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="folder-open-outline" size={48} color="#6B7280" />
+          <Ionicons name="folder-open-outline" size={48} color={colors.midGrey} />
           <Text style={styles.emptyText}>No {activeFilter !== 'all' ? activeFilter : ''} transactions</Text>
           <Text style={styles.emptySubtext}>
             {activeFilter === 'income'
@@ -194,28 +195,28 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   backButton: {
-    padding: 8,
+    padding: spacing.xs,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   filterTabs: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 8,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.xs,
   },
   filterTab: {
     flex: 1,
@@ -223,24 +224,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#1F1333',
-    borderRadius: 10,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.sm,
+    ...shadows.sm,
   },
   filterTabActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   filterTabIncome: {
-    backgroundColor: '#10B981',
+    backgroundColor: colors.tagGreenText,
   },
   filterTabText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   filterTabTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -248,9 +250,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: spacing.sm,
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   emptyContainer: {
     flex: 1,
@@ -260,27 +263,29 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    marginTop: 16,
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
+    marginTop: spacing.md,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#6B7280',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
   listContent: {
-    padding: 16,
+    padding: spacing.md,
     paddingBottom: 100,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
     padding: 14,
     marginBottom: 10,
+    ...shadows.sm,
   },
   transactionIcon: {
     width: 40,
@@ -288,49 +293,52 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   transactionDetails: {
     flex: 1,
   },
   merchantName: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 4,
   },
   transactionMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   transactionDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   categoryName: {
     fontSize: 11,
-    color: '#7C3AED',
-    backgroundColor: '#7C3AED20',
+    fontFamily: fonts.body,
+    color: colors.tagEmberText,
+    backgroundColor: colors.tagEmberBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
   },
   businessPercent: {
     fontSize: 11,
-    color: '#6B7280',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   transactionRight: {
     alignItems: 'flex-end',
-    marginRight: 8,
+    marginRight: spacing.xs,
   },
   transactionAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.display,
   },
   needsEvidenceBadge: {
-    backgroundColor: '#F59E0B20',
-    borderRadius: 4,
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.sm,
     padding: 2,
     marginTop: 4,
   },

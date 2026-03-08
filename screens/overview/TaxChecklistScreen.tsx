@@ -12,6 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface ChecklistItem {
   id: string;
@@ -43,13 +45,11 @@ interface TrackingStats {
   totalTransactions: number;
 }
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-
 const CATEGORY_COLORS = {
-  registration: '#7C3AED',
-  tracking: '#3B82F6',
-  deadline: '#FF6B6B',
-  preparation: '#10B981',
+  registration: colors.ink,
+  tracking: colors.tagBlueText,
+  deadline: colors.ember,
+  preparation: colors.tagGreenText,
 };
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -85,12 +85,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
       if (!user) return;
 
       // Fetch uncategorized count from server
-      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-      const uncategorizedData = await response.json();
+      const uncategorizedData = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
 
       // Fetch categorized transactions
       const { data: categorized } = await supabase
@@ -411,7 +406,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ink} />
           <Text style={styles.loadingText}>Loading checklist...</Text>
         </View>
       </SafeAreaView>
@@ -442,7 +437,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <View style={styles.headerText}>
           <Text style={styles.title}>Tax Checklist</Text>
@@ -455,7 +450,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
         <View style={styles.achievementCard}>
           <View style={styles.achievementHeader}>
             <View style={styles.achievementIconContainer}>
-              <Ionicons name="rocket" size={24} color="#7C3AED" />
+              <Ionicons name="rocket" size={24} color={colors.ink} />
             </View>
             <View style={styles.achievementHeaderText}>
               <Text style={styles.achievementTitle}>In Progress with bopp</Text>
@@ -469,8 +464,8 @@ export default function TaxChecklistScreen({ navigation }: any) {
             onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'income' })}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: '#10B98120' }]}>
-                <Ionicons name="trending-up" size={20} color="#10B981" />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagGreenBg }]}>
+                <Ionicons name="trending-up" size={20} color={colors.tagGreenText} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Track all income sources</Text>
@@ -480,15 +475,15 @@ export default function TaxChecklistScreen({ navigation }: any) {
                     : 'Start tracking your income'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
             </View>
             {trackingStats.categorizedIncomeCount > 0 && (
               <View style={styles.trackingProgressContainer}>
-                <View style={[styles.trackingProgressBar, { backgroundColor: '#10B98130' }]}>
-                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#10B981' }]} />
+                <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagGreenBg }]}>
+                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.tagGreenText }]} />
                 </View>
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                   <Text style={styles.trackingBadgeText}>Active</Text>
                 </View>
               </View>
@@ -507,8 +502,8 @@ export default function TaxChecklistScreen({ navigation }: any) {
             }}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: '#7C3AED20' }]}>
-                <Ionicons name="receipt-outline" size={20} color="#7C3AED" />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.parchment }]}>
+                <Ionicons name="receipt-outline" size={20} color={colors.ink} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Categorize business expenses</Text>
@@ -520,11 +515,11 @@ export default function TaxChecklistScreen({ navigation }: any) {
                       : 'Upload transactions to get started'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
             </View>
             {(trackingStats.uncategorizedCount > 0 || trackingStats.categorizedExpenseCount > 0) && (
               <View style={styles.trackingProgressContainer}>
-                <View style={[styles.trackingProgressBar, { backgroundColor: '#7C3AED30' }]}>
+                <View style={[styles.trackingProgressBar, { backgroundColor: colors.parchment }]}>
                   <View
                     style={[
                       styles.trackingProgressFill,
@@ -532,21 +527,21 @@ export default function TaxChecklistScreen({ navigation }: any) {
                         width: trackingStats.totalTransactions > 0
                           ? `${Math.round((trackingStats.categorizedExpenseCount / (trackingStats.categorizedExpenseCount + trackingStats.uncategorizedCount)) * 100)}%`
                           : '0%',
-                        backgroundColor: '#7C3AED'
+                        backgroundColor: colors.ink
                       }
                     ]}
                   />
                 </View>
                 {trackingStats.uncategorizedCount > 0 ? (
-                  <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
-                    <Ionicons name="time" size={14} color="#F59E0B" />
-                    <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                  <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
+                    <Ionicons name="time" size={14} color={colors.ember} />
+                    <Text style={[styles.trackingBadgeText, { color: colors.ember }]}>
                       {trackingStats.uncategorizedCount} pending
                     </Text>
                   </View>
                 ) : (
                   <View style={styles.trackingBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                     <Text style={styles.trackingBadgeText}>All done</Text>
                   </View>
                 )}
@@ -561,8 +556,8 @@ export default function TaxChecklistScreen({ navigation }: any) {
               onPress={() => navigation.navigate('QualifyTransactionList')}
             >
               <View style={styles.trackingHeader}>
-                <View style={[styles.trackingIconContainer, { backgroundColor: '#F59E0B20' }]}>
-                  <Ionicons name="document-text-outline" size={20} color="#F59E0B" />
+                <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.ember} />
                 </View>
                 <View style={styles.trackingInfo}>
                   <Text style={styles.trackingLabel}>Add receipts & evidence</Text>
@@ -572,10 +567,10 @@ export default function TaxChecklistScreen({ navigation }: any) {
                       : 'All expenses qualified'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+                <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
               </View>
               <View style={styles.trackingProgressContainer}>
-                <View style={[styles.trackingProgressBar, { backgroundColor: '#F59E0B30' }]}>
+                <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
                   <View
                     style={[
                       styles.trackingProgressFill,
@@ -583,19 +578,19 @@ export default function TaxChecklistScreen({ navigation }: any) {
                         width: `${trackingStats.categorizedExpenseCount > 0
                           ? Math.round(((trackingStats.categorizedExpenseCount - trackingStats.unqualifiedExpenseCount) / trackingStats.categorizedExpenseCount) * 100)
                           : 0}%`,
-                        backgroundColor: trackingStats.unqualifiedExpenseCount === 0 ? '#10B981' : '#F59E0B'
+                        backgroundColor: trackingStats.unqualifiedExpenseCount === 0 ? colors.tagGreenText : colors.ember
                       }
                     ]}
                   />
                 </View>
                 {trackingStats.unqualifiedExpenseCount === 0 ? (
                   <View style={styles.trackingBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                     <Text style={styles.trackingBadgeText}>HMRC ready</Text>
                   </View>
                 ) : (
-                  <View style={[styles.trackingBadge, { backgroundColor: '#F59E0B20' }]}>
-                    <Text style={[styles.trackingBadgeText, { color: '#F59E0B' }]}>
+                  <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
+                    <Text style={[styles.trackingBadgeText, { color: colors.ember }]}>
                       {Math.round(((trackingStats.categorizedExpenseCount - trackingStats.unqualifiedExpenseCount) / trackingStats.categorizedExpenseCount) * 100)}% qualified
                     </Text>
                   </View>
@@ -611,8 +606,8 @@ export default function TaxChecklistScreen({ navigation }: any) {
               onPress={() => navigation.navigate('GiftedTracker')}
             >
               <View style={styles.trackingHeader}>
-                <View style={[styles.trackingIconContainer, { backgroundColor: '#EC489920' }]}>
-                  <Ionicons name="gift-outline" size={20} color="#EC4899" />
+                <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
+                  <Ionicons name="gift-outline" size={20} color={colors.ember} />
                 </View>
                 <View style={styles.trackingInfo}>
                   <Text style={styles.trackingLabel}>Track gifted items</Text>
@@ -622,15 +617,15 @@ export default function TaxChecklistScreen({ navigation }: any) {
                       : 'Log PR packages & gifts'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+                <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
               </View>
               {trackingStats.giftedItemsCount > 0 && (
                 <View style={styles.trackingProgressContainer}>
-                  <View style={[styles.trackingProgressBar, { backgroundColor: '#EC489930' }]}>
-                    <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: '#EC4899' }]} />
+                  <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
+                    <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.ember }]} />
                   </View>
                   <View style={styles.trackingBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                    <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
                     <Text style={styles.trackingBadgeText}>Active</Text>
                   </View>
                 </View>
@@ -678,7 +673,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
                     activeOpacity={0.7}
                   >
                     <View style={[styles.checkbox, isCompleted && styles.checkboxChecked]}>
-                      {isCompleted && <Ionicons name="checkmark" size={16} color="#fff" />}
+                      {isCompleted && <Ionicons name="checkmark" size={16} color={colors.ink} />}
                     </View>
                     <View style={styles.itemContent}>
                       <View style={styles.itemHeader}>
@@ -696,7 +691,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
                       </Text>
                       {item.dueDate && !isCompleted && (
                         <View style={styles.dueDateContainer}>
-                          <Ionicons name="calendar-outline" size={12} color="#FF6B6B" />
+                          <Ionicons name="calendar-outline" size={12} color={colors.ember} />
                           <Text style={styles.dueDateText}>
                             Due: {new Date(item.dueDate).toLocaleDateString('en-GB', {
                               day: 'numeric', month: 'short', year: 'numeric'
@@ -716,7 +711,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
         <View style={styles.infoCard}>
           <View style={styles.infoCardHeader}>
             <View style={styles.infoCardIcon}>
-              <Ionicons name="information-circle" size={24} color="#3B82F6" />
+              <Ionicons name="information-circle" size={24} color={colors.tagBlueText} />
             </View>
             <Text style={styles.infoCardTitle}>Other things on your tax return</Text>
           </View>
@@ -731,7 +726,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
                 onPress={() => Linking.openURL('https://www.gov.uk/repaying-your-student-loan/what-you-pay')}
               >
                 <Text style={styles.infoLinkText}>Student loan repayments</Text>
-                <Ionicons name="open-outline" size={14} color="#7C3AED" />
+                <Ionicons name="open-outline" size={14} color={colors.ink} />
               </TouchableOpacity>
             )}
 
@@ -741,7 +736,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
                 onPress={() => Linking.openURL('https://www.gov.uk/tax-foreign-income/taxed-twice')}
               >
                 <Text style={styles.infoLinkText}>Foreign tax relief</Text>
-                <Ionicons name="open-outline" size={14} color="#7C3AED" />
+                <Ionicons name="open-outline" size={14} color={colors.ink} />
               </TouchableOpacity>
             )}
 
@@ -750,7 +745,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2024-to-2025')}
             >
               <Text style={styles.infoLinkText}>National Insurance contributions</Text>
-              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              <Ionicons name="open-outline" size={14} color={colors.ink} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -758,7 +753,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/self-assessment-tax-returns')}
             >
               <Text style={styles.infoLinkText}>Self Assessment overview</Text>
-              <Ionicons name="open-outline" size={14} color="#7C3AED" />
+              <Ionicons name="open-outline" size={14} color={colors.ink} />
             </TouchableOpacity>
           </View>
         </View>
@@ -768,337 +763,64 @@ export default function TaxChecklistScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#2E1A47',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1F1333',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-  },
-  progressCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#7C3AED30',
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  progressTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  progressCount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7C3AED',
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#2E1A47',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
-  // Achievement Card Styles
-  achievementCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#7C3AED30',
-  },
-  achievementHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  achievementIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#7C3AED20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  achievementHeaderText: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  achievementSubtitle: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
-  // Tracking Card Styles
-  trackingCard: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  trackingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  trackingIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  trackingInfo: {
-    flex: 1,
-  },
-  trackingLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  trackingStatus: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  trackingProgressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 10,
-  },
-  trackingProgressBar: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  trackingProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  trackingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B98120',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  trackingBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#10B981',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 0,
-    paddingBottom: 100,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categoryIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  categoryTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  checklistItem: {
-    flexDirection: 'row',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-  },
-  checklistItemCompleted: {
-    opacity: 0.6,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#4B5563',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  checkboxChecked: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
-  },
-  itemContent: {
-    flex: 1,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
-  },
-  itemTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-    flex: 1,
-  },
-  itemTitleCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#9CA3AF',
-  },
-  priorityBadge: {
-    backgroundColor: '#FF6B6B20',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#FF6B6B',
-  },
-  itemDescription: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    lineHeight: 18,
-  },
-  itemDescriptionCompleted: {
-    color: '#6B7280',
-  },
-  dueDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    gap: 4,
-  },
-  dueDateText: {
-    fontSize: 12,
-    color: '#FF6B6B',
-    fontWeight: '500',
-  },
-  infoCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#3B82F630',
-  },
-  infoCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoCardIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#3B82F620',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  infoCardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    flex: 1,
-  },
-  infoCardDescription: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  infoLinks: {
-    gap: 8,
-  },
-  infoLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#2E1A47',
-    borderRadius: 10,
-    padding: 14,
-  },
-  infoLinkText: {
-    fontSize: 14,
-    color: '#7C3AED',
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: colors.parchment },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: spacing.sm, fontSize: 16, fontFamily: fonts.body, color: colors.midGrey },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
+  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, justifyContent: 'center', alignItems: 'center', marginRight: 16, ...shadows.sm },
+  headerText: { flex: 1 },
+  title: { fontSize: 24, fontFamily: fonts.display, color: colors.ink, marginBottom: 4 },
+  subtitle: { fontSize: 14, fontFamily: fonts.body, color: colors.midGrey },
+  progressCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  progressTitle: { fontSize: 16, fontFamily: fonts.displaySemi, color: colors.ink },
+  progressCount: { fontSize: 16, fontFamily: fonts.display, color: colors.ink },
+  progressBarContainer: { height: 8, backgroundColor: colors.mist, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  progressBar: { height: '100%', backgroundColor: colors.tagGreenText, borderRadius: 4 },
+  progressText: { fontSize: 13, fontFamily: fonts.body, color: colors.midGrey },
+  achievementCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
+  achievementHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  achievementIconContainer: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.volt, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  achievementHeaderText: { flex: 1 },
+  achievementTitle: { fontSize: 18, fontFamily: fonts.display, color: colors.ink, marginBottom: 2 },
+  achievementSubtitle: { fontSize: 13, fontFamily: fonts.body, color: colors.midGrey },
+  trackingCard: { backgroundColor: colors.parchment, borderRadius: 12, padding: 14, marginBottom: 10 },
+  trackingHeader: { flexDirection: 'row', alignItems: 'center' },
+  trackingIconContainer: { width: 36, height: 36, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  trackingInfo: { flex: 1 },
+  trackingLabel: { fontSize: 14, fontFamily: fonts.bodyBold, color: colors.ink, marginBottom: 2 },
+  trackingStatus: { fontSize: 12, fontFamily: fonts.body, color: colors.midGrey },
+  trackingProgressContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 10 },
+  trackingProgressBar: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
+  trackingProgressFill: { height: '100%', borderRadius: 3 },
+  trackingBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.tagGreenBg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4 },
+  trackingBadgeText: { fontSize: 11, fontFamily: fonts.bodyBold, color: colors.tagGreenText },
+  scrollView: { flex: 1 },
+  content: { padding: 20, paddingTop: 0, paddingBottom: 100 },
+  categorySection: { marginBottom: 24 },
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  categoryIcon: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  categoryTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.ink },
+  checklistItem: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 12, padding: 16, marginBottom: 8, ...shadows.sm },
+  checklistItemCompleted: { opacity: 0.6 },
+  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.mist, justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2 },
+  checkboxChecked: { backgroundColor: colors.tagGreenText, borderColor: colors.tagGreenText },
+  itemContent: { flex: 1 },
+  itemHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8 },
+  itemTitle: { fontSize: 15, fontFamily: fonts.bodyBold, color: colors.ink, flex: 1 },
+  itemTitleCompleted: { textDecorationLine: 'line-through', color: colors.midGrey },
+  priorityBadge: { backgroundColor: colors.tagEmberBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  priorityText: { fontSize: 10, fontFamily: fonts.bodyBold, color: colors.ember },
+  itemDescription: { fontSize: 13, fontFamily: fonts.body, color: colors.midGrey, lineHeight: 18 },
+  itemDescriptionCompleted: { color: colors.midGrey },
+  dueDateContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 },
+  dueDateText: { fontSize: 12, fontFamily: fonts.bodyBold, color: colors.ember },
+  infoCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginTop: 8, ...shadows.sm },
+  infoCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  infoCardIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.tagBlueBg, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  infoCardTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.ink, flex: 1 },
+  infoCardDescription: { fontSize: 13, fontFamily: fonts.body, color: colors.midGrey, lineHeight: 18, marginBottom: 16 },
+  infoLinks: { gap: 8 },
+  infoLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.parchment, borderRadius: 10, padding: 14 },
+  infoLinkText: { fontSize: 14, fontFamily: fonts.bodyBold, color: colors.ink },
 });

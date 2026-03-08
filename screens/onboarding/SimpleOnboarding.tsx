@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface SimpleOnboardingProps {
   onComplete: () => void;
@@ -222,7 +223,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           value={email}
           onChangeText={setEmail}
           placeholder="your@email.com"
-          placeholderTextColor="#64748B"
+          placeholderTextColor={colors.midGrey}
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
@@ -235,7 +236,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             value={password}
             onChangeText={setPassword}
             placeholder={authMode === 'signup' ? 'At least 6 characters' : 'Your password'}
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoComplete="password"
@@ -247,7 +248,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
-              color="#9CA3AF"
+              color={colors.midGrey}
             />
           </TouchableOpacity>
         </View>
@@ -258,13 +259,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <>
               <Text style={styles.primaryButtonText}>
                 {authMode === 'signup' ? 'Create account' : 'Log in'}
               </Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
             </>
           )}
         </TouchableOpacity>
@@ -307,7 +308,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             value={customWorkType}
             onChangeText={setCustomWorkType}
             placeholder="e.g., dog walking, consulting"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             autoFocus
             onSubmitEditing={handleOtherSubmit}
           />
@@ -320,7 +321,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             disabled={!customWorkType.trim()}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
         </View>
       )}
@@ -341,9 +342,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           step={100}
           value={monthlyIncome}
           onValueChange={setMonthlyIncome}
-          minimumTrackTintColor="#7C3AED"
-          maximumTrackTintColor="rgba(255,255,255,0.2)"
-          thumbTintColor="#FF6B6B"
+          minimumTrackTintColor={colors.ink}
+          maximumTrackTintColor={colors.mist}
+          thumbTintColor={colors.ember}
         />
         <View style={styles.sliderLabels}>
           <Text style={styles.sliderLabelText}>£0</Text>
@@ -357,7 +358,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           onPress={() => setReceivesGiftedItems(!receivesGiftedItems)}
         >
           <View style={[styles.checkboxBox, receivesGiftedItems && styles.checkboxBoxChecked]}>
-            {receivesGiftedItems && <Ionicons name="checkmark" size={16} color="#fff" />}
+            {receivesGiftedItems && <Ionicons name="checkmark" size={16} color={colors.white} />}
           </View>
           <Text style={styles.checkboxLabel}>I receive gifted items/products</Text>
         </TouchableOpacity>
@@ -365,7 +366,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       <TouchableOpacity style={styles.primaryButton} onPress={handleIncomeNext}>
         <Text style={styles.primaryButtonText}>Continue</Text>
-        <Ionicons name="arrow-forward" size={20} color="#fff" />
+        <Ionicons name="arrow-forward" size={20} color={colors.white} />
       </TouchableOpacity>
     </View>
   );
@@ -401,7 +402,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       )}
     </View>
@@ -439,9 +440,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             step={5000}
             value={employmentIncome}
             onValueChange={setEmploymentIncome}
-            minimumTrackTintColor="#7C3AED"
-            maximumTrackTintColor="rgba(255,255,255,0.2)"
-            thumbTintColor="#FF6B6B"
+            minimumTrackTintColor={colors.ink}
+            maximumTrackTintColor={colors.mist}
+            thumbTintColor={colors.ember}
           />
           <View style={styles.sliderLabels}>
             <Text style={styles.sliderLabelText}>£10k</Text>
@@ -452,7 +453,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             onPress={() => setCurrentStep('studentLoan')}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
         </View>
       )}
@@ -507,7 +508,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       )}
     </View>
@@ -522,7 +523,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         {currentStep !== 'signup' && (
           <View style={styles.header}>
             <TouchableOpacity onPress={goBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color={colors.ink} />
             </TouchableOpacity>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${getProgress()}%` }]} />
@@ -557,26 +558,26 @@ const OptionButton: React.FC<OptionButtonProps> = ({ text, icon, onPress }) => (
   <TouchableOpacity style={styles.optionButton} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.optionContent}>
       <View style={styles.optionIcon}>
-        <Ionicons name={icon} size={24} color="#FF6B6B" />
+        <Ionicons name={icon} size={24} color={colors.ember} />
       </View>
       <Text style={styles.optionText}>{text}</Text>
     </View>
-    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+    <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
   </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-    gap: 16,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    gap: spacing.md,
   },
   backButton: {
     width: 40,
@@ -587,20 +588,20 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 4,
-    backgroundColor: '#4B5563',
-    borderRadius: 2,
+    backgroundColor: colors.mist,
+    borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#7C3AED',
-    borderRadius: 2,
+    backgroundColor: colors.ink,
+    borderRadius: borderRadius.xs,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: 24,
+    padding: spacing.lg,
     paddingBottom: 40,
   },
   stepContainer: {
@@ -613,57 +614,60 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 48,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   authToggle: {
     flexDirection: 'row',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
     padding: 4,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
     gap: 4,
+    ...shadows.sm,
   },
   authToggleButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
   authToggleButtonActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   authToggleText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   authToggleTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   formContainer: {
-    gap: 16,
+    gap: spacing.md,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: -8,
   },
   input: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    color: colors.ink,
     borderWidth: 2,
     borderColor: 'transparent',
+    fontFamily: fonts.body,
   },
   passwordContainer: {
     position: 'relative',
@@ -673,92 +677,97 @@ const styles = StyleSheet.create({
   },
   passwordToggle: {
     position: 'absolute',
-    right: 16,
-    top: 16,
+    right: spacing.md,
+    top: spacing.md,
     padding: 4,
   },
   primaryButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 8,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
   primaryButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   question: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   questionSubtitle: {
     fontSize: 15,
-    color: '#9CA3AF',
-    marginBottom: 24,
+    color: colors.midGrey,
+    marginBottom: spacing.lg,
+    fontFamily: fonts.body,
   },
   employmentIncomeContainer: {
-    marginTop: 24,
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
+    marginTop: spacing.lg,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    ...shadows.sm,
   },
   optionButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    ...shadows.sm,
   },
   optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: spacing.md,
   },
   optionIcon: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#2E1A47',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
   },
   optionText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
   },
   otherInputContainer: {
-    gap: 16,
+    gap: spacing.md,
   },
   otherLabel: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   sliderSection: {
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   sliderLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 16,
+    color: colors.midGrey,
+    marginBottom: spacing.md,
+    fontFamily: fonts.body,
   },
   incomeDisplay: {
     fontSize: 48,
-    fontWeight: '900',
-    color: '#7C3AED',
-    marginBottom: 24,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.lg,
   },
   slider: {
     width: '100%',
@@ -767,148 +776,156 @@ const styles = StyleSheet.create({
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
   sliderLabelText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   checkboxSection: {
-    gap: 16,
-    marginBottom: 32,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
   },
   checkbox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   checkboxBox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#4B5563',
+    borderColor: colors.mist,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxBoxChecked: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#fff',
+    color: colors.ink,
     flex: 1,
+    fontFamily: fonts.body,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(245, 242, 236, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   // Tax residency styles
   optionButtonSelected: {
     borderWidth: 2,
-    borderColor: '#7C3AED',
-    backgroundColor: '#7C3AED15',
+    borderColor: colors.ink,
+    backgroundColor: colors.parchment,
   },
   optionSubtext: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginTop: 2,
+    fontFamily: fonts.body,
   },
   foreignCountriesSection: {
-    marginTop: 24,
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
+    marginTop: spacing.lg,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    ...shadows.sm,
   },
   foreignCountriesLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 4,
   },
   foreignCountriesHint: {
     fontSize: 13,
-    color: '#9CA3AF',
-    marginBottom: 16,
+    color: colors.midGrey,
+    marginBottom: spacing.md,
+    fontFamily: fonts.body,
   },
   countryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
+    gap: spacing.xs,
+    marginBottom: spacing.lg,
   },
   countryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    gap: 8,
+    gap: spacing.xs,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   countryChipSelected: {
-    borderColor: '#7C3AED',
-    backgroundColor: '#7C3AED20',
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
   },
   countryFlag: {
     fontSize: 18,
   },
   countryName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#9CA3AF',
+    fontFamily: fonts.displayMed,
+    color: colors.midGrey,
   },
   countryNameSelected: {
-    color: '#fff',
+    color: colors.ink,
   },
   skipLink: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: spacing.md,
   },
   skipLinkText: {
     fontSize: 15,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: colors.midGrey,
+    fontFamily: fonts.displayMed,
   },
   noticeCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#F59E0B40',
+    borderColor: colors.ember,
+    ...shadows.sm,
   },
   noticeTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 12,
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   noticeText: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 22,
-    marginTop: 8,
+    marginTop: spacing.xs,
+    fontFamily: fonts.body,
   },
   helpNote: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginTop: 24,
+    marginTop: spacing.lg,
     paddingHorizontal: 4,
-    gap: 8,
+    gap: spacing.xs,
   },
   helpNoteText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     flex: 1,
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
 });

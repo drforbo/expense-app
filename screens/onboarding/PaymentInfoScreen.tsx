@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface PaymentInfoScreenProps {
   email: string;
@@ -19,11 +20,11 @@ interface PaymentInfoScreenProps {
   onBack: () => void;
 }
 
-export default function PaymentInfoScreen({ 
-  email, 
-  userId, 
-  onComplete, 
-  onBack 
+export default function PaymentInfoScreen({
+  email,
+  userId,
+  onComplete,
+  onBack
 }: PaymentInfoScreenProps) {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -66,7 +67,7 @@ export default function PaymentInfoScreen({
     const year = parseInt('20' + cleanedExpiry.substring(2, 4));
     const now = new Date();
     const expiryDate = new Date(year, month - 1);
-    
+
     if (expiryDate < now) {
       Alert.alert('Card Expired', 'Please use a valid card');
       return false;
@@ -97,10 +98,10 @@ export default function PaymentInfoScreen({
       // 2. Attach payment method
       // 3. Create subscription with £2.99 first month, then £12.99/month
       // 4. Save subscription ID to Supabase
-      
+
       console.log('Payment collected for user:', userId);
       console.log('Charged: £2.99 for first month');
-      
+
       onComplete();
     } catch (error: any) {
       Alert.alert('Payment Error', error.message || 'Something went wrong');
@@ -118,14 +119,14 @@ export default function PaymentInfoScreen({
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         {/* Back button */}
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
         {/* Header */}
@@ -153,11 +154,11 @@ export default function PaymentInfoScreen({
         </View>
 
         {/* Apple Pay Option */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.applePayButton}
           onPress={handleApplePay}
         >
-          <Ionicons name="logo-apple" size={24} color="#fff" />
+          <Ionicons name="logo-apple" size={24} color={colors.white} />
           <Text style={styles.applePayText}>Pay with Apple Pay</Text>
         </TouchableOpacity>
 
@@ -173,11 +174,11 @@ export default function PaymentInfoScreen({
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Card Number</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="card-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+              <Ionicons name="card-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="1234 5678 9012 3456"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.midGrey}
                 value={cardNumber}
                 onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                 keyboardType="numeric"
@@ -195,11 +196,11 @@ export default function PaymentInfoScreen({
             <View style={[styles.inputContainer, styles.halfWidth]}>
               <Text style={styles.label}>Expiry</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="calendar-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                <Ionicons name="calendar-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="MM/YY"
-                  placeholderTextColor="#6B7280"
+                  placeholderTextColor={colors.midGrey}
                   value={expiry}
                   onChangeText={(text) => setExpiry(formatExpiry(text))}
                   keyboardType="numeric"
@@ -215,11 +216,11 @@ export default function PaymentInfoScreen({
             <View style={[styles.inputContainer, styles.halfWidth]}>
               <Text style={styles.label}>CVV</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="123"
-                  placeholderTextColor="#6B7280"
+                  placeholderTextColor={colors.midGrey}
                   value={cvv}
                   onChangeText={setCvv}
                   keyboardType="numeric"
@@ -237,24 +238,24 @@ export default function PaymentInfoScreen({
 
         {/* Security Note */}
         <View style={styles.securityNote}>
-          <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+          <Ionicons name="shield-checkmark" size={16} color={colors.tagGreenText} />
           <Text style={styles.securityText}>
             Your payment info is secure and encrypted
           </Text>
         </View>
 
         {/* Continue Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
           onPress={handleContinue}
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <>
               <Text style={styles.continueButtonText}>Pay £2.99</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
             </>
           )}
         </TouchableOpacity>
@@ -271,11 +272,11 @@ export default function PaymentInfoScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
     paddingTop: 60,
     paddingBottom: 40,
   },
@@ -283,118 +284,125 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   trialCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   trialRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   trialLabel: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   trialValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
   },
   divider: {
     height: 1,
-    backgroundColor: '#374151',
-    marginVertical: 12,
+    backgroundColor: colors.mist,
+    marginVertical: spacing.sm,
   },
   trialNote: {
     fontSize: 14,
-    color: '#10B981',
+    color: colors.tagGreenText,
     lineHeight: 20,
+    fontFamily: fonts.body,
   },
   applePayButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.dark,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   applePayText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginLeft: spacing.xs,
   },
   orDivider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   orLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#374151',
+    backgroundColor: colors.mist,
   },
   orText: {
     fontSize: 14,
-    color: '#6B7280',
-    marginHorizontal: 16,
+    color: colors.midGrey,
+    marginHorizontal: spacing.md,
+    fontFamily: fonts.body,
   },
   form: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.mist,
   },
   inputIcon: {
-    marginLeft: 16,
+    marginLeft: spacing.md,
   },
   input: {
     flex: 1,
     height: 56,
     fontSize: 16,
-    color: '#fff',
-    paddingHorizontal: 12,
+    color: colors.ink,
+    paddingHorizontal: spacing.sm,
+    fontFamily: fonts.body,
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
   halfWidth: {
     flex: 1,
@@ -403,35 +411,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   securityText: {
     fontSize: 14,
-    color: '#10B981',
-    marginLeft: 8,
+    color: colors.tagGreenText,
+    marginLeft: spacing.xs,
+    fontFamily: fonts.body,
   },
   continueButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   continueButtonDisabled: {
     opacity: 0.5,
   },
   continueButtonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
   footer: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
 });

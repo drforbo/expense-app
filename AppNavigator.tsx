@@ -19,7 +19,9 @@ import CategorizedTransactionsScreen from './screens/transactions/CategorizedTra
 import SubscriptionReviewScreen from './screens/transactions/SubscriptionReviewScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import TaxEstimateScreen from './screens/tax/TaxEstimateScreen';
+import FilingGuideScreen from './screens/tax/FilingGuideScreen';
 import ProfileScreen from './screens/profile/ProfileScreen';
+import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 
 type RootStackParamList = {
   Onboarding: undefined;
@@ -34,7 +36,9 @@ type RootStackParamList = {
   EditTransaction: { transactionId: string; transactionType: string };
   CategorizedTransactions: { filterType?: string };
   TaxEstimate: undefined;
+  FilingGuide: undefined;
   Profile: undefined;
+  GiftedTracker: undefined;
 };
 
 type TabParamList = {
@@ -159,7 +163,9 @@ export default function AppNavigator() {
         <Stack.Screen name="CategorizedTransactions" component={CategorizedTransactionsScreen} />
         <Stack.Screen name="SubscriptionReview" component={SubscriptionReviewScreen} />
         <Stack.Screen name="TaxEstimate" component={TaxEstimateScreen} />
+        <Stack.Screen name="FilingGuide" component={FilingGuideScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="GiftedTracker" component={GiftedTrackerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

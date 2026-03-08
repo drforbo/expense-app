@@ -13,8 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
 import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiPost } from '../../lib/api';
 
 export default function DashboardScreen({ navigation }: any) {
   const { uploadState, clearUpload } = useUpload();
@@ -26,6 +25,10 @@ export default function DashboardScreen({ navigation }: any) {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [loadingCounts, setLoadingCounts] = useState(true);
   const [showUploadComplete, setShowUploadComplete] = useState(false);
+  const [hasTransactions, setHasTransactions] = useState(true);
+  const [profileCompleted, setProfileCompleted] = useState(true);
+  const [receivesGifts, setReceivesGifts] = useState(false);
+  const [giftedItemsCount, setGiftedItemsCount] = useState(0);
   const slideAnim = useRef(new Animated.Value(-80)).current;
 
   const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
@@ -65,13 +68,26 @@ export default function DashboardScreen({ navigation }: any) {
       // Get user name from email
       setUserName(user.email?.split('@')[0] || 'there');
 
+      // Check profile completion + gifted items preference
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('profile_completed, receives_gifted_items')
+        .eq('user_id', user.id)
+        .single();
+      setProfileCompleted(profileData?.profile_completed ?? false);
+      setReceivesGifts(profileData?.receives_gifted_items ?? false);
+
+      // Gifted items count
+      if (profileData?.receives_gifted_items) {
+        const { data: giftedItems } = await supabase
+          .from('gifted_items')
+          .select('id')
+          .eq('user_id', user.id);
+        setGiftedItemsCount(giftedItems?.length || 0);
+      }
+
       // Uncategorized count
-      const uncategorizedResponse = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-      const uncategorizedData = await uncategorizedResponse.json();
+      const uncategorizedData = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
       setUncategorizedCount(uncategorizedData.count || 0);
 
       // Unqualified count
@@ -89,6 +105,18 @@ export default function DashboardScreen({ navigation }: any) {
         .select('amount, tax_deductible, qualified, business_percent, category_id')
         .eq('user_id', user.id);
 
+      setHasTransactions((transactions?.length || 0) > 0 || (uncategorizedData.count || 0) > 0);
+
+      // Gifted items total (counts as income)
+      let giftedTotal = 0;
+      const { data: giftedData } = await supabase
+        .from('gifted_items')
+        .select('rrp')
+        .eq('user_id', user.id);
+      if (giftedData) {
+        giftedTotal = giftedData.reduce((sum, g) => sum + (g.rrp || 0), 0);
+      }
+
       if (transactions) {
         let income = 0;
         let qualifiedExpenses = 0;
@@ -101,7 +129,7 @@ export default function DashboardScreen({ navigation }: any) {
           }
         });
 
-        setTotalIncome(income);
+        setTotalIncome(income + giftedTotal);
         setTotalExpenses(qualifiedExpenses);
 
         // Simple tax estimate (basic rate 20% after personal allowance £12,570)
@@ -137,7 +165,7 @@ export default function DashboardScreen({ navigation }: any) {
         <Animated.View style={[styles.toastBanner, { transform: [{ translateY: slideAnim }] }]}>
           <Ionicons name="checkmark-circle" size={20} color={colors.tagGreenText} />
           <Text style={styles.toastText}>
-            {uploadState.result.transactions_saved} transactions added
+            {uploadState.result.transaction_count} transactions added
           </Text>
           <TouchableOpacity onPress={hideUploadComplete}>
             <Ionicons name="close" size={18} color={colors.midGrey} />
@@ -167,7 +195,52 @@ export default function DashboardScreen({ navigation }: any) {
 
         {/* Greeting */}
         <Text style={styles.greeting}>Hey {userName} 👋</Text>
-        <Text style={styles.greetingSub}>Here's your tax snapshot</Text>
+        <Text style={styles.greetingSub}>
+          {!hasTransactions ? 'Let\'s get your taxes sorted' : 'Here\'s your tax snapshot'}
+        </Text>
+
+        {/* First-time user: upload prompt */}
+        {!loadingCounts && !hasTransactions && (
+          <TouchableOpacity
+            style={styles.welcomeCard}
+            onPress={() => navigation.navigate('UploadStatement')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.welcomeIconWrap}>
+              <Ionicons name="document-text-outline" size={28} color={colors.ink} />
+            </View>
+            <Text style={styles.welcomeTitle}>Upload a bank statement</Text>
+            <Text style={styles.welcomeSub}>
+              Get started by uploading a PDF bank statement. We'll read your transactions and help you track expenses for your tax return.
+            </Text>
+            <View style={styles.welcomeCta}>
+              <Ionicons name="add" size={18} color={colors.ink} />
+              <Text style={styles.welcomeCtaText}>Upload statement</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Profile incomplete prompt */}
+        {!loadingCounts && !profileCompleted && (
+          <TouchableOpacity
+            style={styles.profilePromptCard}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.profilePromptRow}>
+              <View style={styles.profilePromptIcon}>
+                <Ionicons name="person-outline" size={20} color={colors.ember} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profilePromptTitle}>Complete your profile</Text>
+                <Text style={styles.profilePromptSub}>
+                  Your tax estimate won't be accurate until you've added your employment details, student loan plan, and tax year info.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Tax snapshot card */}
         <View style={styles.taxCard}>
@@ -249,6 +322,30 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
         </TouchableOpacity>
+
+        {/* Gifted items card */}
+        {receivesGifts && (
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => navigation.navigate('GiftedTracker')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: colors.tagBlueBg }]}>
+              <Ionicons name="gift-outline" size={22} color={colors.tagBlueText} />
+            </View>
+            <View style={styles.actionText}>
+              <Text style={styles.actionTitle}>Log gifted items</Text>
+              <Text style={styles.actionSub}>
+                {loadingCounts
+                  ? 'Loading...'
+                  : giftedItemsCount > 0
+                    ? `${giftedItemsCount} item${giftedItemsCount !== 1 ? 's' : ''} logged`
+                    : 'PR packages count as income'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
+          </TouchableOpacity>
+        )}
 
         {/* All transactions link */}
         <TouchableOpacity
@@ -465,5 +562,84 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 14,
     color: colors.ember,
+  },
+  welcomeCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.volt,
+    borderStyle: 'dashed',
+  },
+  welcomeIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.tagVoltBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  welcomeTitle: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.ink,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  welcomeSub: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.midGrey,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.lg,
+  },
+  welcomeCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.volt,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: borderRadius.sm,
+  },
+  welcomeCtaText: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    color: colors.ink,
+  },
+  profilePromptCard: {
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  profilePromptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profilePromptIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  profilePromptTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  profilePromptSub: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.midGrey,
+    lineHeight: 17,
   },
 });

@@ -15,8 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
+import { API_URL } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface CategoryBreakdown {
   category_name: string;
@@ -160,7 +160,10 @@ export default function OverviewScreen({ navigation }: any) {
 
       const response = await fetch(`${API_URL}/api/get_last_export_date`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+        },
         body: JSON.stringify({ user_id: user.id }),
         signal: controller.signal,
       });
@@ -580,7 +583,7 @@ export default function OverviewScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ink} />
           <Text style={styles.loadingText}>Loading summary...</Text>
         </View>
       </SafeAreaView>
@@ -600,7 +603,7 @@ export default function OverviewScreen({ navigation }: any) {
             style={styles.refreshButton}
             onPress={fetchFinancialSummary}
           >
-            <Ionicons name="refresh" size={24} color="#9CA3AF" />
+            <Ionicons name="refresh" size={24} color={colors.midGrey} />
           </TouchableOpacity>
         </View>
 
@@ -608,8 +611,8 @@ export default function OverviewScreen({ navigation }: any) {
         {userProfile?.tracking_goal === 'limited_company' ? (
           <View style={styles.limitedCompanyCard}>
             <View style={styles.taxHeader}>
-              <View style={[styles.taxIconContainer, { backgroundColor: '#7C3AED20' }]}>
-                <Ionicons name="business" size={24} color="#7C3AED" />
+              <View style={[styles.taxIconContainer, { backgroundColor: colors.parchment }]}>
+                <Ionicons name="business" size={24} color={colors.ink} />
               </View>
               <Text style={styles.taxLabel}>Limited Company</Text>
             </View>
@@ -618,7 +621,7 @@ export default function OverviewScreen({ navigation }: any) {
               We're working on bringing corporation tax and director salary calculations to bopp. In the meantime, you can still track and categorize all your business expenses.
             </Text>
             <View style={styles.comingSoonBadge}>
-              <Ionicons name="rocket" size={14} color="#7C3AED" />
+              <Ionicons name="rocket" size={14} color={colors.ink} />
               <Text style={styles.comingSoonText}>Coming soon to bopp</Text>
             </View>
           </View>
@@ -631,7 +634,7 @@ export default function OverviewScreen({ navigation }: any) {
               <View style={styles.taxCard}>
                 <View style={styles.taxHeader}>
                   <View style={styles.taxIconContainer}>
-                    <Ionicons name="calculator" size={24} color="#F59E0B" />
+                    <Ionicons name="calculator" size={24} color={colors.ember} />
                   </View>
                   <Text style={styles.taxLabel}>
                     {userProfile?.has_other_employment && userProfile?.employment_is_paye
@@ -642,7 +645,7 @@ export default function OverviewScreen({ navigation }: any) {
                     style={styles.infoButton}
                     onPress={() => setShowEstimateInfo(true)}
                   >
-                    <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
+                    <Ionicons name="information-circle-outline" size={20} color={colors.midGrey} />
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.taxAmount}>{formatCurrency(summary.estimatedTaxOwed)}</Text>
@@ -652,7 +655,7 @@ export default function OverviewScreen({ navigation }: any) {
                 {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
                   <View style={styles.payeInfoContainer}>
                     <View style={styles.payeInfoRow}>
-                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      <Ionicons name="checkmark-circle" size={16} color={colors.tagGreenText} />
                       <Text style={styles.payeInfoText}>
                         Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
                       </Text>
@@ -664,7 +667,7 @@ export default function OverviewScreen({ navigation }: any) {
                 )}
                 {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
                   <View style={styles.taxInfoRow}>
-                    <Ionicons name="alert-circle-outline" size={14} color="#F59E0B" />
+                    <Ionicons name="alert-circle-outline" size={14} color={colors.ember} />
                     <Text style={styles.taxInfoText}>
                       Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
                     </Text>
@@ -675,8 +678,8 @@ export default function OverviewScreen({ navigation }: any) {
               {/* Running Total Tax Card - Based on Actual Transactions */}
               <View style={styles.runningTaxCard}>
                 <View style={styles.taxHeader}>
-                  <View style={[styles.taxIconContainer, { backgroundColor: '#10B98120' }]}>
-                    <Ionicons name="trending-up" size={24} color="#10B981" />
+                  <View style={[styles.taxIconContainer, { backgroundColor: colors.tagGreenBg }]}>
+                    <Ionicons name="trending-up" size={24} color={colors.tagGreenText} />
                   </View>
                   <View style={styles.runningTaxLabelContainer}>
                     <Text style={styles.taxLabel}>Tax on Tracked Income</Text>
@@ -685,7 +688,7 @@ export default function OverviewScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.taxAmount, { color: '#10B981' }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
+                <Text style={[styles.taxAmount, { color: colors.tagGreenText }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
                 <Text style={styles.taxNote}>
                   Tax Year {summary.taxYear} • Based on {formatCurrency(Math.max(0, (summary.businessIncome + summary.giftedItemsTotal) - summary.businessExpenses))} taxable profit
                 </Text>
@@ -699,7 +702,7 @@ export default function OverviewScreen({ navigation }: any) {
                 </View>
                 {(summary.businessIncome + summary.giftedItemsTotal) === 0 && (
                   <View style={styles.noDataHint}>
-                    <Ionicons name="bulb-outline" size={14} color="#6B7280" />
+                    <Ionicons name="bulb-outline" size={14} color={colors.midGrey} />
                     <Text style={styles.noDataHintText}>
                       Start categorizing income transactions to see your actual tax liability
                     </Text>
@@ -708,7 +711,7 @@ export default function OverviewScreen({ navigation }: any) {
               </View>
 
               <View style={styles.disclaimerContainer}>
-                <Ionicons name="information-circle-outline" size={14} color="#6B7280" />
+                <Ionicons name="information-circle-outline" size={14} color={colors.midGrey} />
                 <Text style={styles.disclaimerText}>
                   These are estimates only, not financial advice. Consult an accountant for accurate figures.
                 </Text>
@@ -723,7 +726,7 @@ export default function OverviewScreen({ navigation }: any) {
             >
               <View style={styles.profileIncompleteHeader}>
                 <View style={styles.profileIncompleteIconContainer}>
-                  <Ionicons name="calculator-outline" size={28} color="#7C3AED" />
+                  <Ionicons name="calculator-outline" size={28} color={colors.ink} />
                 </View>
                 <View style={styles.profileIncompleteHeaderText}>
                   <Text style={styles.profileIncompleteTitle}>Complete your profile</Text>
@@ -752,7 +755,7 @@ export default function OverviewScreen({ navigation }: any) {
                 <Text style={styles.missingFieldsLabel}>Still needed:</Text>
                 {profileCompleteness.missingFields.map((field, index) => (
                   <View key={index} style={styles.missingFieldItem}>
-                    <Ionicons name="ellipse-outline" size={8} color="#9CA3AF" />
+                    <Ionicons name="ellipse-outline" size={8} color={colors.midGrey} />
                     <Text style={styles.missingFieldText}>{field}</Text>
                   </View>
                 ))}
@@ -760,7 +763,7 @@ export default function OverviewScreen({ navigation }: any) {
 
               <View style={styles.profileIncompleteButton}>
                 <Text style={styles.profileIncompleteButtonText}>Complete Profile</Text>
-                <Ionicons name="arrow-forward" size={18} color="#fff" />
+                <Ionicons name="arrow-forward" size={18} color={colors.white} />
               </View>
             </TouchableOpacity>
           );
@@ -787,14 +790,14 @@ export default function OverviewScreen({ navigation }: any) {
         >
           <View style={styles.incomeHeader}>
             <View style={styles.incomeIconContainer}>
-              <Ionicons name="cash-outline" size={24} color="#10B981" />
+              <Ionicons name="cash-outline" size={24} color={colors.tagGreenText} />
             </View>
             <View style={styles.incomeInfo}>
               <Text style={styles.incomeLabel}>Business Income</Text>
               <Text style={styles.incomeAmount}>{formatCurrency(summary.businessIncome)}</Text>
             </View>
             {summary.businessIncome > 0 && (
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
             )}
           </View>
           {summary.businessIncome === 0 && (
@@ -821,17 +824,17 @@ export default function OverviewScreen({ navigation }: any) {
           }}
         >
           <View style={styles.incomeHeader}>
-            <View style={[styles.incomeIconContainer, { backgroundColor: '#F59E0B20' }]}>
-              <Ionicons name="gift-outline" size={24} color="#F59E0B" />
+            <View style={[styles.incomeIconContainer, { backgroundColor: colors.tagEmberBg }]}>
+              <Ionicons name="gift-outline" size={24} color={colors.ember} />
             </View>
             <View style={styles.incomeInfo}>
               <Text style={styles.incomeLabel}>Gifted Items</Text>
-              <Text style={[styles.incomeAmount, { color: '#F59E0B' }]}>{formatCurrency(summary.giftedItemsTotal)}</Text>
+              <Text style={[styles.incomeAmount, { color: colors.ember }]}>{formatCurrency(summary.giftedItemsTotal)}</Text>
               {summary.giftedItemsCount > 0 && (
                 <Text style={styles.giftedItemsCount}>{summary.giftedItemsCount} item{summary.giftedItemsCount !== 1 ? 's' : ''} tracked</Text>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
           </View>
           {summary.giftedItemsCount === 0 && (
             <View style={styles.emptyIncomeMessage}>
@@ -870,12 +873,12 @@ export default function OverviewScreen({ navigation }: any) {
                   <View style={styles.categoryHeader}>
                     <Text style={styles.categoryName}>{category.category_name}</Text>
                     <View style={styles.categoryHeaderRight}>
-                      <Text style={[styles.categoryAmount, { color: '#10B981' }]}>{formatCurrency(category.total_amount)}</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                      <Text style={[styles.categoryAmount, { color: colors.tagGreenText }]}>{formatCurrency(category.total_amount)}</Text>
+                      <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
                     </View>
                   </View>
-                  <View style={[styles.categoryBarContainer, { backgroundColor: '#10B98120' }]}>
-                    <View style={[styles.categoryBar, { width: `${barWidth}%`, backgroundColor: '#10B981' }]} />
+                  <View style={[styles.categoryBarContainer, { backgroundColor: colors.tagGreenBg }]}>
+                    <View style={[styles.categoryBar, { width: `${barWidth}%`, backgroundColor: colors.tagGreenText }]} />
                   </View>
                   <Text style={styles.categoryCount}>
                     {category.transaction_count} transaction{category.transaction_count !== 1 ? 's' : ''}
@@ -891,7 +894,7 @@ export default function OverviewScreen({ navigation }: any) {
         <View style={styles.expensesRow}>
           <View style={[styles.expenseCard, styles.businessCard]}>
             <View style={styles.expenseIconContainer}>
-              <Ionicons name="briefcase" size={20} color="#7C3AED" />
+              <Ionicons name="briefcase" size={20} color={colors.ink} />
             </View>
             <Text style={styles.expenseLabel}>Business</Text>
             <Text style={styles.expenseAmount}>{formatCurrency(summary.businessExpenses)}</Text>
@@ -900,7 +903,7 @@ export default function OverviewScreen({ navigation }: any) {
 
           <View style={[styles.expenseCard, styles.personalCard]}>
             <View style={[styles.expenseIconContainer, styles.personalIcon]}>
-              <Ionicons name="person" size={20} color="#6B7280" />
+              <Ionicons name="person" size={20} color={colors.midGrey} />
             </View>
             <Text style={styles.expenseLabel}>Personal</Text>
             <Text style={styles.expenseAmount}>{formatCurrency(summary.personalExpenses)}</Text>
@@ -916,13 +919,13 @@ export default function OverviewScreen({ navigation }: any) {
           >
             <View style={styles.unqualifiedHeader}>
               <View style={styles.unqualifiedIconContainer}>
-                <Ionicons name="document-text-outline" size={24} color="#F59E0B" />
+                <Ionicons name="document-text-outline" size={24} color={colors.ember} />
               </View>
               <View style={styles.unqualifiedInfo}>
                 <Text style={styles.unqualifiedLabel}>Needs Evidence</Text>
                 <Text style={styles.unqualifiedAmount}>{formatCurrency(summary.unqualifiedExpenses)}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
             </View>
             <Text style={styles.unqualifiedDescription}>
               {summary.unqualifiedCount} expense{summary.unqualifiedCount !== 1 ? 's' : ''} need receipts to be HMRC-ready
@@ -959,7 +962,7 @@ export default function OverviewScreen({ navigation }: any) {
                       <Text style={styles.categoryName}>{category.category_name}</Text>
                       <View style={styles.categoryHeaderRight}>
                         <Text style={styles.categoryAmount}>{formatCurrency(category.total_amount)}</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                        <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
                       </View>
                     </View>
                     <View style={styles.categoryBarContainer}>
@@ -982,11 +985,11 @@ export default function OverviewScreen({ navigation }: any) {
           disabled={exporting}
         >
           <View style={styles.exportButtonContent}>
-            <View style={[styles.actionIcon, { backgroundColor: '#F59E0B20' }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.tagEmberBg }]}>
               {exporting ? (
-                <ActivityIndicator size={24} color="#F59E0B" />
+                <ActivityIndicator size={24} color={colors.ember} />
               ) : (
-                <Ionicons name="download" size={24} color="#F59E0B" />
+                <Ionicons name="download" size={24} color={colors.ember} />
               )}
             </View>
             <View style={styles.exportButtonText}>
@@ -994,7 +997,7 @@ export default function OverviewScreen({ navigation }: any) {
               <Text style={styles.actionSubtitle}>Last export: {formatLastExportDate(lastExportDate)}</Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
         </TouchableOpacity>
 
       </ScrollView>
@@ -1018,7 +1021,7 @@ export default function OverviewScreen({ navigation }: any) {
                 value={startDate}
                 onChangeText={setStartDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.midGrey}
               />
             </View>
 
@@ -1029,7 +1032,7 @@ export default function OverviewScreen({ navigation }: any) {
                 value={endDate}
                 onChangeText={setEndDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.midGrey}
               />
             </View>
 
@@ -1062,7 +1065,7 @@ export default function OverviewScreen({ navigation }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.disclaimerHeader}>
-              <Ionicons name="alert-circle" size={32} color="#F59E0B" />
+              <Ionicons name="alert-circle" size={32} color={colors.ember} />
             </View>
             <Text style={styles.modalTitle}>Important Disclaimer</Text>
             <Text style={styles.disclaimerBody}>
@@ -1109,7 +1112,7 @@ export default function OverviewScreen({ navigation }: any) {
             <View style={styles.breakdownModalHeader}>
               <Text style={styles.breakdownModalTitle}>{selectedBreakdown?.title}</Text>
               <TouchableOpacity onPress={() => setShowBreakdownModal(false)}>
-                <Ionicons name="close" size={24} color="#9CA3AF" />
+                <Ionicons name="close" size={24} color={colors.midGrey} />
               </TouchableOpacity>
             </View>
 
@@ -1126,7 +1129,7 @@ export default function OverviewScreen({ navigation }: any) {
                     }}
                   >
                     <View style={styles.breakdownItemIcon}>
-                      <Ionicons name="gift" size={20} color="#F59E0B" />
+                      <Ionicons name="gift" size={20} color={colors.ember} />
                     </View>
                     <View style={styles.breakdownItemDetails}>
                       <Text style={styles.breakdownItemName}>{item.item_name}</Text>
@@ -1134,10 +1137,10 @@ export default function OverviewScreen({ navigation }: any) {
                         {item.received_from ? `From ${item.received_from} • ` : ''}{new Date(item.received_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </Text>
                     </View>
-                    <Text style={[styles.breakdownItemAmount, { color: '#F59E0B' }]}>
+                    <Text style={[styles.breakdownItemAmount, { color: colors.ember }]}>
                       {formatCurrency(item.rrp)}
                     </Text>
-                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
+                    <Ionicons name="chevron-forward" size={16} color={colors.midGrey} style={{ marginLeft: 4 }} />
                   </TouchableOpacity>
                 ))
               ) : (
@@ -1156,12 +1159,12 @@ export default function OverviewScreen({ navigation }: any) {
                     }}
                   >
                     <View style={[styles.breakdownItemIcon, {
-                      backgroundColor: selectedBreakdown.type === 'income' ? '#10B98120' : '#7C3AED20'
+                      backgroundColor: selectedBreakdown.type === 'income' ? colors.tagGreenBg : colors.parchment
                     }]}>
                       <Ionicons
                         name={selectedBreakdown.type === 'income' ? 'trending-up' : 'receipt-outline'}
                         size={20}
-                        color={selectedBreakdown.type === 'income' ? '#10B981' : '#7C3AED'}
+                        color={selectedBreakdown.type === 'income' ? colors.tagGreenText : colors.ink}
                       />
                     </View>
                     <View style={styles.breakdownItemDetails}>
@@ -1181,11 +1184,11 @@ export default function OverviewScreen({ navigation }: any) {
                       </View>
                     </View>
                     <Text style={[styles.breakdownItemAmount, {
-                      color: selectedBreakdown.type === 'income' ? '#10B981' : '#7C3AED'
+                      color: selectedBreakdown.type === 'income' ? colors.tagGreenText : colors.ink
                     }]}>
                       {formatCurrency(Math.abs(txn.amount) * (txn.business_percent / 100))}
                     </Text>
-                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" style={{ marginLeft: 4 }} />
+                    <Ionicons name="chevron-forward" size={16} color={colors.midGrey} style={{ marginLeft: 4 }} />
                   </TouchableOpacity>
                 ))
               )}
@@ -1212,7 +1215,7 @@ export default function OverviewScreen({ navigation }: any) {
                   }
                 }}
               >
-                <Ionicons name="pencil" size={18} color="#fff" />
+                <Ionicons name="pencil" size={18} color={colors.white} />
                 <Text style={styles.breakdownEditButtonText}>Edit All</Text>
               </TouchableOpacity>
             </View>
@@ -1231,7 +1234,7 @@ export default function OverviewScreen({ navigation }: any) {
           <View style={styles.modalContent}>
             <View style={styles.infoModalHeader}>
               <View style={[styles.taxIconContainer, { marginRight: 0 }]}>
-                <Ionicons name="information-circle" size={28} color="#F59E0B" />
+                <Ionicons name="information-circle" size={28} color={colors.ember} />
               </View>
             </View>
             <Text style={styles.modalTitle}>About Estimated Tax</Text>
@@ -1242,7 +1245,7 @@ export default function OverviewScreen({ navigation }: any) {
               It projects your annual tax liability based on this figure, giving you a year-end target to plan for.
             </Text>
             <View style={styles.infoModalHighlight}>
-              <Ionicons name="shield-checkmark" size={18} color="#10B981" />
+              <Ionicons name="shield-checkmark" size={18} color={colors.tagGreenText} />
               <Text style={styles.infoModalHighlightText}>
                 This estimate is intentionally conservative - we'd rather you save a bit too much than be caught short at tax time. Your actual bill may be lower.
               </Text>
@@ -1266,7 +1269,7 @@ export default function OverviewScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -1276,7 +1279,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   scrollView: {
     flex: 1,
@@ -1293,37 +1296,37 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   refreshButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   profilePromptCard: {
-    backgroundColor: '#7C3AED15',
+    backgroundColor: colors.parchment,
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   profilePromptIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1333,22 +1336,22 @@ const styles = StyleSheet.create({
   },
   profilePromptTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 2,
   },
   profilePromptSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   // Profile Incomplete Card Styles
   profileIncompleteCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#7C3AED40',
+    borderColor: colors.mist,
   },
   profileIncompleteHeader: {
     flexDirection: 'row',
@@ -1359,7 +1362,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -1369,13 +1372,13 @@ const styles = StyleSheet.create({
   },
   profileIncompleteTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 2,
   },
   profileIncompleteSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   profileProgressContainer: {
     marginBottom: 16,
@@ -1388,34 +1391,34 @@ const styles = StyleSheet.create({
   },
   profileProgressLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   profileProgressPercentage: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   profileProgressBarBg: {
     height: 8,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 4,
     overflow: 'hidden',
   },
   profileProgressBarFill: {
     height: '100%',
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
     borderRadius: 4,
   },
   missingFieldsContainer: {
-    backgroundColor: '#2E1A4780',
+    backgroundColor: colors.parchment,
     borderRadius: 10,
     padding: 14,
     marginBottom: 16,
   },
   missingFieldsLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1428,10 +1431,10 @@ const styles = StyleSheet.create({
   },
   missingFieldText: {
     fontSize: 14,
-    color: '#D1D5DB',
+    color: colors.midGrey,
   },
   profileIncompleteButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
     borderRadius: 12,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1441,26 +1444,26 @@ const styles = StyleSheet.create({
   },
   profileIncompleteButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   limitedCompanyCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#6B728030',
+    borderColor: colors.mist,
   },
   limitedCompanyTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 8,
   },
   limitedCompanyText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -1468,7 +1471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#7C3AED15',
+    backgroundColor: colors.parchment,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -1477,16 +1480,16 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   taxCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#F59E0B30',
+    borderColor: colors.mist,
   },
   taxHeader: {
     flexDirection: 'row',
@@ -1497,30 +1500,30 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F59E0B20',
+    backgroundColor: colors.tagEmberBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   taxLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   taxAmount: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#F59E0B',
+    fontFamily: fonts.display,
+    color: colors.ember,
     marginBottom: 4,
   },
   taxNote: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 12,
   },
   disclaimerContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 8,
     padding: 10,
     gap: 8,
@@ -1528,7 +1531,7 @@ const styles = StyleSheet.create({
   disclaimerText: {
     flex: 1,
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.midGrey,
     lineHeight: 16,
   },
   taxInfoRow: {
@@ -1536,22 +1539,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginBottom: 12,
-    backgroundColor: '#F59E0B10',
+    backgroundColor: colors.tagEmberBg,
     padding: 8,
     borderRadius: 8,
   },
   taxInfoText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     flex: 1,
   },
   payeInfoContainer: {
-    backgroundColor: '#10B98110',
+    backgroundColor: colors.tagGreenBg,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#10B98120',
+    borderColor: colors.mist,
   },
   payeInfoRow: {
     flexDirection: 'row',
@@ -1561,22 +1564,22 @@ const styles = StyleSheet.create({
   },
   payeInfoText: {
     fontSize: 13,
-    color: '#10B981',
-    fontWeight: '600',
+    color: colors.tagGreenText,
+    fontFamily: fonts.bodyBold,
     flex: 1,
   },
   payeInfoDetail: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 18,
   },
   incomeCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#10B98130',
+    borderColor: colors.mist,
   },
   incomeHeader: {
     flexDirection: 'row',
@@ -1586,7 +1589,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#10B98120',
+    backgroundColor: colors.tagGreenBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1596,13 +1599,13 @@ const styles = StyleSheet.create({
   },
   incomeLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 4,
   },
   incomeAmount: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#10B981',
+    fontFamily: fonts.display,
+    color: colors.tagGreenText,
   },
   incomeBreakdown: {
     flexDirection: 'row',
@@ -1613,24 +1616,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 8,
     padding: 12,
   },
   incomeBreakdownLabel: {
     flex: 1,
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   incomeBreakdownAmount: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 16,
   },
   expensesRow: {
@@ -1640,47 +1643,47 @@ const styles = StyleSheet.create({
   },
   expenseCard: {
     flex: 1,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
   },
   businessCard: {
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   personalCard: {
     borderWidth: 1,
-    borderColor: '#6B728030',
+    borderColor: colors.mist,
   },
   expenseIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   personalIcon: {
-    backgroundColor: '#6B728020',
+    backgroundColor: colors.parchment,
   },
   expenseLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 4,
   },
   expenseAmount: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   expensePercent: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
   },
   categoryList: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1696,30 +1699,30 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     flex: 1,
   },
   categoryAmount: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   categoryBarContainer: {
     height: 8,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
   categoryBar: {
     height: '100%',
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
     borderRadius: 4,
   },
   categoryCount: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.midGrey,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -1727,7 +1730,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     flex: 1,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     minHeight: 120,
@@ -1742,13 +1745,13 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   actionSubtitle: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   modalOverlay: {
     flex: 1,
@@ -1758,7 +1761,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -1766,13 +1769,13 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 24,
   },
   dateInputContainer: {
@@ -1780,18 +1783,18 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 8,
   },
   dateInput: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#7C3AED20',
+    borderColor: colors.mist,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1805,20 +1808,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   confirmButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#9CA3AF',
+    fontFamily: fonts.display,
+    color: colors.midGrey,
   },
   confirmButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   disclaimerHeader: {
     alignItems: 'center',
@@ -1826,24 +1829,24 @@ const styles = StyleSheet.create({
   },
   disclaimerBody: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
   },
   disclaimerEmphasis: {
     fontSize: 14,
-    color: '#F59E0B',
-    fontWeight: '600',
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginTop: 8,
     marginBottom: 8,
   },
   unqualifiedCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#F59E0B30',
+    borderColor: colors.mist,
   },
   unqualifiedHeader: {
     flexDirection: 'row',
@@ -1854,7 +1857,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#F59E0B20',
+    backgroundColor: colors.tagEmberBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1864,31 +1867,31 @@ const styles = StyleSheet.create({
   },
   unqualifiedLabel: {
     fontSize: 12,
-    color: '#F59E0B',
-    fontWeight: '600',
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: 2,
   },
   unqualifiedAmount: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   unqualifiedDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
   },
   unqualifiedAction: {
-    backgroundColor: '#F59E0B15',
+    backgroundColor: colors.tagEmberBg,
     borderRadius: 8,
     padding: 10,
     alignItems: 'center',
   },
   unqualifiedActionText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#F59E0B',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   // Income source styles
   incomeSourceList: {
@@ -1898,7 +1901,7 @@ const styles = StyleSheet.create({
   incomeSourceItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 10,
     padding: 12,
   },
@@ -1906,7 +1909,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: '#10B98120',
+    backgroundColor: colors.tagGreenBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1914,12 +1917,12 @@ const styles = StyleSheet.create({
   incomeSourceLabel: {
     flex: 1,
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   incomeSourceAmount: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#10B981',
+    fontFamily: fonts.display,
+    color: colors.tagGreenText,
     marginRight: 4,
   },
   // Empty income message
@@ -1929,20 +1932,20 @@ const styles = StyleSheet.create({
   },
   emptyIncomeText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
     marginBottom: 4,
   },
   emptyIncomeSubtext: {
     fontSize: 13,
-    color: '#4B5563',
+    color: colors.midGrey,
     textAlign: 'center',
   },
   // Category list title
   categoryListTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
     marginBottom: 12,
   },
   categoryHeaderRight: {
@@ -1957,7 +1960,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   breakdownModalContent: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -1970,12 +1973,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E1A47',
+    borderBottomColor: colors.mist,
   },
   breakdownModalTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   breakdownList: {
     maxHeight: 400,
@@ -1985,13 +1988,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E1A4750',
+    borderBottomColor: colors.mist,
   },
   breakdownItemIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#F59E0B20',
+    backgroundColor: colors.tagEmberBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -2001,13 +2004,13 @@ const styles = StyleSheet.create({
   },
   breakdownItemName: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 4,
   },
   breakdownItemMeta: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
   },
   breakdownItemMetaRow: {
     flexDirection: 'row',
@@ -2017,27 +2020,27 @@ const styles = StyleSheet.create({
   },
   breakdownItemPercent: {
     fontSize: 11,
-    color: '#6B7280',
-    backgroundColor: '#2E1A47',
+    color: colors.midGrey,
+    backgroundColor: colors.parchment,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   breakdownItemAmount: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   needsEvidenceBadge: {
-    backgroundColor: '#F59E0B20',
+    backgroundColor: colors.tagEmberBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   needsEvidenceText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#F59E0B',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   breakdownModalButtons: {
     flexDirection: 'row',
@@ -2046,19 +2049,19 @@ const styles = StyleSheet.create({
   },
   breakdownCloseButton: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   breakdownCloseButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#9CA3AF',
+    fontFamily: fonts.display,
+    color: colors.midGrey,
   },
   breakdownEditButton: {
     flex: 1,
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -2068,24 +2071,24 @@ const styles = StyleSheet.create({
   },
   breakdownEditButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   // Running tax card styles
   runningTaxCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#10B98130',
+    borderColor: colors.mist,
   },
   runningTaxLabelContainer: {
     flex: 1,
   },
   runningTaxSubLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     marginTop: 2,
   },
   // Info button styles
@@ -2097,7 +2100,7 @@ const styles = StyleSheet.create({
   noDataHint: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     borderRadius: 8,
     padding: 10,
     gap: 8,
@@ -2106,7 +2109,7 @@ const styles = StyleSheet.create({
   noDataHintText: {
     flex: 1,
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     lineHeight: 16,
   },
   // Info modal styles
@@ -2116,30 +2119,30 @@ const styles = StyleSheet.create({
   },
   infoModalText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
   },
   infoModalHighlight: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#10B98115',
+    backgroundColor: colors.tagGreenBg,
     borderRadius: 8,
     padding: 12,
     gap: 10,
     marginVertical: 8,
     borderWidth: 1,
-    borderColor: '#10B98120',
+    borderColor: colors.mist,
   },
   infoModalHighlightText: {
     flex: 1,
     fontSize: 13,
-    color: '#10B981',
+    color: colors.tagGreenText,
     lineHeight: 18,
   },
   infoModalNote: {
     fontSize: 13,
-    color: '#6B7280',
+    color: colors.midGrey,
     fontStyle: 'italic',
     marginTop: 8,
   },
@@ -2150,24 +2153,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#2E1A47',
+    borderTopColor: colors.mist,
   },
   taxBreakdownItem: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
   },
   // Gifted items card styles
   giftedItemsCard: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#F59E0B30',
+    borderColor: colors.mist,
   },
   giftedItemsCount: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginTop: 2,
   },
   // Total income row styles
@@ -2175,26 +2178,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#10B98115',
+    backgroundColor: colors.tagGreenBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#10B98120',
+    borderColor: colors.mist,
   },
   totalIncomeLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   totalIncomeAmount: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#10B981',
+    fontFamily: fonts.display,
+    color: colors.tagGreenText,
   },
   // Export button styles
   exportButton: {
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',

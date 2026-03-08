@@ -8,8 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface WelcomeScreenProps {
   onComplete: () => void;
@@ -140,21 +139,7 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
       <View style={styles.content}>
         <View style={styles.headingContainer}>
           <Text style={styles.welcomeText}>Welcome to</Text>
-          
-          <MaskedView
-            maskElement={
-              <Text style={styles.boppText}>bopp</Text>
-            }
-          >
-            <LinearGradient
-              colors={['#7C3AED', '#FF6B6B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientContainer}
-            >
-              <Text style={[styles.boppText, { opacity: 0 }]}>bopp</Text>
-            </LinearGradient>
-          </MaskedView>
+          <Text style={styles.boppText}>bopp</Text>
         </View>
 
         <View style={styles.taglineContainer}>
@@ -173,31 +158,24 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
         </View>
 
         <View style={styles.featuresContainer}>
-          <Feature 
-            text="Your personal tax to-do list" 
+          <Feature
+            text="Your personal tax to-do list"
             emoji="✅"
           />
-          <Feature 
-            text="Feel on top of taxes" 
+          <Feature
+            text="Feel on top of taxes"
             emoji="🏆"
           />
-          <Feature 
-            text="Track expenses in your sleep" 
+          <Feature
+            text="Track expenses in your sleep"
             emoji="🔥"
           />
         </View>
 
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%' }}>
           <TouchableOpacity style={styles.ctaButton} onPress={onComplete}>
-            <LinearGradient
-              colors={['#7C3AED', '#9333EA']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaGradient}
-            >
-              <Text style={styles.ctaButtonText}>Show me!</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </LinearGradient>
+            <Text style={styles.ctaButtonText}>Show me!</Text>
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
           </TouchableOpacity>
         </Animated.View>
 
@@ -224,25 +202,25 @@ const Feature: React.FC<FeatureProps> = ({ text, emoji }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     overflow: 'hidden',
   },
   floatingShape: {
     position: 'absolute',
     borderRadius: 100,
-    opacity: 0.1,
+    opacity: 0.15,
   },
   shape1: {
     width: 150,
     height: 150,
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.volt,
     top: 60,
     right: -50,
   },
   shape2: {
     width: 120,
     height: 120,
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.ember,
     bottom: 100,
     left: -40,
   },
@@ -255,34 +233,30 @@ const styles = StyleSheet.create({
   },
   headingContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   welcomeText: {
     fontSize: 20,
-    color: '#9CA3AF',
-    marginBottom: 8,
-    fontWeight: '500',
+    color: colors.midGrey,
+    marginBottom: spacing.xs,
+    fontFamily: fonts.displayMed,
   },
   boppText: {
     fontSize: 64,
-    fontWeight: '700',
+    fontFamily: fonts.display,
     letterSpacing: -3,
-    color: '#fff',
+    color: colors.ink,
   },
-  gradientContainer: {
-  paddingVertical: 4,
-  paddingHorizontal: 0.5,
-},
   taglineContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
     height: 80,
   },
   taglineStatic: {
     fontSize: 16,
-    color: '#9CA3AF',
-    marginBottom: 8,
-    fontWeight: '500',
+    color: colors.midGrey,
+    marginBottom: spacing.xs,
+    fontFamily: fonts.displayMed,
   },
   animatedTextContainer: {
     minHeight: 36,
@@ -290,8 +264,8 @@ const styles = StyleSheet.create({
   },
   taglineAnimated: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#FF6B6B',
+    fontFamily: fonts.display,
+    color: colors.ember,
     textAlign: 'center',
   },
   featuresContainer: {
@@ -301,60 +275,54 @@ const styles = StyleSheet.create({
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#1F1333',
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.white,
     borderRadius: 14,
     paddingVertical: 14,
-    borderWidth: 2,
-    borderColor: 'rgba(124, 58, 237, 0.2)',
+    ...shadows.sm,
   },
   featureIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   featureEmoji: {
     fontSize: 20,
   },
   featureText: {
     fontSize: 15,
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.ink,
+    fontFamily: fonts.displaySemi,
     flex: 1,
   },
   ctaButton: {
     width: '100%',
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
-    marginBottom: 16,
-  },
-  ctaGradient: {
-    paddingVertical: 16,
+    backgroundColor: colors.ember,
+    paddingVertical: spacing.md,
     paddingHorizontal: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.md,
+    ...shadows.md,
   },
   ctaButtonText: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.display,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
   bottomText: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: colors.midGrey,
+    fontFamily: fonts.displayMed,
     fontStyle: 'italic',
     textAlign: 'center',
   },

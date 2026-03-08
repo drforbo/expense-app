@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -22,25 +23,25 @@ const GUIDE_STEPS = [
     icon: 'camera' as const,
     title: 'Snap Your Receipts',
     description: 'Just take a photo of any expense. We\'ll automatically categorize it for HMRC.',
-    color: '#FF6B6B',
+    color: colors.ember,
   },
   {
     icon: 'game-controller' as const,
     title: 'Gamified Tracking',
     description: 'Build streaks, earn badges, and level up by staying on top of your expenses.',
-    color: '#7C3AED',
+    color: colors.ink,
   },
   {
     icon: 'shield-checkmark' as const,
     title: 'Stay Compliant',
     description: 'We translate your spending into HMRC-compliant tax categories automatically.',
-    color: '#FF6B6B',
+    color: colors.ember,
   },
   {
     icon: 'flash' as const,
     title: 'Tax Time Made Easy',
     description: 'Export everything you need for your self-assessment in seconds.',
-    color: '#7C3AED',
+    color: colors.ink,
   },
 ];
 
@@ -74,7 +75,7 @@ export default function QuickGuide({ onComplete, onBack }: QuickGuideProps) {
       {/* Back button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
       </View>
 
@@ -89,7 +90,7 @@ export default function QuickGuide({ onComplete, onBack }: QuickGuideProps) {
       >
         {GUIDE_STEPS.map((step, index) => (
           <View key={index} style={styles.stepContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: '#1F1333' }]}>
+            <View style={styles.iconCircle}>
               <Ionicons name={step.icon} size={80} color={step.color} />
             </View>
             <Text style={styles.title}>{step.title}</Text>
@@ -118,7 +119,7 @@ export default function QuickGuide({ onComplete, onBack }: QuickGuideProps) {
           <Text style={styles.nextButtonText}>
             {currentStep === GUIDE_STEPS.length - 1 ? 'Get Started' : 'Next'}
           </Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+          <Ionicons name="arrow-forward" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -128,20 +129,21 @@ export default function QuickGuide({ onComplete, onBack }: QuickGuideProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     alignItems: 'flex-start',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
+    ...shadows.sm,
   },
   scrollView: {
     flex: 1,
@@ -157,56 +159,59 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 40,
+    ...shadows.sm,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   description: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 24,
+    fontFamily: fonts.body,
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: spacing.lg,
   },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4B5563',
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.mist,
     marginHorizontal: 4,
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   nextButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
 });

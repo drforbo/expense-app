@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface AddEvidenceScreenProps {
   route: any;
@@ -237,7 +238,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Evidence</Text>
         <View style={{ width: 24 }} />
@@ -260,7 +261,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color="#7C3AED" />
+                  <Ionicons name="document-text" size={48} color={colors.ember} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -291,7 +292,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={24} color="#7C3AED" />
+                  <Ionicons name="camera" size={24} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -300,7 +301,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={24} color="#7C3AED" />
+                  <Ionicons name="images" size={24} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
@@ -310,7 +311,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={24} color="#7C3AED" />
+                <Ionicons name="document-text" size={24} color={colors.ember} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
             </View>
@@ -318,7 +319,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color="#7C3AED" />
+              <ActivityIndicator color={colors.ember} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -333,7 +334,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           <TextInput
             style={styles.textInput}
             placeholder="e.g., Camera lens for filming YouTube videos"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             value={businessUseExplanation}
             onChangeText={setBusinessUseExplanation}
             multiline
@@ -351,7 +352,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           <TextInput
             style={styles.input}
             placeholder="https://youtube.com/watch?v=..."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             value={contentLink}
             onChangeText={setContentLink}
             autoCapitalize="none"
@@ -366,7 +367,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           disabled={saving || uploading}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <Text style={styles.saveButtonText}>Save Evidence</Text>
           )}
@@ -379,79 +380,82 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.md,
   },
   transactionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   merchantName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   amount: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ember,
+    marginBottom: spacing.xs,
   },
   category: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
   },
   uploadButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
   uploadButtonsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: spacing.sm,
   },
   uploadButton: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   uploadButtonFullWidth: {
     flex: 0,
@@ -459,20 +463,20 @@ const styles = StyleSheet.create({
   },
   uploadButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
   },
   pdfUploadButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   imageContainer: {
     position: 'relative',
@@ -480,79 +484,82 @@ const styles = StyleSheet.create({
   receiptImage: {
     width: '100%',
     height: 300,
-    borderRadius: 12,
-    backgroundColor: '#1F1333',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
-    backgroundColor: '#1F1333',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   pdfFileName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.md,
   },
   pdfUploaded: {
     fontSize: 12,
-    color: '#10B981',
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   changeImageButton: {
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.ember,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   changeImageText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
   uploadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
   uploadingText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   input: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   textInput: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
     minHeight: 120,
   },
   saveButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     marginBottom: 40,
   },
@@ -561,7 +568,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
 });

@@ -17,8 +17,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
   id: string;
@@ -282,7 +282,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       </SafeAreaView>
     );
@@ -293,7 +293,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Evidence</Text>
         <View style={{ width: 24 }} />
@@ -318,13 +318,13 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             onPress={() => setShowMemoryJogger(!showMemoryJogger)}
           >
             <View style={styles.memoryJoggerTitleRow}>
-              <Ionicons name="bulb" size={20} color="#F59E0B" />
+              <Ionicons name="bulb" size={20} color={colors.ember} />
               <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
             </View>
             <Ionicons
               name={showMemoryJogger ? 'chevron-up' : 'chevron-down'}
               size={20}
-              color="#9CA3AF"
+              color={colors.midGrey}
             />
           </TouchableOpacity>
 
@@ -343,7 +343,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => copyToClipboard(transaction.merchant_name)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={copiedText === transaction.merchant_name ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === transaction.merchant_name ? "#10B981" : "#7C3AED"} />
+                  <Ionicons name={copiedText === transaction.merchant_name ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === transaction.merchant_name ? colors.tagGreenText : colors.ember} />
                   <Text style={styles.searchTermText}>{transaction.merchant_name}</Text>
                   {copiedText === transaction.merchant_name && <Text style={styles.copiedBadge}>Copied!</Text>}
                 </TouchableOpacity>
@@ -357,7 +357,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(amountOnly)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? "#10B981" : "#7C3AED"} />
+                      <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.tagGreenText : colors.ember} />
                       <Text style={styles.searchTermText}>{amountOnly}</Text>
                       {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -373,7 +373,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(merchantAmount)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? "#10B981" : "#7C3AED"} />
+                      <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.tagGreenText : colors.ember} />
                       <Text style={styles.searchTermText}>{merchantAmount}</Text>
                       {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -389,7 +389,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(receiptSearch)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? "#10B981" : "#7C3AED"} />
+                      <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.tagGreenText : colors.ember} />
                       <Text style={styles.searchTermText} numberOfLines={1}>{transaction.merchant_name} receipt OR order</Text>
                       {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -400,15 +400,15 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
               <View style={styles.searchTips}>
                 <Text style={styles.searchTipTitle}>Where to look:</Text>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="mail-outline" size={16} color="#6B7280" />
+                  <Ionicons name="mail-outline" size={16} color={colors.midGrey} />
                   <Text style={styles.searchTipText}>Email inbox & receipts folder</Text>
                 </View>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                  <Ionicons name="chatbubble-outline" size={16} color={colors.midGrey} />
                   <Text style={styles.searchTipText}>WhatsApp & iMessage</Text>
                 </View>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="images-outline" size={16} color="#6B7280" />
+                  <Ionicons name="images-outline" size={16} color={colors.midGrey} />
                   <Text style={styles.searchTipText}>Photos app (screenshots)</Text>
                 </View>
               </View>
@@ -428,7 +428,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           {noReceiptMode ? (
             <View style={styles.noReceiptWarning}>
               <View style={styles.noReceiptWarningHeader}>
-                <Ionicons name="alert-circle" size={24} color="#F59E0B" />
+                <Ionicons name="alert-circle" size={24} color={colors.ember} />
                 <Text style={styles.noReceiptWarningTitle}>No Receipt Mode</Text>
               </View>
               <Text style={styles.noReceiptWarningText}>
@@ -444,7 +444,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   setNoReceiptMode(false);
                 }}
               >
-                <Ionicons name="receipt-outline" size={18} color="#7C3AED" />
+                <Ionicons name="receipt-outline" size={18} color={colors.ember} />
                 <Text style={styles.addReceiptInsteadText}>Add a receipt instead</Text>
               </TouchableOpacity>
             </View>
@@ -452,7 +452,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color="#7C3AED" />
+                  <Ionicons name="document-text" size={48} color={colors.ember} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -483,7 +483,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={24} color="#7C3AED" />
+                  <Ionicons name="camera" size={24} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -492,7 +492,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={24} color="#7C3AED" />
+                  <Ionicons name="images" size={24} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
@@ -502,7 +502,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={24} color="#7C3AED" />
+                <Ionicons name="document-text" size={24} color={colors.ember} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
 
@@ -523,7 +523,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   );
                 }}
               >
-                <Ionicons name="document-lock-outline" size={20} color="#9CA3AF" />
+                <Ionicons name="document-lock-outline" size={20} color={colors.midGrey} />
                 <Text style={styles.noReceiptButtonText}>I don't have a receipt</Text>
               </TouchableOpacity>
             </View>
@@ -531,7 +531,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color="#7C3AED" />
+              <ActivityIndicator color={colors.ember} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -552,7 +552,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             placeholder={noReceiptMode
               ? "e.g., Purchased USB-C cable from Currys PC World on 15th March for connecting camera to MacBook for video editing. Lost receipt but have bank statement showing transaction."
               : "e.g., Camera lens for filming YouTube videos"}
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             value={businessUseExplanation}
             onChangeText={setBusinessUseExplanation}
             multiline
@@ -578,7 +578,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           <TextInput
             style={styles.input}
             placeholder="https://youtube.com/watch?v=..."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.midGrey}
             value={contentLink}
             onChangeText={setContentLink}
             autoCapitalize="none"
@@ -594,11 +594,11 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             disabled={saving || uploading}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <>
                 <Text style={styles.saveButtonText}>Save Evidence</Text>
-                <Ionicons name="checkmark" size={20} color="#fff" />
+                <Ionicons name="checkmark" size={20} color={colors.white} />
               </>
             )}
           </TouchableOpacity>
@@ -619,7 +619,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -630,117 +630,124 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.md,
   },
   transactionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   merchantName: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   amount: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginBottom: 12,
+    fontFamily: fonts.display,
+    color: colors.ember,
+    marginBottom: spacing.sm,
   },
   transactionMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   category: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   date: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   explanation: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     lineHeight: 20,
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F59E0B30',
+    borderColor: colors.mist,
+    ...shadows.sm,
   },
   memoryJoggerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   memoryJoggerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   memoryJoggerTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#F59E0B',
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
   },
   memoryJoggerContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   memoryJoggerSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
   },
   emailHintCard: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 12,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.lg,
     padding: 14,
     marginBottom: 10,
   },
   emailHintHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     marginBottom: 6,
   },
   emailHintFrom: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     flex: 1,
   },
   emailHintSubject: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 6,
   },
   emailHintSnippet: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     lineHeight: 18,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   emailHintFooter: {
     flexDirection: 'row',
@@ -749,164 +756,171 @@ const styles = StyleSheet.create({
   },
   emailHintDate: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   emailHintRelevance: {
-    backgroundColor: '#10B98120',
-    paddingHorizontal: 8,
+    backgroundColor: colors.tagGreenBg,
+    paddingHorizontal: spacing.xs,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
   },
   emailHintRelevanceText: {
     fontSize: 11,
-    color: '#10B981',
-    fontWeight: '500',
+    fontFamily: fonts.displayMed,
+    color: colors.tagGreenText,
   },
   // Search suggestions styles
   searchSuggestions: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   searchSuggestionLabel: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#D1D5DB',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 10,
   },
   searchTermChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2E1A47',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   searchTermChipCopied: {
-    backgroundColor: '#10B98115',
-    borderColor: '#10B981',
+    backgroundColor: colors.tagGreenBg,
+    borderColor: colors.tagGreenText,
   },
   searchTermText: {
     fontSize: 14,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     flex: 1,
   },
   copiedBadge: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   searchTips: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 10,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.lg,
     padding: 14,
   },
   searchTipTitle: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#D1D5DB',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 10,
   },
   searchTipRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   searchTipText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
   },
   uploadButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
   uploadButton: {
     flex: 1,
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   uploadButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
   },
   pdfUploadButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   noReceiptButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 12,
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
   },
   noReceiptButtonText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textDecorationLine: 'underline',
   },
   noReceiptWarning: {
-    backgroundColor: '#F59E0B15',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#F59E0B40',
+    borderColor: colors.ember,
   },
   noReceiptWarningHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   noReceiptWarningTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#F59E0B',
+    fontFamily: fonts.display,
+    color: colors.ember,
   },
   noReceiptWarningText: {
     fontSize: 14,
-    color: '#D1D5DB',
-    marginBottom: 8,
+    fontFamily: fonts.body,
+    color: colors.ink,
+    marginBottom: spacing.xs,
     lineHeight: 20,
   },
   noReceiptWarningList: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   noReceiptWarningItem: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     marginBottom: 4,
     lineHeight: 18,
   },
@@ -914,38 +928,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED20',
-    borderRadius: 8,
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.md,
   },
   addReceiptInsteadText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
-    backgroundColor: '#1F1333',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.sm,
     borderWidth: 2,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   pdfFileName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.md,
   },
   pdfUploaded: {
     fontSize: 12,
-    color: '#10B981',
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   imageContainer: {
     position: 'relative',
@@ -953,97 +967,101 @@ const styles = StyleSheet.create({
   receiptImage: {
     width: '100%',
     height: 300,
-    borderRadius: 12,
-    backgroundColor: '#1F1333',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
   },
   changeImageButton: {
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.ember,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   changeImageText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
   uploadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
   uploadingText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   input: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   textInput: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
     minHeight: 120,
   },
   textInputNoReceipt: {
     minHeight: 160,
-    borderColor: '#F59E0B40',
+    borderColor: colors.ember,
   },
   charCount: {
     fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 8,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginTop: spacing.xs,
     textAlign: 'right',
   },
   charCountOk: {
-    color: '#10B981',
+    color: colors.tagGreenText,
   },
   actionButtons: {
-    gap: 12,
+    gap: spacing.sm,
     marginBottom: 40,
   },
   saveButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   saveButtonDisabled: {
     opacity: 0.5,
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   skipButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#64748B',
-    borderRadius: 12,
-    padding: 16,
+    borderColor: colors.mist,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
   },
   skipButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
 });

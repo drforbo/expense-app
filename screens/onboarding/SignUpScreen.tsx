@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface SignUpScreenProps {
   onComplete: (userId: string, email: string) => void;
@@ -77,14 +78,14 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         {/* Back button */}
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
         {/* Header */}
@@ -101,11 +102,11 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="you@example.com"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.midGrey}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -122,11 +123,11 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="At least 8 characters"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.midGrey}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -135,14 +136,14 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
                 textContentType="none"
                 editable={!isLoading}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
               >
-                <Ionicons 
-                  name={showPassword ? "eye-outline" : "eye-off-outline"} 
-                  size={20} 
-                  color="#9CA3AF" 
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={20}
+                  color={colors.midGrey}
                 />
               </TouchableOpacity>
             </View>
@@ -152,11 +153,11 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm Password</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={colors.midGrey} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Re-enter password"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.midGrey}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
@@ -171,17 +172,17 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
         </View>
 
         {/* Continue Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
           onPress={handleSignUp}
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.white} />
           ) : (
             <>
               <Text style={styles.continueButtonText}>Continue</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
             </>
           )}
         </TouchableOpacity>
@@ -198,11 +199,11 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
     paddingTop: 60,
     paddingBottom: 40,
   },
@@ -210,79 +211,83 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
   },
   header: {
     marginBottom: 40,
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.mist,
   },
   inputIcon: {
-    marginLeft: 16,
+    marginLeft: spacing.md,
   },
   input: {
     flex: 1,
     height: 56,
     fontSize: 16,
-    color: '#fff',
-    paddingHorizontal: 12,
+    color: colors.ink,
+    paddingHorizontal: spacing.sm,
+    fontFamily: fonts.body,
   },
   eyeIcon: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
   },
   continueButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   continueButtonDisabled: {
     opacity: 0.5,
   },
   continueButtonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
   footer: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
 });

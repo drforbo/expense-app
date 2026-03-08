@@ -1,17 +1,13 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Alert } from 'react-native';
+import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { apiUpload, apiPost } from '../lib/api';
 
 interface UploadState {
   isUploading: boolean;
   filename: string | null;
   status: 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
   result: {
-    transactions_found: number;
-    transactions_saved: number;
-    duplicates_skipped: number;
+    transaction_count: number;
   } | null;
   error: string | null;
 }
@@ -34,6 +30,45 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 export function UploadProvider({ children }: { children: ReactNode }) {
   const [uploadState, setUploadState] = useState<UploadState>(initialState);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  const pollStatementStatus = (statementId: string, filename: string) => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      try {
+        const data = await apiPost('/api/statement_status', { statement_id: statementId });
+
+        if (data.status === 'completed') {
+          stopPolling();
+          setUploadState({
+            isUploading: false,
+            filename,
+            status: 'complete',
+            result: { transaction_count: data.transaction_count || 0 },
+            error: null,
+          });
+        } else if (data.status === 'error') {
+          stopPolling();
+          setUploadState({
+            isUploading: false,
+            filename,
+            status: 'error',
+            result: null,
+            error: 'Processing failed. Please try again.',
+          });
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 5000);
+  };
 
   const startUpload = useCallback(async (file: { uri: string; name: string; size?: number }) => {
     try {
@@ -45,17 +80,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         error: null,
       });
 
-      // Get user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('You must be logged in');
-      }
+      if (!user) throw new Error('You must be logged in');
 
       console.log('Uploading file:', file.name, 'Size:', file.size);
 
-      setUploadState(prev => ({ ...prev, status: 'processing' }));
-
-      // Create form data
       const formData = new FormData();
       formData.append('pdf', {
         uri: file.uri,
@@ -64,29 +93,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       } as any);
       formData.append('user_id', user.id);
 
-      // Upload to server
-      const response = await fetch(`${API_URL}/api/upload_statement`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const data = await response.json();
+      const data = await apiUpload('/api/upload_statement', formData);
 
       if (data.success) {
-        setUploadState({
-          isUploading: false,
-          filename: file.name,
-          status: 'complete',
-          result: {
-            transactions_found: data.transactions_found,
-            transactions_saved: data.transactions_saved,
-            duplicates_skipped: data.duplicates_skipped,
-          },
-          error: null,
-        });
+        setUploadState(prev => ({ ...prev, status: 'processing' }));
+        pollStatementStatus(data.statement_id, file.name);
       } else {
         throw new Error(data.error || 'Upload failed');
       }
@@ -103,6 +114,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearUpload = useCallback(() => {
+    stopPolling();
     setUploadState(initialState);
   }, []);
 

@@ -10,8 +10,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,15 +58,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Background gradient - DEEP PURPLE */}
-      <LinearGradient
-        colors={['#2E1A47', '#1F0F2E', '#2E1A47']}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
-      {/* Progress bar - ELECTRIC VIOLET & CORAL */}
+      {/* Progress bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBackground}>
           <Animated.View
@@ -77,16 +69,10 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
                   inputRange: [0, 1],
                   outputRange: ['0%', '100%'],
                 }),
+                backgroundColor: colors.ink,
               },
             ]}
-          >
-            <LinearGradient
-              colors={['#7C3AED', '#FF6B6B']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
+          />
         </View>
         <Text style={styles.stepCounter}>
           {step} of {totalSteps}
@@ -94,7 +80,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
       </View>
 
       {/* Scrollable content */}
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
@@ -197,21 +183,13 @@ export const OptionCard: React.FC<OptionCardProps> = ({
           styles.card,
           {
             transform: [{ scale: scaleAnim }],
-            borderColor: glowAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['rgba(124, 58, 237, 0)', 'rgba(124, 58, 237, 1)'],
-            }),
-            shadowOpacity: glowAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.5],
-            }),
+            borderColor: selected ? colors.ink : 'transparent',
           },
         ]}
       >
         {selected && (
-          <LinearGradient
-            colors={['rgba(124, 58, 237, 0.15)', 'rgba(255, 107, 107, 0.1)']}
-            style={StyleSheet.absoluteFill}
+          <View
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.parchment }]}
           />
         )}
 
@@ -302,16 +280,11 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <LinearGradient
-          colors={disabled ? ['#2A2A2A', '#1A1A1A'] : ['#7C3AED', '#FF6B6B']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.buttonGradient}
-        >
+        <View style={styles.buttonInner}>
           <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
             {text}
           </Text>
-        </LinearGradient>
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -320,29 +293,29 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   progressContainer: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    backgroundColor: '#2E1A47',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.parchment,
   },
   progressBackground: {
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 2,
+    backgroundColor: colors.mist,
+    borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: borderRadius.xs,
   },
   stepCounter: {
-    fontFamily: 'Outfit_600SemiBold',
+    fontFamily: fonts.displaySemi,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 12,
+    color: colors.midGrey,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   keyboardAvoid: {
@@ -353,65 +326,63 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 40 : spacing.lg,
   },
   content: {
     flex: 1,
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 32,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   title: {
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: fonts.display,
     fontSize: 36,
-    color: '#FFFFFF',
+    color: colors.ink,
     lineHeight: 44,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontFamily: 'Outfit_400Regular',
+    fontFamily: fonts.body,
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.midGrey,
     lineHeight: 26,
   },
   mainContent: {
     flex: 1,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: colors.white,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: 'rgba(124, 58, 237, 0)',
-    marginBottom: 16,
+    borderColor: 'transparent',
+    marginBottom: spacing.md,
     overflow: 'hidden',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
+    ...shadows.sm,
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   cardIcon: {
     fontSize: 40,
-    marginRight: 20,
+    marginRight: spacing.lg,
   },
   cardText: {
     flex: 1,
   },
   cardTitle: {
-    fontFamily: 'Outfit_600SemiBold',
+    fontFamily: fonts.displaySemi,
     fontSize: 22,
-    color: '#FFFFFF',
+    color: colors.ink,
     marginBottom: 6,
   },
   cardDescription: {
-    fontFamily: 'Outfit_400Regular',
+    fontFamily: fonts.body,
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: colors.midGrey,
     lineHeight: 21,
   },
   checkmark: {
@@ -421,44 +392,42 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.ember,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmarkText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: colors.white,
+    fontFamily: fonts.bodyBold,
   },
   buttonContainer: {
-    marginTop: 32,
-    marginBottom: 16,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
   },
   button: {
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 5,
+    ...shadows.md,
   },
   buttonDisabled: {
     shadowOpacity: 0,
   },
-  buttonGradient: {
+  buttonInner: {
+    backgroundColor: colors.ember,
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.lg,
   },
   buttonText: {
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: fonts.display,
     fontSize: 18,
-    color: '#FFFFFF',
+    color: colors.white,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   buttonTextDisabled: {
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: colors.mist,
   },
 });

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SignUpScreen from './SignUpScreen';
 import PaymentInfoScreen from './PaymentInfoScreen';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface PaymentFlowProps {
   onComplete: () => void;
@@ -29,7 +30,7 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
 
   if (currentStep === 'signup') {
     return (
-      <SignUpScreen 
+      <SignUpScreen
         onComplete={handleSignUpComplete}
         onBack={() => setCurrentStep('intro')}
       />
@@ -38,7 +39,7 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
 
   if (currentStep === 'payment') {
     return (
-      <PaymentInfoScreen 
+      <PaymentInfoScreen
         email={userEmail}
         userId={userId}
         onComplete={handlePaymentComplete}
@@ -53,13 +54,13 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
       <View style={styles.content}>
         {/* Back button */}
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.iconCircle}>
-            <Ionicons name="rocket" size={36} color="#7C3AED" />
+            <Ionicons name="rocket" size={36} color={colors.ember} />
           </View>
           <Text style={styles.title}>Ready to start?</Text>
           <Text style={styles.subtitle}>
@@ -71,28 +72,28 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
         <View style={styles.features}>
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
             </View>
             <Text style={styles.featureText}>AI-powered expense categorization</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
             </View>
             <Text style={styles.featureText}>HMRC-compliant tax reports</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
             </View>
             <Text style={styles.featureText}>Gamified daily habit building</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color="#10B981" />
+              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
             </View>
             <Text style={styles.featureText}>Cancel anytime, no commitments</Text>
           </View>
@@ -111,12 +112,12 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
         </View>
 
         {/* CTA Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.ctaButton}
           onPress={() => setCurrentStep('signup')}
         >
           <Text style={styles.ctaButtonText}>Get Started</Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+          <Ionicons name="arrow-forward" size={20} color={colors.white} />
         </TouchableOpacity>
 
         {/* Footer */}
@@ -131,22 +132,23 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
+    ...shadows.sm,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
     justifyContent: 'space-between',
   },
   header: {
@@ -157,23 +159,25 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
+    ...shadows.sm,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     textAlign: 'center',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 20,
+    fontFamily: fonts.body,
   },
   features: {
     marginBottom: 14,
@@ -187,28 +191,31 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#1F1333',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   featureText: {
     fontSize: 15,
-    color: '#fff',
+    color: colors.ink,
     flex: 1,
+    fontFamily: fonts.body,
   },
   pricingCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     marginBottom: 14,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: colors.ink,
+    ...shadows.sm,
   },
   pricingTitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginBottom: 6,
+    fontFamily: fonts.body,
   },
   pricingRow: {
     flexDirection: 'row',
@@ -217,22 +224,24 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 40,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   period: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: colors.midGrey,
     marginLeft: 4,
+    fontFamily: fonts.body,
   },
   pricingNote: {
     fontSize: 13,
-    color: '#10B981',
+    color: colors.tagGreenText,
+    fontFamily: fonts.body,
   },
   ctaButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -240,14 +249,15 @@ const styles = StyleSheet.create({
   },
   ctaButtonText: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#fff',
-    marginRight: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
+    marginRight: spacing.xs,
   },
   footer: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 15,
+    fontFamily: fonts.body,
   },
 });

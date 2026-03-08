@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
 import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
@@ -31,8 +32,6 @@ interface TransactionGroup {
   transactions: Transaction[];
   count: number;
 }
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.119:3000';
 
 interface DetectedSubscription {
   merchantNormalized: string;
@@ -82,19 +81,13 @@ export default function TransactionListScreen({ navigation }: any) {
       }
 
       // Fetch uncategorized transactions from server
-      console.log('📡 Fetching from:', `${API_URL}/api/get_uncategorized_transactions`);
+      console.log('📡 Fetching uncategorized transactions...');
       const startTime = Date.now();
 
-      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
+      const data = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
 
       const loadTime = Date.now() - startTime;
       console.log(`⏱️  Server response time: ${loadTime}ms`);
-
-      const data = await response.json();
       console.log('📊 Received transactions:', data.transactions?.length || 0);
 
       if (data.transactions && data.transactions.length > 0) {
@@ -121,13 +114,7 @@ export default function TransactionListScreen({ navigation }: any) {
 
   const detectSubscriptions = async (userId: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/detect_subscriptions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId }),
-      });
-
-      const data = await response.json();
+      const data = await apiPost('/api/detect_subscriptions', { user_id: userId });
 
       if (data.success && data.subscriptions?.length > 0) {
         console.log(`🔄 Detected ${data.subscriptions.length} subscriptions`);
@@ -171,16 +158,10 @@ export default function TransactionListScreen({ navigation }: any) {
         userProfile = data || {};
       }
 
-      const response = await fetch(`${API_URL}/api/bulk_generate_first_questions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transactions: txns,
-          userProfile
-        }),
+      const data = await apiPost('/api/bulk_generate_first_questions', {
+        transactions: txns,
+        userProfile
       });
-
-      const data = await response.json();
 
       // Map results by transaction_id for quick lookup
       const questionsMap: Record<string, any> = {};
@@ -203,7 +184,7 @@ export default function TransactionListScreen({ navigation }: any) {
   const handleTransactionPress = (transaction: Transaction) => {
     navigation.navigate('TransactionCategorization', {
       transaction,
-      allTransactions: transactions,
+      allTransactions: [transaction],
       preGeneratedQuestions: preGeneratedQuestions[transaction.transaction_id],
     });
   };

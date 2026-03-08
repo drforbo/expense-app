@@ -18,8 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.75.100.222:3000';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface GiftedItem {
   id: string;
@@ -66,17 +66,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/get_gifted_items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch items');
-      }
-
-      const data = await response.json();
+      const data = await apiPost('/api/get_gifted_items', { user_id: user.id });
       setItems(data);
     } catch (error: any) {
       console.error('Error fetching items:', error);
@@ -156,17 +146,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
       setRecognizing(true);
       console.log('🔍 Recognizing item...');
 
-      const response = await fetch(`${API_URL}/api/recognize_item`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_base64: base64 }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to recognize item');
-      }
-
-      const result = await response.json();
+      const result = await apiPost('/api/recognize_item', { image_base64: base64 });
       console.log('✅ Item recognized:', result);
 
       setItemName(result.item_name);
@@ -263,17 +243,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             received_from: receivedFrom,
           };
 
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error:', errorText);
-        throw new Error(`Failed to save item: ${response.status}`);
-      }
+      await apiPost(endpoint, body);
 
       Alert.alert('Success', `Item ${selectedItem ? 'updated' : 'added'} successfully!`);
       closeModal();
@@ -297,15 +267,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             text: 'Delete',
             style: 'destructive',
             onPress: async () => {
-              const response = await fetch(`${API_URL}/api/delete_gifted_item`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id }),
-              });
-
-              if (!response.ok) {
-                throw new Error('Failed to delete item');
-              }
+              await apiPost('/api/delete_gifted_item', { id });
 
               Alert.alert('Success', 'Item deleted');
               fetchItems();
@@ -387,7 +349,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         style={styles.deleteButton}
         onPress={() => deleteItem(item.id)}
       >
-        <Ionicons name="trash" size={20} color="#EF4444" />
+        <Ionicons name="trash" size={20} color={colors.ember} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -396,25 +358,43 @@ export default function GiftedTrackerScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={22} color={colors.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gifted Tracker</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Gifted items</Text>
+        <View style={{ width: 36 }} />
       </View>
 
       {/* List */}
       {loading && items.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="gift-outline" size={64} color="#64748B" />
+          <View style={styles.emptyIconWrap}>
+            <Ionicons name="gift-outline" size={36} color={colors.tagBlueText} />
+          </View>
           <Text style={styles.emptyTitle}>No gifted items yet</Text>
           <Text style={styles.emptySubtitle}>
-            Tap the + button to add your first gifted item
+            Snap a photo or manually log items you've been gifted — PR packages, products, freebies.
           </Text>
+
+          <View style={styles.taxInfoBanner}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
+            <Text style={styles.taxInfoText}>
+              HMRC treats gifted items as taxable income if they're received in connection with your work. You'll need to declare their retail value on your Self Assessment.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.emptyAddBtn}
+            onPress={openAddModal}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={18} color={colors.ink} />
+            <Text style={styles.emptyAddBtnText}>Add your first item</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -424,6 +404,14 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           contentContainerStyle={styles.listContent}
           refreshing={loading}
           onRefresh={fetchItems}
+          ListHeaderComponent={
+            <View style={styles.listTaxNote}>
+              <Ionicons name="information-circle-outline" size={14} color={colors.tagBlueText} />
+              <Text style={styles.listTaxNoteText}>
+                Gifted items are treated as taxable income by HMRC. Their retail value is added to your income total.
+              </Text>
+            </View>
+          }
         />
       )}
 
@@ -433,7 +421,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         onPress={openAddModal}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={32} color="#FFFFFF" />
+        <Ionicons name="add" size={32} color={colors.white} />
       </TouchableOpacity>
 
       {/* Add/Edit Modal */}
@@ -453,7 +441,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             </Text>
             <TouchableOpacity onPress={saveItem} disabled={loading}>
               {loading ? (
-                <ActivityIndicator color="#8B5CF6" />
+                <ActivityIndicator color={colors.ink} />
               ) : (
                 <Text style={styles.saveButton}>Save</Text>
               )}
@@ -480,7 +468,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={48} color="#64748B" />
+                  <Ionicons name="camera" size={48} color={colors.midGrey} />
                   <Text style={styles.photoPlaceholderText}>No photo</Text>
                 </View>
               )}
@@ -491,7 +479,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                   onPress={takePhoto}
                   disabled={recognizing}
                 >
-                  <Ionicons name="camera" size={20} color="#8B5CF6" />
+                  <Ionicons name="camera" size={20} color={colors.ink} />
                   <Text style={styles.photoButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -500,14 +488,14 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                   onPress={pickImage}
                   disabled={recognizing}
                 >
-                  <Ionicons name="images" size={20} color="#8B5CF6" />
+                  <Ionicons name="images" size={20} color={colors.ink} />
                   <Text style={styles.photoButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
 
               {recognizing && (
                 <View style={styles.recognizingContainer}>
-                  <ActivityIndicator color="#8B5CF6" />
+                  <ActivityIndicator color={colors.ink} />
                   <Text style={styles.recognizingText}>Recognizing item...</Text>
                 </View>
               )}
@@ -521,8 +509,8 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={itemName}
                 onChangeText={setItemName}
                 placeholder="e.g. iPhone 15 Pro"
-                placeholderTextColor="#64748B"
-                keyboardAppearance="dark"
+                placeholderTextColor={colors.midGrey}
+                keyboardAppearance="light"
               />
 
               <Text style={styles.label}>RRP (£) *</Text>
@@ -531,9 +519,9 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={rrp}
                 onChangeText={setRrp}
                 placeholder="0.00"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.midGrey}
                 keyboardType="decimal-pad"
-                keyboardAppearance="dark"
+                keyboardAppearance="light"
               />
 
               <Text style={styles.label}>Received Date *</Text>
@@ -542,8 +530,8 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={receivedDate}
                 onChangeText={setReceivedDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor="#64748B"
-                keyboardAppearance="dark"
+                placeholderTextColor={colors.midGrey}
+                keyboardAppearance="light"
               />
 
               <Text style={styles.label}>Brand Name (Optional)</Text>
@@ -552,10 +540,10 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={receivedFrom}
                 onChangeText={setReceivedFrom}
                 placeholder="e.g., Apple, Samsung, Nike..."
-                placeholderTextColor="#64748B"
-                keyboardAppearance="dark"
-                selectionColor="#8B5CF6"
-                cursorColor="#8B5CF6"
+                placeholderTextColor={colors.midGrey}
+                keyboardAppearance="light"
+                selectionColor={colors.ink}
+                cursorColor={colors.ink}
               />
 
               <Text style={styles.label}>Notes (Optional)</Text>
@@ -564,13 +552,13 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Add extra details like the video you featured it in, or why you received the item..."
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.midGrey}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
-                keyboardAppearance="dark"
-                selectionColor="#8B5CF6"
-                cursorColor="#8B5CF6"
+                keyboardAppearance="light"
+                selectionColor={colors.ink}
+                cursorColor={colors.ink}
               />
             </View>
           </ScrollView>
@@ -584,20 +572,30 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F0524',
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#1F1333',
+    borderBottomColor: colors.mist,
+    backgroundColor: colors.white,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.mist,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: 18,
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   loadingContainer: {
     flex: 1,
@@ -608,185 +606,244 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: 32,
+  },
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.tagBlueBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginTop: 16,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#94A3B8',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
-    marginTop: 8,
+    lineHeight: 20,
+    marginBottom: spacing.lg,
   },
-  listContent: {
-    padding: 16,
+  taxInfoBanner: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: spacing.md,
+    backgroundColor: colors.tagBlueBg,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.lg,
   },
-  itemCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+  taxInfoText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.tagBlueText,
+    lineHeight: 18,
+  },
+  emptyAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.volt,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: borderRadius.sm,
+  },
+  emptyAddBtnText: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    color: colors.ink,
+  },
+  listContent: {
+    padding: spacing.md,
+  },
+  listTaxNote: {
+    flexDirection: 'row',
+    gap: 6,
+    padding: spacing.sm,
+    backgroundColor: colors.tagBlueBg,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.md,
+  },
+  listTaxNoteText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.tagBlueText,
+    lineHeight: 17,
+  },
+  itemCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...shadows.sm,
   },
   itemImage: {
     width: 80,
     height: 80,
-    borderRadius: 8,
-    marginRight: 12,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.sm,
   },
   itemDetails: {
     flex: 1,
   },
   itemName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 4,
   },
   itemRrp: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#10B981',
+    fontFamily: fonts.display,
+    color: colors.tagGreenText,
     marginBottom: 4,
   },
   itemDate: {
     fontSize: 12,
-    color: '#94A3B8',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     marginBottom: 4,
   },
   itemNotes: {
     fontSize: 12,
-    color: '#64748B',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     fontStyle: 'italic',
   },
   deleteButton: {
-    padding: 8,
+    padding: spacing.xs,
   },
   addButton: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
+    bottom: spacing.lg,
+    right: spacing.lg,
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.ember,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...shadows.md,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#0F0524',
+    backgroundColor: colors.parchment,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#1F1333',
+    borderBottomColor: colors.mist,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
   },
   cancelButton: {
     fontSize: 16,
-    color: '#94A3B8',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   saveButton: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#8B5CF6',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   modalContent: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   photoSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   photoPreview: {
     width: 200,
     height: 200,
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
   },
   photoPlaceholder: {
     width: 200,
     height: 200,
-    borderRadius: 12,
-    backgroundColor: '#1F1333',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   photoPlaceholderText: {
-    marginTop: 8,
+    marginTop: spacing.xs,
     fontSize: 14,
-    color: '#64748B',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   photoButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.sm,
   },
   photoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
     paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#1F1333',
-    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#8B5CF6',
+    borderColor: colors.ink,
   },
   photoButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#8B5CF6',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   recognizingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
   recognizingText: {
     fontSize: 14,
-    color: '#94A3B8',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   formSection: {
-    gap: 16,
+    gap: spacing.md,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: '#1F1333',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     fontSize: 16,
-    color: '#FFFFFF',
+    fontFamily: fonts.body,
+    color: colors.ink,
     borderWidth: 1,
-    borderColor: '#2D2142',
+    borderColor: colors.mist,
   },
   textArea: {
     height: 100,
-    paddingTop: 12,
+    paddingTop: spacing.sm,
   },
 });

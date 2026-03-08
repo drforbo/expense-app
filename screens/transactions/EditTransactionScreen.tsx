@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
   id: string;
@@ -151,7 +152,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={colors.ink} />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
@@ -174,11 +175,11 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit {isIncome ? 'Income' : 'Expense'}</Text>
         <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-          <Ionicons name="trash-outline" size={24} color="#EF4444" />
+          <Ionicons name="trash-outline" size={24} color={colors.ember} />
         </TouchableOpacity>
       </View>
 
@@ -186,11 +187,11 @@ export default function EditTransactionScreen({ route, navigation }: any) {
         {/* Transaction Details (Read-only) */}
         <View style={styles.detailsCard}>
           <View style={styles.merchantRow}>
-            <View style={[styles.iconContainer, { backgroundColor: isIncome ? '#10B98120' : '#7C3AED20' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: isIncome ? colors.tagGreenBg : colors.tagEmberBg }]}>
               <Ionicons
                 name={isIncome ? 'trending-up' : 'receipt-outline'}
                 size={24}
-                color={isIncome ? '#10B981' : '#7C3AED'}
+                color={isIncome ? colors.tagGreenText : colors.ember}
               />
             </View>
             <View style={styles.merchantInfo}>
@@ -201,7 +202,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
           <View style={styles.amountRow}>
             <Text style={styles.amountLabel}>Total Amount</Text>
-            <Text style={[styles.amountValue, { color: isIncome ? '#10B981' : '#7C3AED' }]}>
+            <Text style={[styles.amountValue, { color: isIncome ? colors.tagGreenText : colors.ember }]}>
               {formatCurrency(transaction.amount)}
             </Text>
           </View>
@@ -227,7 +228,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               keyboardType="numeric"
               maxLength={3}
               placeholder="100"
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={colors.midGrey}
             />
             <Text style={styles.percentSign}>%</Text>
           </View>
@@ -243,7 +244,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
             value={explanation}
             onChangeText={setExplanation}
             placeholder="Why is this a business expense?"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={colors.midGrey}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -256,9 +257,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
             <Ionicons
               name={transaction.tax_deductible ? 'checkmark-circle' : 'close-circle'}
               size={16}
-              color={transaction.tax_deductible ? '#10B981' : '#6B7280'}
+              color={transaction.tax_deductible ? colors.tagGreenText : colors.midGrey}
             />
-            <Text style={[styles.statusText, { color: transaction.tax_deductible ? '#10B981' : '#6B7280' }]}>
+            <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagGreenText : colors.midGrey }]}>
               {transaction.tax_deductible ? 'Tax Deductible' : 'Not Deductible'}
             </Text>
           </View>
@@ -268,9 +269,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               <Ionicons
                 name={transaction.qualified ? 'checkmark-circle' : 'document-text-outline'}
                 size={16}
-                color={transaction.qualified ? '#10B981' : '#F59E0B'}
+                color={transaction.qualified ? colors.tagGreenText : colors.ember}
               />
-              <Text style={[styles.statusText, { color: transaction.qualified ? '#10B981' : '#F59E0B' }]}>
+              <Text style={[styles.statusText, { color: transaction.qualified ? colors.tagGreenText : colors.ember }]}>
                 {transaction.qualified ? 'Has Evidence' : 'Needs Evidence'}
               </Text>
             </View>
@@ -284,9 +285,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               navigation.navigate('QualifyTransactions', { transaction });
             }}
           >
-            <Ionicons name="document-attach" size={20} color="#F59E0B" />
+            <Ionicons name="document-attach" size={20} color={colors.ember} />
             <Text style={styles.addEvidenceText}>Add Receipt & Evidence</Text>
-            <Ionicons name="chevron-forward" size={20} color="#F59E0B" />
+            <Ionicons name="chevron-forward" size={20} color={colors.ember} />
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -299,10 +300,10 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <>
-              <Ionicons name="checkmark" size={20} color="#fff" />
+              <Ionicons name="checkmark" size={20} color={colors.white} />
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </>
           )}
@@ -315,7 +316,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -323,122 +324,128 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: spacing.sm,
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#1F1333',
+    borderBottomColor: colors.mist,
   },
   backButton: {
-    padding: 8,
+    padding: spacing.xs,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   deleteButton: {
-    padding: 8,
+    padding: spacing.xs,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: spacing.md,
   },
   detailsCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   merchantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   merchantInfo: {
     flex: 1,
   },
   merchantName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   transactionDate: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#2E1A47',
+    borderTopColor: colors.mist,
   },
   amountLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   amountValue: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: fonts.display,
   },
   categoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#2E1A47',
+    borderTopColor: colors.mist,
   },
   categoryLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   categoryBadge: {
-    backgroundColor: '#7C3AED20',
-    paddingHorizontal: 12,
+    backgroundColor: colors.tagEmberBg,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
   },
   categoryText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagEmberText,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.sm,
   },
   inputCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    marginBottom: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
+    marginBottom: spacing.xs,
   },
   percentInputRow: {
     flexDirection: 'row',
@@ -446,98 +453,100 @@ const styles = StyleSheet.create({
   },
   percentInput: {
     flex: 1,
-    backgroundColor: '#2E1A47',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
   },
   percentSign: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    marginLeft: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
+    marginLeft: spacing.xs,
   },
   inputHelper: {
     fontSize: 12,
-    color: '#6B7280',
-    marginTop: 8,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginTop: spacing.xs,
   },
   explanationInput: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     fontSize: 16,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     minHeight: 100,
   },
   statusRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   statusActive: {
-    backgroundColor: '#10B98120',
+    backgroundColor: colors.tagGreenBg,
   },
   statusInactive: {
-    backgroundColor: '#6B728020',
+    backgroundColor: colors.parchment,
   },
   statusWarning: {
-    backgroundColor: '#F59E0B20',
+    backgroundColor: colors.tagEmberBg,
   },
   statusText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
   },
   addEvidenceButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F59E0B15',
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
     borderWidth: 1,
-    borderColor: '#F59E0B30',
-    marginBottom: 24,
+    borderColor: colors.ember,
+    marginBottom: spacing.lg,
   },
   addEvidenceText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#F59E0B',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
     flex: 1,
   },
   footer: {
-    padding: 20,
+    padding: spacing.md,
     paddingBottom: 34,
     borderTopWidth: 1,
-    borderTopColor: '#1F1333',
+    borderTopColor: colors.mist,
   },
   saveButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
 });

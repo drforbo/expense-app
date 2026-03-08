@@ -26,10 +26,13 @@ interface TaxBreakdown {
   personalAllowance: number;
   taxableIncome: number;
   incomeTax: number;
+  taxPaidViaPAYE: number;
+  incomeTaxRemaining: number;
   nationalInsurance: number;
   totalTaxOwed: number;
   employmentIncome: number;
   studentLoanRepayment: number;
+  giftedIncome: number;
 }
 
 interface UserProfile {
@@ -54,9 +57,10 @@ export default function TaxEstimateScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [{ data: profileData }, { data: transactions }] = await Promise.all([
+      const [{ data: profileData }, { data: transactions }, { data: giftedData }] = await Promise.all([
         supabase.from('user_profiles').select('*').eq('user_id', user.id).single(),
         supabase.from('categorized_transactions').select('amount, tax_deductible, qualified, business_percent, category_id').eq('user_id', user.id),
+        supabase.from('gifted_items').select('rrp').eq('user_id', user.id),
       ]);
 
       if (profileData) setProfile(profileData);
@@ -72,11 +76,12 @@ export default function TaxEstimateScreen({ navigation }: any) {
         }
       });
 
+      const giftedIncome = (giftedData || []).reduce((sum, g) => sum + (g.rrp || 0), 0);
       const employmentIncome = profileData?.has_other_employment ? (profileData.employment_income || 0) : 0;
-      const totalIncome = selfEmployedIncome + employmentIncome;
+      const totalIncome = selfEmployedIncome + employmentIncome + giftedIncome;
       const taxableIncome = Math.max(0, totalIncome - PERSONAL_ALLOWANCE - qualifiedExpenses);
 
-      // Income tax
+      // Income tax on total taxable income (determines correct band)
       let incomeTax = 0;
       if (taxableIncome > 0) {
         const basicBand = Math.min(taxableIncome, HIGHER_RATE_THRESHOLD - PERSONAL_ALLOWANCE);
@@ -84,15 +89,28 @@ export default function TaxEstimateScreen({ navigation }: any) {
         incomeTax = basicBand * BASIC_RATE + higherBand * HIGHER_RATE;
       }
 
-      // NI (Class 4 on self-employed profit)
-      const selfEmployedProfit = Math.max(0, selfEmployedIncome - qualifiedExpenses);
+      // Tax already paid via PAYE on employment income
+      // PAYE uses the personal allowance first, so calculate what the employer has already deducted
+      let taxPaidViaPAYE = 0;
+      if (employmentIncome > 0) {
+        const payeTaxable = Math.max(0, employmentIncome - PERSONAL_ALLOWANCE);
+        const payeBasic = Math.min(payeTaxable, HIGHER_RATE_THRESHOLD - PERSONAL_ALLOWANCE);
+        const payeHigher = Math.max(0, payeTaxable - (HIGHER_RATE_THRESHOLD - PERSONAL_ALLOWANCE));
+        taxPaidViaPAYE = payeBasic * BASIC_RATE + payeHigher * HIGHER_RATE;
+      }
+
+      // What you still owe = total income tax minus what PAYE already covered
+      const incomeTaxRemaining = Math.max(0, incomeTax - taxPaidViaPAYE);
+
+      // NI (Class 4 on self-employed profit, including gifted income — not on PAYE income)
+      const selfEmployedProfit = Math.max(0, selfEmployedIncome + giftedIncome - qualifiedExpenses);
       let nationalInsurance = 0;
       if (selfEmployedProfit > NI_LOWER) {
         const niBand = Math.min(selfEmployedProfit - NI_LOWER, NI_UPPER - NI_LOWER);
         nationalInsurance = niBand * NI_BASIC_RATE;
       }
 
-      // Student loan
+      // Student loan (employer may already deduct some via PAYE, but SA covers total)
       let studentLoanRepayment = 0;
       const slPlan = profileData?.student_loan_plan;
       if (slPlan && slPlan !== 'none') {
@@ -109,10 +127,13 @@ export default function TaxEstimateScreen({ navigation }: any) {
         personalAllowance: PERSONAL_ALLOWANCE,
         taxableIncome,
         incomeTax,
+        taxPaidViaPAYE,
+        incomeTaxRemaining,
         nationalInsurance,
-        totalTaxOwed: incomeTax + nationalInsurance,
+        totalTaxOwed: incomeTaxRemaining + nationalInsurance,
         employmentIncome,
         studentLoanRepayment,
+        giftedIncome,
       });
     } catch (error) {
       console.error('Error loading tax data:', error);
@@ -143,7 +164,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           {/* Total owed */}
           <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>Total tax owed</Text>
+            <Text style={styles.totalLabel}>Owed via Self Assessment</Text>
             <Text style={styles.totalValue}>{breakdown ? fmt(breakdown.totalTaxOwed) : '—'}</Text>
             <Text style={styles.totalSub}>2025–26 tax year estimate</Text>
           </View>
@@ -152,7 +173,10 @@ export default function TaxEstimateScreen({ navigation }: any) {
           <Text style={styles.sectionLabel}>HOW WE GOT THERE</Text>
 
           <View style={styles.breakdownCard}>
-            <Row label="Self-employed income" value={breakdown ? fmt(breakdown.totalIncome - breakdown.employmentIncome) : '—'} />
+            <Row label="Self-employed income" value={breakdown ? fmt(breakdown.totalIncome - breakdown.employmentIncome - breakdown.giftedIncome) : '—'} />
+            {breakdown && breakdown.giftedIncome > 0 && (
+              <Row label="Gifted items (taxable)" value={fmt(breakdown.giftedIncome)} />
+            )}
             {breakdown && breakdown.employmentIncome > 0 && (
               <Row label="Employment income (PAYE)" value={fmt(breakdown.employmentIncome)} />
             )}
@@ -167,14 +191,30 @@ export default function TaxEstimateScreen({ navigation }: any) {
           <Text style={[styles.sectionLabel, { marginTop: spacing.lg }]}>TAX CALCULATION</Text>
 
           <View style={styles.breakdownCard}>
-            <Row label="Income tax (20% basic rate)" value={breakdown ? fmt(breakdown.incomeTax) : '—'} />
+            <Row label="Income tax on all earnings" value={breakdown ? fmt(breakdown.incomeTax) : '—'} />
+            {breakdown && breakdown.taxPaidViaPAYE > 0 && (
+              <Row label="Already paid via PAYE" value={`− ${fmt(breakdown.taxPaidViaPAYE)}`} color={colors.tagGreenText} />
+            )}
+            {breakdown && breakdown.taxPaidViaPAYE > 0 && (
+              <Row label="Income tax still owed" value={fmt(breakdown.incomeTaxRemaining)} bold />
+            )}
             <Row label="National Insurance (Class 4)" value={breakdown ? fmt(breakdown.nationalInsurance) : '—'} />
             {breakdown && breakdown.studentLoanRepayment > 0 && (
               <Row label="Student loan repayment" value={fmt(breakdown.studentLoanRepayment)} />
             )}
             <Divider />
-            <Row label="Total owed to HMRC" value={breakdown ? fmt(breakdown.totalTaxOwed) : '—'} bold accent />
+            <Row label="You owe via Self Assessment" value={breakdown ? fmt(breakdown.totalTaxOwed) : '—'} bold accent />
           </View>
+
+          {/* PAYE explainer */}
+          {breakdown && breakdown.taxPaidViaPAYE > 0 && (
+            <View style={styles.payeNote}>
+              <Ionicons name="briefcase-outline" size={16} color={colors.tagGreenText} />
+              <Text style={styles.payeNoteText}>
+                Your employer has already paid {fmt(breakdown.taxPaidViaPAYE)} in income tax on your PAYE earnings. The figure above is only what you owe on top of that via Self Assessment.
+              </Text>
+            </View>
+          )}
 
           {/* Disclaimer */}
           <View style={styles.disclaimer}>
@@ -183,6 +223,75 @@ export default function TaxEstimateScreen({ navigation }: any) {
               This is an estimate based on your transactions and profile. It does not account for all allowances or reliefs. Consult an accountant for your official return.
             </Text>
           </View>
+
+          {/* What's next */}
+          <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>WHAT'S NEXT</Text>
+
+          <View style={styles.nextCard}>
+            <View style={styles.nextItem}>
+              <View style={[styles.nextIcon, { backgroundColor: colors.tagVoltBg }]}>
+                <Ionicons name="wallet-outline" size={20} color={colors.ink} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nextTitle}>Set money aside</Text>
+                <Text style={styles.nextSub}>
+                  {breakdown && breakdown.totalTaxOwed > 0
+                    ? `Try to save ${fmt(Math.round(breakdown.totalTaxOwed / 12))} per month to cover your tax bill.`
+                    : 'Based on your estimate, you may not owe tax — but keep saving just in case.'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.nextDivider} />
+
+            <View style={styles.nextItem}>
+              <View style={[styles.nextIcon, { backgroundColor: colors.tagEmberBg }]}>
+                <Ionicons name="receipt-outline" size={20} color={colors.ember} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nextTitle}>Review your expenses</Text>
+                <Text style={styles.nextSub}>
+                  Make sure all business expenses are categorised and have receipts attached. This reduces your tax bill.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.nextDivider} />
+
+            <View style={styles.nextItem}>
+              <View style={[styles.nextIcon, { backgroundColor: colors.tagBlueBg }]}>
+                <Ionicons name="calendar-outline" size={20} color={colors.tagBlueText} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nextTitle}>File with HMRC</Text>
+                <Text style={styles.nextSub}>
+                  Self Assessment is due by 31 January each year. Use these figures as a guide when completing your return.
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Filing guide CTA */}
+          <TouchableOpacity
+            style={styles.filingGuideCta}
+            onPress={() => navigation.navigate('FilingGuide')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="list-outline" size={20} color={colors.ink} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.filingGuideCtaTitle}>Your filing guide</Text>
+              <Text style={styles.filingGuideCtaSub}>Personalised steps to file your Self Assessment</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.ink} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.backToDashboard}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backToDashboardText}>← Back to dashboard</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -323,11 +432,92 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tagBlueBg,
     borderRadius: borderRadius.sm,
   },
+  payeNote: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.tagGreenBg,
+    borderRadius: borderRadius.sm,
+  },
+  payeNoteText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.tagGreenText,
+    lineHeight: 18,
+  },
   disclaimerText: {
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.tagBlueText,
     lineHeight: 18,
+  },
+  nextCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  nextItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  nextIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nextTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  nextSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.midGrey,
+    lineHeight: 18,
+  },
+  nextDivider: {
+    height: 1,
+    backgroundColor: colors.mist,
+    marginVertical: 4,
+  },
+  filingGuideCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.volt,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  filingGuideCtaTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  filingGuideCtaSub: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.ink,
+    opacity: 0.7,
+  },
+  backToDashboard: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  backToDashboardText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.ember,
   },
 });

@@ -12,9 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
 import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 interface UserProfile {
   work_type: string;
@@ -89,13 +88,8 @@ export default function SettingsScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const response = await fetch(`${API_URL}/api/export_transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, format: 'csv' }),
-      });
-
-      if (!response.ok) throw new Error('Export failed');
+      const data = await apiPost('/api/export_transactions', { user_id: user.id, format: 'csv' });
+      if (data.error) throw new Error('Export failed');
       Alert.alert('Export ready', 'Your transactions have been exported. Check your downloads.');
     } catch (error) {
       Alert.alert('Export failed', 'Please try again.');

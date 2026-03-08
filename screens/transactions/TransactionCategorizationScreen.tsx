@@ -17,6 +17,8 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface Transaction {
   transaction_id: string;
@@ -59,8 +61,6 @@ interface Suggestion {
   occurrenceCount: number;
   isVariable: boolean;
 }
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.129:3000';
 
 export default function TransactionCategorizationScreen({
   route,
@@ -214,13 +214,7 @@ export default function TransactionCategorizationScreen({
       }
 
       // Fetch uncategorized transactions
-      const response = await fetch(`${API_URL}/api/get_uncategorized_transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-
-      const data = await response.json();
+      const data = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
 
       if (data.transactions && data.transactions.length > 0) {
         setTransactions(data.transactions);
@@ -243,16 +237,10 @@ export default function TransactionCategorizationScreen({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const response = await fetch(`${API_URL}/api/get_categorization_suggestions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          transaction
-        }),
+      const data = await apiPost('/api/get_categorization_suggestions', {
+        user_id: user.id,
+        transaction
       });
-
-      const data = await response.json();
       if (data.hasSuggestion && data.suggestion) {
         console.log('💡 Got suggestion for', transaction.merchant_name);
         return data.suggestion as Suggestion;
@@ -311,20 +299,16 @@ export default function TransactionCategorizationScreen({
 
       // Update merchant pattern
       try {
-        await fetch(`${API_URL}/api/update_merchant_pattern`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: user.id,
-            transaction: currentTxn,
-            categorization: {
-              categoryId: suggestion.suggestedCategoryId,
-              categoryName: suggestion.suggestedCategoryName,
-              businessPercent: suggestion.suggestedBusinessPercent,
-              userAnswers: suggestion.typicalAnswers || {}
-            },
-            categorization_source: 'suggestion_accepted'
-          }),
+        await apiPost('/api/update_merchant_pattern', {
+          user_id: user.id,
+          transaction: currentTxn,
+          categorization: {
+            categoryId: suggestion.suggestedCategoryId,
+            categoryName: suggestion.suggestedCategoryName,
+            businessPercent: suggestion.suggestedBusinessPercent,
+            userAnswers: suggestion.typicalAnswers || {}
+          },
+          categorization_source: 'suggestion_accepted'
         });
       } catch (patternError) {
         console.log('Warning: Failed to update merchant pattern', patternError);
@@ -408,20 +392,16 @@ export default function TransactionCategorizationScreen({
 
       // Update merchant pattern
       try {
-        await fetch(`${API_URL}/api/update_merchant_pattern`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: user.id,
-            transaction: currentTxn,
-            categorization: {
-              categoryId: lastCategorization.categoryId,
-              categoryName: lastCategorization.categoryName,
-              businessPercent: lastCategorization.businessPercent,
-              userAnswers: lastCategorization.answers
-            },
-            categorization_source: 'same_as_above'
-          }),
+        await apiPost('/api/update_merchant_pattern', {
+          user_id: user.id,
+          transaction: currentTxn,
+          categorization: {
+            categoryId: lastCategorization.categoryId,
+            categoryName: lastCategorization.categoryName,
+            businessPercent: lastCategorization.businessPercent,
+            userAnswers: lastCategorization.answers
+          },
+          categorization_source: 'same_as_above'
         });
       } catch (patternError) {
         console.log('Warning: Failed to update merchant pattern', patternError);
@@ -462,17 +442,12 @@ export default function TransactionCategorizationScreen({
         setShowSuggestion(true);
       }
 
-      const response = await fetch(`${API_URL}/api/generate_questions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction,
-          userProfile: userProfile || {},
-          previousAnswers: previousAnswers || {}
-        }),
+      const data = await apiPost('/api/generate_questions', {
+        transaction,
+        userProfile: userProfile || {},
+        previousAnswers: previousAnswers || {}
       });
 
-      const data = await response.json();
       const newQuestions = data.questions || [];
 
       // If we have previous answers, append new questions to existing ones
@@ -520,17 +495,12 @@ export default function TransactionCategorizationScreen({
       // Try to generate follow-up questions based on their answer
       try {
         setProcessing(true);
-        const response = await fetch(`${API_URL}/api/generate_questions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            transaction: transactions[currentIndex],
-            userProfile: userProfile || {},
-            previousAnswers: newAnswers
-          }),
+        const data = await apiPost('/api/generate_questions', {
+          transaction: transactions[currentIndex],
+          userProfile: userProfile || {},
+          previousAnswers: newAnswers
         });
 
-        const data = await response.json();
         const newQuestions = data.questions || [];
 
         // If AI returns no more questions, categorize now
@@ -599,17 +569,12 @@ export default function TransactionCategorizationScreen({
     // Try to generate follow-up questions
     try {
       setProcessing(true);
-      const response = await fetch(`${API_URL}/api/generate_questions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction: transactions[currentIndex],
-          userProfile: userProfile || {},
-          previousAnswers: newAnswers
-        }),
+      const data = await apiPost('/api/generate_questions', {
+        transaction: transactions[currentIndex],
+        userProfile: userProfile || {},
+        previousAnswers: newAnswers
       });
 
-      const data = await response.json();
       const newQuestions = data.questions || [];
 
       // If AI returns no more questions (empty array), categorize now
@@ -642,17 +607,12 @@ export default function TransactionCategorizationScreen({
     try {
       setProcessing(true);
 
-      const response = await fetch(`${API_URL}/api/categorize_from_answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction: transactions[currentIndex],
-          answers: userAnswers,
-          userProfile: userProfile || {},
-        }),
+      const data = await apiPost('/api/categorize_from_answers', {
+        transaction: transactions[currentIndex],
+        answers: userAnswers,
+        userProfile: userProfile || {},
       });
 
-      const data = await response.json();
       setCategorization(data);
     } catch (error: any) {
       console.error('Error categorizing:', error);
@@ -758,20 +718,16 @@ export default function TransactionCategorizationScreen({
 
         // Update merchant pattern for learning
         try {
-          await fetch(`${API_URL}/api/update_merchant_pattern`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: user.id,
-              transaction: transactions[currentIndex],
-              categorization: {
-                categoryId: categorization.categoryId,
-                categoryName: categorization.categoryName,
-                businessPercent: categorization.businessPercent,
-                userAnswers: answers
-              },
-              categorization_source: 'manual'
-            }),
+          await apiPost('/api/update_merchant_pattern', {
+            user_id: user.id,
+            transaction: transactions[currentIndex],
+            categorization: {
+              categoryId: categorization.categoryId,
+              categoryName: categorization.categoryName,
+              businessPercent: categorization.businessPercent,
+              userAnswers: answers
+            },
+            categorization_source: 'manual'
           });
           console.log('📊 Merchant pattern updated');
         } catch (patternError) {
@@ -823,19 +779,14 @@ export default function TransactionCategorizationScreen({
     try {
       setRecategorizing(true);
 
-      const response = await fetch(`${API_URL}/api/recategorize_with_feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction: transactions[currentIndex],
-          answers: answers,
-          userProfile: userProfile || {},
-          currentCategorization: categorization,
-          feedback: feedback.trim(),
-        }),
+      const data = await apiPost('/api/recategorize_with_feedback', {
+        transaction: transactions[currentIndex],
+        answers: answers,
+        userProfile: userProfile || {},
+        currentCategorization: categorization,
+        feedback: feedback.trim(),
       });
 
-      const data = await response.json();
       setCategorization(data);
       setFeedback('');
       setShowFeedback(false);
@@ -856,7 +807,7 @@ export default function TransactionCategorizationScreen({
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#7C3AED" />
+        <ActivityIndicator size="large" color={colors.ember} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -866,7 +817,7 @@ export default function TransactionCategorizationScreen({
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <Ionicons name="receipt-outline" size={64} color="#64748B" />
+          <Ionicons name="receipt-outline" size={64} color={colors.midGrey} />
           <Text style={styles.emptyText}>No transactions to categorize</Text>
           <TouchableOpacity
             style={styles.button}
@@ -915,7 +866,7 @@ export default function TransactionCategorizationScreen({
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color={colors.ink} />
             </TouchableOpacity>
             <View style={styles.progressContainer}>
               {batchMode && batchMerchant && (
@@ -931,13 +882,13 @@ export default function TransactionCategorizationScreen({
             {/* Transaction Card */}
             <View style={[
               styles.transactionCard,
-              { backgroundColor: isIncome ? '#FF6B6B10' : '#1F1333' }
+              { backgroundColor: isIncome ? colors.tagEmberBg : colors.card }
             ]}>
               <View style={styles.transactionHeader}>
                 <Ionicons
                   name={isIncome ? "trending-up" : "receipt"}
                   size={32}
-                  color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                  color={isIncome ? colors.ember : colors.ember}
                 />
                 <View style={styles.transactionInfo}>
                   <Text style={styles.merchantName}>
@@ -948,7 +899,7 @@ export default function TransactionCategorizationScreen({
               </View>
               <Text style={[
                 styles.amount,
-                { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+                { color: isIncome ? colors.ember : colors.ember }
               ]}>
                 {isIncome ? '+' : ''}£{Math.abs(currentTransaction?.amount || 0).toFixed(2)}
               </Text>
@@ -959,7 +910,7 @@ export default function TransactionCategorizationScreen({
               <View style={styles.sameAsAboveCard}>
                 <View style={styles.sameAsAboveContent}>
                   <View style={styles.sameAsAboveIcon}>
-                    <Ionicons name="copy-outline" size={20} color="#10B981" />
+                    <Ionicons name="copy-outline" size={20} color={colors.tagGreenText} />
                   </View>
                   <View style={styles.sameAsAboveText}>
                     <Text style={styles.sameAsAboveTitle}>Same as above?</Text>
@@ -974,10 +925,10 @@ export default function TransactionCategorizationScreen({
                   disabled={processing}
                 >
                   {processing ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="checkmark" size={18} color="#fff" />
+                      <Ionicons name="checkmark" size={18} color={colors.white} />
                       <Text style={styles.sameAsAboveButtonText}>Apply</Text>
                     </>
                   )}
@@ -990,7 +941,7 @@ export default function TransactionCategorizationScreen({
               <View style={styles.suggestionCard}>
                 <View style={styles.suggestionHeader}>
                   <View style={styles.suggestionIconContainer}>
-                    <Ionicons name="sparkles" size={20} color="#7C3AED" />
+                    <Ionicons name="sparkles" size={20} color={colors.ember} />
                   </View>
                   <Text style={styles.suggestionTitle}>We remember this</Text>
                 </View>
@@ -1001,7 +952,7 @@ export default function TransactionCategorizationScreen({
 
                 {suggestion.isVariable && (
                   <View style={styles.suggestionWarning}>
-                    <Ionicons name="information-circle" size={14} color="#F59E0B" />
+                    <Ionicons name="information-circle" size={14} color={colors.ember} />
                     <Text style={styles.suggestionWarningText}>
                       You've categorized this merchant differently before
                     </Text>
@@ -1015,10 +966,10 @@ export default function TransactionCategorizationScreen({
                     disabled={usingSuggestion}
                   >
                     {usingSuggestion ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <ActivityIndicator size="small" color={colors.white} />
                     ) : (
                       <>
-                        <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                        <Ionicons name="checkmark-circle" size={18} color={colors.white} />
                         <Text style={styles.suggestionAcceptText}>Use Same Category</Text>
                       </>
                     )}
@@ -1042,13 +993,13 @@ export default function TransactionCategorizationScreen({
                 onPress={() => setShowMemoryJogger(!showMemoryJogger)}
               >
                 <View style={styles.memoryJoggerTitleRow}>
-                  <Ionicons name="bulb" size={20} color="#F59E0B" />
+                  <Ionicons name="bulb" size={20} color={colors.ember} />
                   <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
                 </View>
                 <Ionicons
                   name={showMemoryJogger ? 'chevron-up' : 'chevron-down'}
                   size={20}
-                  color="#9CA3AF"
+                  color={colors.midGrey}
                 />
               </TouchableOpacity>
 
@@ -1067,7 +1018,7 @@ export default function TransactionCategorizationScreen({
                       onPress={() => copyToClipboard(currentTransaction.merchant_name || currentTransaction.name)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "#10B981" : "#7C3AED"} />
+                      <Ionicons name={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? colors.tagGreenText : colors.ember} />
                       <Text style={styles.searchTermText}>{currentTransaction.merchant_name || currentTransaction.name}</Text>
                       {copiedText === (currentTransaction.merchant_name || currentTransaction.name) && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -1081,7 +1032,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(amountOnly)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? "#10B981" : "#7C3AED"} />
+                          <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.tagGreenText : colors.ember} />
                           <Text style={styles.searchTermText}>{amountOnly}</Text>
                           {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1097,7 +1048,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(merchantAmount)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? "#10B981" : "#7C3AED"} />
+                          <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.tagGreenText : colors.ember} />
                           <Text style={styles.searchTermText}>{merchantAmount}</Text>
                           {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1113,7 +1064,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(receiptSearch)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? "#10B981" : "#7C3AED"} />
+                          <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.tagGreenText : colors.ember} />
                           <Text style={styles.searchTermText} numberOfLines={1}>{currentTransaction.merchant_name || currentTransaction.name} receipt OR order</Text>
                           {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1124,15 +1075,15 @@ export default function TransactionCategorizationScreen({
                   <View style={styles.searchTips}>
                     <Text style={styles.searchTipTitle}>Where to look:</Text>
                     <View style={styles.searchTipRow}>
-                      <Ionicons name="mail-outline" size={16} color="#6B7280" />
+                      <Ionicons name="mail-outline" size={16} color={colors.midGrey} />
                       <Text style={styles.searchTipText}>Email inbox & receipts folder</Text>
                     </View>
                     <View style={styles.searchTipRow}>
-                      <Ionicons name="chatbubble-outline" size={16} color="#6B7280" />
+                      <Ionicons name="chatbubble-outline" size={16} color={colors.midGrey} />
                       <Text style={styles.searchTipText}>WhatsApp & iMessage</Text>
                     </View>
                     <View style={styles.searchTipRow}>
-                      <Ionicons name="images-outline" size={16} color="#6B7280" />
+                      <Ionicons name="images-outline" size={16} color={colors.midGrey} />
                       <Text style={styles.searchTipText}>Photos app (screenshots)</Text>
                     </View>
                   </View>
@@ -1145,7 +1096,7 @@ export default function TransactionCategorizationScreen({
           <>
             {processing ? (
               <View style={styles.processingContainer}>
-                <ActivityIndicator size="large" color={isIncome ? '#FF6B6B' : '#7C3AED'} />
+                <ActivityIndicator size="large" color={isIncome ? colors.ember : colors.ember} />
                 <Text style={styles.processingText}>
                   {currentQuestionIndex === 0 ? 'Analyzing...' : 'Processing...'}
                 </Text>
@@ -1164,7 +1115,7 @@ export default function TransactionCategorizationScreen({
                       value={customAnswer}
                       onChangeText={setCustomAnswer}
                       placeholder="Type your answer here..."
-                      placeholderTextColor="#64748B"
+                      placeholderTextColor={colors.midGrey}
                       multiline
                       autoFocus
                       returnKeyType="done"
@@ -1177,14 +1128,14 @@ export default function TransactionCategorizationScreen({
                     <TouchableOpacity
                       style={[
                         styles.submitButton,
-                        { backgroundColor: isIncome ? '#FF6B6B' : '#7C3AED' },
+                        { backgroundColor: isIncome ? colors.ember : colors.ember },
                         !customAnswer.trim() && styles.submitButtonDisabled
                       ]}
                       onPress={() => handleCustomAnswer(currentQuestionIndex)}
                       disabled={!customAnswer.trim()}
                     >
                       <Text style={styles.submitButtonText}>Submit</Text>
-                      <Ionicons name="arrow-forward" size={16} color="#fff" />
+                      <Ionicons name="arrow-forward" size={16} color={colors.white} />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -1197,7 +1148,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => handleAnswer(currentQuestionIndex, option)}
                         >
                           <Text style={styles.optionText}>{option}</Text>
-                          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                          <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -1211,7 +1162,7 @@ export default function TransactionCategorizationScreen({
                         <Ionicons
                           name="create-outline"
                           size={18}
-                          color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                          color={isIncome ? colors.ember : colors.ember}
                         />
                         <Text style={styles.customAnswerToggleText}>or type your own answer</Text>
                       </TouchableOpacity>
@@ -1224,7 +1175,7 @@ export default function TransactionCategorizationScreen({
                       value={customAnswer}
                       onChangeText={setCustomAnswer}
                       placeholder="Type your answer here..."
-                      placeholderTextColor="#64748B"
+                      placeholderTextColor={colors.midGrey}
                       multiline
                       autoFocus
                       returnKeyType="done"
@@ -1248,14 +1199,14 @@ export default function TransactionCategorizationScreen({
                       <TouchableOpacity
                         style={[
                           styles.submitButton,
-                          { backgroundColor: isIncome ? '#FF6B6B' : '#7C3AED' },
+                          { backgroundColor: isIncome ? colors.ember : colors.ember },
                           !customAnswer.trim() && styles.submitButtonDisabled
                         ]}
                         onPress={() => handleCustomAnswer(currentQuestionIndex)}
                         disabled={!customAnswer.trim()}
                       >
                         <Text style={styles.submitButtonText}>Submit</Text>
-                        <Ionicons name="arrow-forward" size={16} color="#fff" />
+                        <Ionicons name="arrow-forward" size={16} color={colors.white} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1283,7 +1234,7 @@ export default function TransactionCategorizationScreen({
             {/* Success Banner */}
             {showSuccessBanner && (
               <View style={styles.successBanner}>
-                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={20} color={colors.tagGreenText} />
                 <Text style={styles.successBannerText}>Updated successfully</Text>
               </View>
             )}
@@ -1295,11 +1246,11 @@ export default function TransactionCategorizationScreen({
                   <Ionicons
                     name="git-branch-outline"
                     size={24}
-                    color={isIncome ? '#FF6B6B' : '#7C3AED'}
+                    color={isIncome ? colors.ember : colors.ember}
                   />
                   <Text style={[
                     styles.splitHeaderText,
-                    { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+                    { color: isIncome ? colors.ember : colors.ember }
                   ]}>
                     Split Transaction
                   </Text>
@@ -1311,8 +1262,8 @@ export default function TransactionCategorizationScreen({
 
                 {((categorization as any).splits || []).map((split: any, idx: number) => {
                   const isBusiness = split.businessPercent > 0;
-                  const businessColor = isIncome ? '#FF6B6B' : '#10B981';
-                  const personalColor = '#9CA3AF';
+                  const businessColor = isIncome ? colors.ember : colors.tagGreenText;
+                  const personalColor = colors.midGrey;
                   const color = isBusiness ? businessColor : personalColor;
 
                   return (
@@ -1336,7 +1287,7 @@ export default function TransactionCategorizationScreen({
                         </View>
                         <Text style={[
                           styles.splitAmount,
-                          { color: isIncome ? '#FF6B6B' : '#7C3AED' }
+                          { color: isIncome ? colors.ember : colors.ember }
                         ]}>
                           £{split.amount.toFixed(2)}
                         </Text>
@@ -1354,8 +1305,8 @@ export default function TransactionCategorizationScreen({
                   styles.resultBadge,
                   {
                     backgroundColor: isIncome
-                      ? (categorization.taxDeductible ? '#FF6B6B20' : '#64748B20')  // Coral for income
-                      : (categorization.taxDeductible ? '#10B98120' : '#64748B20')  // Green for business expenses
+                      ? (categorization.taxDeductible ? colors.tagEmberBg : colors.parchment)
+                      : (categorization.taxDeductible ? colors.tagGreenBg : colors.parchment)
                   }
                 ]}>
                   <Ionicons
@@ -1367,16 +1318,16 @@ export default function TransactionCategorizationScreen({
                     size={32}
                     color={
                       isIncome
-                        ? (categorization.taxDeductible ? '#FF6B6B' : '#9CA3AF')  // Coral for income
-                        : (categorization.taxDeductible ? '#10B981' : '#9CA3AF')  // Green for business expenses
+                        ? (categorization.taxDeductible ? colors.ember : colors.midGrey)  // Coral for income
+                        : (categorization.taxDeductible ? colors.tagGreenText : colors.midGrey)  // Green for business expenses
                     }
                   />
                   <Text style={[
                     styles.resultTitle,
                     {
                       color: isIncome
-                        ? (categorization.taxDeductible ? '#FF6B6B' : '#9CA3AF')  // Coral for income
-                        : (categorization.taxDeductible ? '#10B981' : '#9CA3AF')  // Green for business expenses
+                        ? (categorization.taxDeductible ? colors.ember : colors.midGrey)  // Coral for income
+                        : (categorization.taxDeductible ? colors.tagGreenText : colors.midGrey)  // Green for business expenses
                     }
                   ]}>
                     {categorization.taxDeductible
@@ -1406,7 +1357,7 @@ export default function TransactionCategorizationScreen({
                 disabled={recategorizing}
               >
                 <Text style={styles.buttonText}>Looks good</Text>
-                <Ionicons name="checkmark" size={20} color="#fff" />
+                <Ionicons name="checkmark" size={20} color={colors.white} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1424,7 +1375,7 @@ export default function TransactionCategorizationScreen({
                 style={styles.feedbackToggle}
                 onPress={() => setShowFeedback(true)}
               >
-                <Ionicons name="help-circle-outline" size={18} color="#9CA3AF" />
+                <Ionicons name="help-circle-outline" size={18} color={colors.midGrey} />
                 <Text style={styles.feedbackToggleText}>Doesn't look right? Tell us why</Text>
               </TouchableOpacity>
             ) : (
@@ -1436,7 +1387,7 @@ export default function TransactionCategorizationScreen({
                   value={feedback}
                   onChangeText={setFeedback}
                   placeholder="e.g., This should be 100% business, not personal..."
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={colors.midGrey}
                   multiline
                   autoFocus
                 />
@@ -1461,11 +1412,11 @@ export default function TransactionCategorizationScreen({
                     disabled={!feedback.trim() || recategorizing}
                   >
                     {recategorizing ? (
-                      <ActivityIndicator size="small" color="#fff" />
+                      <ActivityIndicator size="small" color={colors.white} />
                     ) : (
                       <>
                         <Text style={styles.submitButtonText}>Update</Text>
-                        <Ionicons name="refresh" size={16} color="#fff" />
+                        <Ionicons name="refresh" size={16} color={colors.white} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -1483,49 +1434,49 @@ export default function TransactionCategorizationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   content: {
-    padding: 24,
+    padding: spacing.lg,
     paddingBottom: 300,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   progress: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   progressContainer: {
     alignItems: 'center',
   },
   batchLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
     marginBottom: 2,
   },
   // Same as Above styles
   sameAsAboveCard: {
-    backgroundColor: '#10B98120',
-    borderRadius: 12,
+    backgroundColor: colors.tagGreenBg,
+    borderRadius: borderRadius.lg,
     padding: 14,
-    marginBottom: 16,
+    marginBottom: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#10B98140',
+    borderColor: colors.tagGreenText,
   },
   sameAsAboveContent: {
     flexDirection: 'row',
@@ -1536,79 +1487,84 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#10B98130',
+    backgroundColor: colors.tagGreenBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   sameAsAboveText: {
     flex: 1,
   },
   sameAsAboveTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
     marginBottom: 2,
   },
   sameAsAboveDesc: {
     fontSize: 12,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   sameAsAboveButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 8,
+    backgroundColor: colors.tagGreenText,
+    borderRadius: borderRadius.md,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   sameAsAboveButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
   transactionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
   },
   transactionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   transactionInfo: {
-    marginLeft: 12,
+    marginLeft: spacing.sm,
     flex: 1,
   },
   merchantName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     marginBottom: 4,
   },
   transactionDate: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   amount: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ember,
     textAlign: 'center',
   },
   loadingText: {
-    marginTop: 16,
+    marginTop: spacing.md,
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   emptyText: {
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
   },
   processingContainer: {
@@ -1616,63 +1572,67 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   processingText: {
-    marginTop: 16,
+    marginTop: spacing.md,
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   questionContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   questionText: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 20,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.md,
   },
   optionsContainer: {
-    gap: 12,
+    gap: spacing.sm,
   },
   optionButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    ...shadows.sm,
   },
   optionText: {
     fontSize: 16,
-    color: '#fff',
-    fontWeight: '500',
+    fontFamily: fonts.displayMed,
+    color: colors.ink,
     flex: 1,
-    marginRight: 12,
+    marginRight: spacing.sm,
   },
   answersContainer: {
-    backgroundColor: '#1F133380',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    ...shadows.sm,
   },
   answersTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    marginBottom: 12,
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
   },
   answerRow: {
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   answerQuestion: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     marginBottom: 2,
   },
   answerValue: {
     fontSize: 15,
-    color: '#fff',
-    fontWeight: '500',
+    fontFamily: fonts.displayMed,
+    color: colors.ink,
   },
   resultContainer: {
     alignItems: 'center',
@@ -1680,135 +1640,138 @@ const styles = StyleSheet.create({
   resultBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 24,
-    gap: 12,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   resultTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.display,
   },
   categoryName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.sm,
   },
   explanation: {
     fontSize: 16,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 20,
+    marginBottom: spacing.md,
   },
   percentageContainer: {
-    backgroundColor: '#7C3AED20',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginBottom: 32,
+    backgroundColor: colors.tagEmberBg,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
+    marginBottom: spacing.xl,
   },
   percentageText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
+    fontFamily: fonts.bodyBold,
+    color: colors.ember,
   },
   actionButtons: {
     width: '100%',
-    gap: 12,
+    gap: spacing.sm,
   },
   button: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   nextButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: colors.ember,
   },
   skipButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#64748B',
+    borderColor: colors.mist,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   skipButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   customAnswerToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
-    padding: 12,
-    gap: 8,
+    marginTop: spacing.md,
+    padding: spacing.sm,
+    gap: spacing.xs,
   },
   customAnswerToggleText: {
     fontSize: 15,
-    color: '#7C3AED',
-    fontWeight: '500',
+    fontFamily: fonts.displayMed,
+    color: colors.ember,
   },
   customAnswerContainer: {
-    marginTop: 20,
-    marginBottom: 20,
-    backgroundColor: '#7C3AED15',
-    borderRadius: 16,
-    padding: 20,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: colors.ember,
+    ...shadows.sm,
   },
   customAnswerLabel: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#7C3AED',
-    marginBottom: 12,
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
+    marginBottom: spacing.sm,
   },
   customInput: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     fontSize: 16,
-    color: '#1F1333',
+    fontFamily: fonts.body,
+    color: colors.ink,
     minHeight: 100,
     maxHeight: 200,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: '#7C3AED40',
+    borderColor: colors.mist,
   },
   customAnswerButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   cancelButton: {
     flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#64748B',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: colors.mist,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   submitButton: {
     flex: 1,
-    backgroundColor: '#7C3AED',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1819,172 +1782,180 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
   splitHeaderBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   splitHeaderText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.display,
   },
   splitSubheader: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   splitItem: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     borderLeftWidth: 4,
+    ...shadows.sm,
   },
   splitHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   splitTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   splitCategory: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.display,
   },
   splitAmount: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#7C3AED',
+    fontFamily: fonts.display,
+    color: colors.ember,
   },
   splitDescription: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
     marginBottom: 4,
   },
   splitExplanation: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     lineHeight: 18,
   },
   feedbackToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    padding: 12,
-    gap: 8,
+    marginTop: spacing.md,
+    padding: spacing.sm,
+    gap: spacing.xs,
   },
   feedbackToggleText: {
     fontSize: 14,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    fontFamily: fonts.displayMed,
+    color: colors.midGrey,
   },
   feedbackContainer: {
-    marginTop: 20,
+    marginTop: spacing.md,
     width: '100%',
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#7C3AED40',
+    borderColor: colors.mist,
+    ...shadows.sm,
   },
   feedbackLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#7C3AED',
-    marginBottom: 12,
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
+    marginBottom: spacing.sm,
   },
   feedbackInput: {
     width: '100%',
-    backgroundColor: '#2E1A47',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     fontSize: 15,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     minHeight: 80,
     maxHeight: 150,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: '#7C3AED40',
+    borderColor: colors.mist,
   },
   feedbackButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   successBanner: {
-    backgroundColor: '#10B98120',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.tagGreenBg,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.xs,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: '#10B981',
+    borderColor: colors.tagGreenText,
   },
   successBannerText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   // Smart Suggestion Card Styles
   suggestionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
+    ...shadows.sm,
   },
   suggestionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   suggestionIconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: '#7C3AED20',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.tagEmberBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   suggestionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   suggestionMessage: {
     fontSize: 14,
-    color: '#D1D5DB',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   suggestionWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F59E0B15',
-    borderRadius: 8,
+    backgroundColor: colors.tagEmberBg,
+    borderRadius: borderRadius.md,
     padding: 10,
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
   suggestionWarningText: {
     fontSize: 12,
-    color: '#F59E0B',
+    fontFamily: fonts.body,
+    color: colors.ember,
     flex: 1,
   },
   suggestionButtons: {
@@ -1994,118 +1965,122 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
+    backgroundColor: colors.ink,
+    borderRadius: borderRadius.lg,
     paddingVertical: 14,
-    gap: 8,
+    gap: spacing.xs,
   },
   suggestionAcceptText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
   suggestionRejectButton: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: '#4B5563',
+    borderColor: colors.mist,
   },
   suggestionRejectText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#9CA3AF',
+    fontFamily: fonts.displayMed,
+    color: colors.midGrey,
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F59E0B30',
+    borderColor: colors.mist,
+    ...shadows.sm,
   },
   memoryJoggerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   memoryJoggerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   memoryJoggerTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#F59E0B',
+    fontFamily: fonts.displaySemi,
+    color: colors.ember,
   },
   memoryJoggerContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   memoryJoggerSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
   },
   searchSuggestions: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   searchSuggestionLabel: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#D1D5DB',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 10,
   },
   searchTermChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2E1A47',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#7C3AED30',
+    borderColor: colors.mist,
   },
   searchTermChipCopied: {
-    backgroundColor: '#10B98115',
-    borderColor: '#10B981',
+    backgroundColor: colors.tagGreenBg,
+    borderColor: colors.tagGreenText,
   },
   searchTermText: {
     fontSize: 14,
-    color: '#fff',
+    fontFamily: fonts.body,
+    color: colors.ink,
     flex: 1,
   },
   copiedBadge: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#10B981',
+    fontFamily: fonts.bodyBold,
+    color: colors.tagGreenText,
   },
   searchTips: {
-    backgroundColor: '#2E1A47',
-    borderRadius: 10,
+    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.lg,
     padding: 14,
   },
   searchTipTitle: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#D1D5DB',
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
     marginBottom: 10,
   },
   searchTipRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   searchTipText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
 });

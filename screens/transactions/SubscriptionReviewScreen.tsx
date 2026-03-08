@@ -11,6 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { apiPost } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
 interface SubscriptionTransaction {
   id: string;
@@ -38,8 +40,6 @@ const QUICK_CATEGORIES = [
   { id: 'entertainment', name: 'Entertainment', icon: 'play-circle-outline', businessPercent: 0 },
   { id: 'utilities', name: 'Utilities', icon: 'flash-outline', businessPercent: 0 },
 ];
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.119:3000';
 
 export default function SubscriptionReviewScreen({ route, navigation }: any) {
   const { subscriptions: initialSubscriptions } = route.params || {};
@@ -88,20 +88,14 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
 
       const category = QUICK_CATEGORIES.find(c => c.id === selectedCategory);
 
-      const response = await fetch(`${API_URL}/api/confirm_subscription`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          subscription: currentSubscription,
-          category_id: selectedCategory,
-          category_name: category?.name || selectedCategory,
-          business_percent: businessPercent,
-          apply_to_past: true
-        }),
+      const data = await apiPost('/api/confirm_subscription', {
+        user_id: user.id,
+        subscription: currentSubscription,
+        category_id: selectedCategory,
+        category_name: category?.name || selectedCategory,
+        business_percent: businessPercent,
+        apply_to_past: true
       });
-
-      const data = await response.json();
 
       if (data.success) {
         Alert.alert(
@@ -127,13 +121,9 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await fetch(`${API_URL}/api/reject_subscription`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          subscription: currentSubscription
-        }),
+      await apiPost('/api/reject_subscription', {
+        user_id: user.id,
+        subscription: currentSubscription
       });
 
       moveToNext();
@@ -161,7 +151,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
-          <Ionicons name="checkmark-circle" size={64} color="#10B981" />
+          <Ionicons name="checkmark-circle" size={64} color={colors.tagGreenText} />
           <Text style={styles.emptyTitle}>All Done!</Text>
           <Text style={styles.emptyText}>No more subscriptions to review</Text>
           <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
@@ -178,7 +168,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.ink} />
           </TouchableOpacity>
           <Text style={styles.progress}>
             {currentIndex + 1} / {subscriptions.length}
@@ -188,7 +178,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
         {/* Title */}
         <View style={styles.titleSection}>
           <View style={styles.subscriptionIcon}>
-            <Ionicons name="repeat" size={28} color="#7C3AED" />
+            <Ionicons name="repeat" size={28} color={colors.ember} />
           </View>
           <Text style={styles.title}>Subscription Detected</Text>
           <Text style={styles.subtitle}>
@@ -237,7 +227,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
             <Ionicons
               name={expandedTransactions ? 'chevron-up' : 'chevron-down'}
               size={18}
-              color="#9CA3AF"
+              color={colors.midGrey}
             />
           </TouchableOpacity>
 
@@ -273,7 +263,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
                 <Ionicons
                   name={cat.icon as any}
                   size={24}
-                  color={selectedCategory === cat.id ? '#fff' : '#7C3AED'}
+                  color={selectedCategory === cat.id ? colors.white : colors.ember}
                 />
                 <Text style={[
                   styles.categoryButtonText,
@@ -328,10 +318,10 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
             disabled={processing || !selectedCategory}
           >
             {processing ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color={colors.white} />
                 <Text style={styles.confirmButtonText}>
                   Confirm & Categorize All
                 </Text>
@@ -355,81 +345,83 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: spacing.md,
     paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   progress: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   subscriptionIcon: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#7C3AED20',
+    backgroundColor: colors.tagEmberBg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     textAlign: 'center',
   },
   subscriptionCard: {
-    backgroundColor: '#1F1333',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
   },
   subscriptionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   merchantName: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.ink,
     flex: 1,
   },
   frequencyBadge: {
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 12,
+    backgroundColor: colors.ink,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
   },
   frequencyText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.displaySemi,
+    color: colors.white,
   },
   subscriptionDetails: {
-    gap: 12,
+    gap: spacing.sm,
   },
   detailRow: {
     flexDirection: 'row',
@@ -437,188 +429,195 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   detailValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   expandButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#374151',
-    gap: 8,
+    borderTopColor: colors.mist,
+    gap: spacing.xs,
   },
   expandButtonText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   transactionsList: {
-    marginTop: 12,
-    gap: 8,
+    marginTop: spacing.sm,
+    gap: spacing.xs,
   },
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#2E1A47',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: colors.parchment,
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
   },
   transactionDate: {
     fontSize: 13,
-    color: '#9CA3AF',
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
   transactionAmount: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#fff',
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   categorySection: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 16,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.md,
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: spacing.sm,
   },
   categoryButton: {
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     width: '47%',
     borderWidth: 2,
     borderColor: 'transparent',
+    ...shadows.sm,
   },
   categoryButtonSelected: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    backgroundColor: colors.ink,
+    borderColor: colors.ink,
   },
   categoryButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 8,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginTop: spacing.xs,
     textAlign: 'center',
   },
   categoryButtonTextSelected: {
-    color: '#fff',
+    color: colors.white,
   },
   categoryBusinessLabel: {
     fontSize: 11,
-    color: '#10B981',
+    fontFamily: fonts.body,
+    color: colors.tagGreenText,
     marginTop: 4,
   },
   categoryBusinessLabelSelected: {
-    color: '#A7F3D0',
+    color: colors.volt,
   },
   businessSection: {
-    marginTop: 20,
-    backgroundColor: '#1F1333',
-    borderRadius: 12,
-    padding: 16,
+    marginTop: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    ...shadows.sm,
   },
   businessLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 12,
+    fontFamily: fonts.displaySemi,
+    color: colors.ink,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   businessButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   percentButton: {
     flex: 1,
-    backgroundColor: '#2E1A47',
+    backgroundColor: colors.parchment,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   percentButtonActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.ink,
   },
   percentButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   percentButtonTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   actionButtons: {
-    gap: 12,
+    gap: spacing.sm,
   },
   confirmButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.xs,
   },
   confirmButtonDisabled: {
-    backgroundColor: '#374151',
+    backgroundColor: colors.mist,
   },
   confirmButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
   rejectButton: {
     backgroundColor: 'transparent',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.mist,
   },
   rejectButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#9CA3AF',
+    fontFamily: fonts.displaySemi,
+    color: colors.midGrey,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
-    marginBottom: 24,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+    marginBottom: spacing.lg,
   },
   doneButton: {
-    backgroundColor: '#7C3AED',
-    borderRadius: 12,
-    padding: 16,
-    paddingHorizontal: 32,
+    backgroundColor: colors.ember,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
   },
   doneButtonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: fonts.display,
+    color: colors.white,
   },
 });
