@@ -153,7 +153,7 @@ export default function DashboardScreen({ navigation }: any) {
       {/* Upload progress banner */}
       {isUploading && (
         <View style={styles.uploadBanner}>
-          <ActivityIndicator size="small" color={colors.ink} />
+          <ActivityIndicator size="small" color={colors.background} />
           <Text style={styles.uploadBannerText}>
             {uploadState.status === 'uploading' ? 'Uploading...' : 'Reading your statement...'}
           </Text>
@@ -181,14 +181,14 @@ export default function DashboardScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.logo}>bo<Text style={styles.logoPop}>pp</Text></Text>
+            <Text style={styles.logo}>bopp.</Text>
           </View>
           <TouchableOpacity
             style={styles.uploadButton}
             onPress={() => navigation.navigate('UploadStatement')}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={18} color={colors.volt} />
+            <Ionicons name="add" size={18} color={colors.background} />
             <Text style={styles.uploadButtonText}>Upload</Text>
           </TouchableOpacity>
         </View>
@@ -207,14 +207,14 @@ export default function DashboardScreen({ navigation }: any) {
             activeOpacity={0.8}
           >
             <View style={styles.welcomeIconWrap}>
-              <Ionicons name="document-text-outline" size={28} color={colors.ink} />
+              <Ionicons name="document-text-outline" size={28} color={colors.volt} />
             </View>
             <Text style={styles.welcomeTitle}>Upload a bank statement</Text>
             <Text style={styles.welcomeSub}>
               Get started by uploading a PDF bank statement. We'll read your transactions and help you track expenses for your tax return.
             </Text>
             <View style={styles.welcomeCta}>
-              <Ionicons name="add" size={18} color={colors.ink} />
+              <Ionicons name="add" size={18} color={colors.background} />
               <Text style={styles.welcomeCtaText}>Upload statement</Text>
             </View>
           </TouchableOpacity>
@@ -281,7 +281,7 @@ export default function DashboardScreen({ navigation }: any) {
             <Ionicons
               name={uncategorizedCount > 0 ? 'card-outline' : 'checkmark'}
               size={22}
-              color={uncategorizedCount > 0 ? colors.ink : colors.tagGreenText}
+              color={uncategorizedCount > 0 ? colors.background : colors.tagGreenText}
             />
           </View>
           <View style={styles.actionText}>
@@ -307,7 +307,7 @@ export default function DashboardScreen({ navigation }: any) {
             <Ionicons
               name={unqualifiedCount > 0 ? 'shield-checkmark-outline' : 'checkmark'}
               size={22}
-              color={unqualifiedCount > 0 ? colors.white : colors.tagGreenText}
+              color={unqualifiedCount > 0 ? colors.background : colors.tagGreenText}
             />
           </View>
           <View style={styles.actionText}>
@@ -376,17 +376,17 @@ const styles = StyleSheet.create({
   uploadBannerText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.ink,
+    color: colors.background,
   },
   toastBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    borderBottomColor: colors.border,
     ...shadows.sm,
   },
   toastText: {
@@ -414,17 +414,11 @@ const styles = StyleSheet.create({
     color: colors.ink,
     letterSpacing: -1,
   },
-  logoPop: {
-    backgroundColor: colors.volt,
-    borderRadius: borderRadius.sm,
-    overflow: 'hidden',
-    paddingHorizontal: 4,
-  },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.coralBlaze,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
@@ -432,7 +426,7 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontFamily: fonts.display,
     fontSize: 13,
-    color: colors.volt,
+    color: colors.background,
   },
   greeting: {
     fontFamily: fonts.display,
@@ -448,16 +442,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   taxCard: {
-    backgroundColor: colors.dark,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.xl,
-    ...shadows.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   taxCardLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
+    color: colors.midGrey,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 6,
@@ -480,7 +475,7 @@ const styles = StyleSheet.create({
   taxMiniLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
-    color: 'rgba(255,255,255,0.4)',
+    color: colors.midGrey,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginBottom: 2,
@@ -494,7 +489,7 @@ const styles = StyleSheet.create({
   taxMiniDivider: {
     width: 1,
     height: 32,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
     marginHorizontal: spacing.md,
   },
   taxCardCta: {
@@ -506,7 +501,7 @@ const styles = StyleSheet.create({
   taxCardCtaText: {
     fontFamily: fonts.display,
     fontSize: 14,
-    color: colors.white,
+    color: colors.background,
   },
   sectionLabel: {
     fontFamily: fonts.bodyBold,
@@ -519,11 +514,12 @@ const styles = StyleSheet.create({
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   actionCardDone: {
     opacity: 0.7,
@@ -564,7 +560,7 @@ const styles = StyleSheet.create({
     color: colors.ember,
   },
   welcomeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.lg,
@@ -609,7 +605,7 @@ const styles = StyleSheet.create({
   welcomeCtaText: {
     fontFamily: fonts.display,
     fontSize: 15,
-    color: colors.ink,
+    color: colors.background,
   },
   profilePromptCard: {
     backgroundColor: colors.tagEmberBg,
@@ -625,7 +621,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,

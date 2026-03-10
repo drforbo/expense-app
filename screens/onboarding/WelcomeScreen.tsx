@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.sm,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     paddingVertical: 14,
     ...shadows.sm,

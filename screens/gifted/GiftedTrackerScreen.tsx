@@ -392,7 +392,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             onPress={openAddModal}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={18} color={colors.ink} />
+            <Ionicons name="add" size={18} color={colors.background} />
             <Text style={styles.emptyAddBtnText}>Add your first item</Text>
           </TouchableOpacity>
         </View>
@@ -421,7 +421,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         onPress={openAddModal}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={32} color={colors.white} />
+        <Ionicons name="add" size={32} color={colors.background} />
       </TouchableOpacity>
 
       {/* Add/Edit Modal */}
@@ -510,7 +510,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 onChangeText={setItemName}
                 placeholder="e.g. iPhone 15 Pro"
                 placeholderTextColor={colors.midGrey}
-                keyboardAppearance="light"
+                keyboardAppearance="dark"
               />
 
               <Text style={styles.label}>RRP (£) *</Text>
@@ -521,7 +521,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 placeholder="0.00"
                 placeholderTextColor={colors.midGrey}
                 keyboardType="decimal-pad"
-                keyboardAppearance="light"
+                keyboardAppearance="dark"
               />
 
               <Text style={styles.label}>Received Date *</Text>
@@ -531,7 +531,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 onChangeText={setReceivedDate}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor={colors.midGrey}
-                keyboardAppearance="light"
+                keyboardAppearance="dark"
               />
 
               <Text style={styles.label}>Brand Name (Optional)</Text>
@@ -541,7 +541,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 onChangeText={setReceivedFrom}
                 placeholder="e.g., Apple, Samsung, Nike..."
                 placeholderTextColor={colors.midGrey}
-                keyboardAppearance="light"
+                keyboardAppearance="dark"
                 selectionColor={colors.ink}
                 cursorColor={colors.ink}
               />
@@ -556,7 +556,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
-                keyboardAppearance="light"
+                keyboardAppearance="dark"
                 selectionColor={colors.ink}
                 cursorColor={colors.ink}
               />
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   backBtn: {
     width: 36,
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
   emptyAddBtnText: {
     fontFamily: fonts.display,
     fontSize: 15,
-    color: colors.ink,
+    color: colors.background,
   },
   listContent: {
     padding: spacing.md,
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   itemCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.ink,
@@ -833,7 +833,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     fontSize: 16,

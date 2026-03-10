@@ -1547,7 +1547,7 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.achievementCard}>
         <View style={styles.achievementHeader}>
           <View style={styles.achievementIconContainer}>
-            <Ionicons name="rocket" size={24} color={colors.ink} />
+            <Ionicons name="rocket" size={24} color={colors.background} />
           </View>
           <View style={styles.achievementHeaderText}>
             <Text style={styles.achievementTitle}>In Progress with bopp</Text>
@@ -2568,8 +2568,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#141414',
   },
   backButton: {
     width: 40,
@@ -2589,10 +2589,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 16,
     marginBottom: 16,
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 4,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   tab: {
     flex: 1,
@@ -2676,7 +2677,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   infoCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 16,
     marginBottom: 24,
     overflow: 'hidden',
@@ -2687,7 +2688,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
   },
   infoLabel: {
     fontSize: 14,
@@ -2705,15 +2706,17 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: colors.mist,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     marginHorizontal: 16,
   },
   // Account management styles
   accountCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   accountRow: {
     flexDirection: 'row',
@@ -2760,13 +2763,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   emailCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   emailText: {
     fontSize: 14,
@@ -2774,10 +2779,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   questionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   questionTitle: {
     fontSize: 16,
@@ -2799,9 +2806,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.08)',
     minWidth: '30%',
     alignItems: 'center',
   },
@@ -2849,7 +2856,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -2896,13 +2903,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   optionItemActive: {
     borderColor: colors.ink,
-    backgroundColor: colors.parchment,
+    backgroundColor: '#0A0A0A',
   },
   optionWithIcon: {
     flexDirection: 'row',
@@ -2926,7 +2933,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.mist,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   subSectionLabel: {
     fontSize: 14,
@@ -2964,13 +2971,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   customInput: {
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: colors.ink,
     borderWidth: 2,
-    borderColor: colors.mist,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   checkboxList: {
     gap: 12,
@@ -2982,7 +2989,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   checkbox: {
     width: 24,
@@ -3012,12 +3021,12 @@ const styles = StyleSheet.create({
   },
   // Checklist tab styles - Achievement Card
   achievementCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: colors.mist,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   achievementHeader: {
     flexDirection: 'row',
@@ -3025,7 +3034,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   achievementIconContainer: {
     width: 44,
@@ -3051,10 +3060,12 @@ const styles = StyleSheet.create({
   },
   // Tracking cards within achievement section
   trackingCard: {
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   trackingHeader: {
     flexDirection: 'row',
@@ -3113,12 +3124,12 @@ const styles = StyleSheet.create({
   },
   // Overall progress card
   progressCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: colors.mist,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -3138,7 +3149,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: colors.mist,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
@@ -3175,10 +3186,12 @@ const styles = StyleSheet.create({
   },
   clItem: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   clItemCompleted: {
     opacity: 0.6,
@@ -3272,7 +3285,7 @@ const styles = StyleSheet.create({
     width: 27,
     height: 27,
     borderRadius: 14,
-    backgroundColor: colors.white,
+    backgroundColor: '#FAFAFA',
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
@@ -3282,9 +3295,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   countrySelectLabel: {
     fontSize: 15,
@@ -3299,11 +3314,13 @@ const styles = StyleSheet.create({
   selectedCountryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
     gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   selectedCountryFlag: {
     fontSize: 16,
@@ -3319,12 +3336,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textAreaInput: {
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     borderRadius: 12,
     padding: 16,
     fontSize: 15,
     color: colors.ink,
     minHeight: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   // Country picker modal
   countryPickerHeader: {
@@ -3346,7 +3365,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   countryPickerItemSelected: {
-    backgroundColor: colors.parchment,
+    backgroundColor: '#141414',
   },
   countryPickerItemLeft: {
     flexDirection: 'row',
@@ -3366,12 +3385,14 @@ const styles = StyleSheet.create({
   },
   taxDisclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: colors.mist,
+    backgroundColor: '#141414',
     padding: 12,
     borderRadius: 8,
     marginTop: 16,
     gap: 10,
     alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   taxDisclaimerText: {
     flex: 1,
@@ -3380,14 +3401,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   // Info Card Styles
-  infoCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: colors.mist,
-  },
   infoCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -3421,9 +3434,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.mist,
+    backgroundColor: '#0A0A0A',
     borderRadius: 10,
     padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   infoLinkText: {
     fontSize: 14,

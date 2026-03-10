@@ -300,10 +300,10 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator size="small" color={colors.background} />
           ) : (
             <>
-              <Ionicons name="checkmark" size={20} color={colors.white} />
+              <Ionicons name="checkmark" size={20} color={colors.background} />
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </>
           )}
@@ -547,6 +547,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
 });

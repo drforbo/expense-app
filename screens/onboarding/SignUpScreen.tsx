@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.xl,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.mist,

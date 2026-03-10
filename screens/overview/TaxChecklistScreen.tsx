@@ -450,7 +450,7 @@ export default function TaxChecklistScreen({ navigation }: any) {
         <View style={styles.achievementCard}>
           <View style={styles.achievementHeader}>
             <View style={styles.achievementIconContainer}>
-              <Ionicons name="rocket" size={24} color={colors.ink} />
+              <Ionicons name="rocket" size={24} color={colors.background} />
             </View>
             <View style={styles.achievementHeaderText}>
               <Text style={styles.achievementTitle}>In Progress with bopp</Text>
@@ -767,18 +767,18 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: spacing.sm, fontSize: 16, fontFamily: fonts.body, color: colors.midGrey },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, justifyContent: 'center', alignItems: 'center', marginRight: 16, ...shadows.sm },
+  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center', marginRight: 16, ...shadows.sm },
   headerText: { flex: 1 },
   title: { fontSize: 24, fontFamily: fonts.display, color: colors.ink, marginBottom: 4 },
   subtitle: { fontSize: 14, fontFamily: fonts.body, color: colors.midGrey },
-  progressCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
+  progressCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   progressTitle: { fontSize: 16, fontFamily: fonts.displaySemi, color: colors.ink },
   progressCount: { fontSize: 16, fontFamily: fonts.display, color: colors.ink },
   progressBarContainer: { height: 8, backgroundColor: colors.mist, borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
   progressBar: { height: '100%', backgroundColor: colors.tagGreenText, borderRadius: 4 },
   progressText: { fontSize: 13, fontFamily: fonts.body, color: colors.midGrey },
-  achievementCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
+  achievementCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 16, ...shadows.sm },
   achievementHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   achievementIconContainer: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.volt, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   achievementHeaderText: { flex: 1 },
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   categoryIcon: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   categoryTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.ink },
-  checklistItem: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 12, padding: 16, marginBottom: 8, ...shadows.sm },
+  checklistItem: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 8, ...shadows.sm },
   checklistItemCompleted: { opacity: 0.6 },
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.mist, justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2 },
   checkboxChecked: { backgroundColor: colors.tagGreenText, borderColor: colors.tagGreenText },
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
   itemDescriptionCompleted: { color: colors.midGrey },
   dueDateContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 },
   dueDateText: { fontSize: 12, fontFamily: fonts.bodyBold, color: colors.ember },
-  infoCard: { backgroundColor: colors.white, borderRadius: 16, padding: 20, marginTop: 8, ...shadows.sm },
+  infoCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginTop: 8, ...shadows.sm },
   infoCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   infoCardIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.tagBlueBg, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   infoCardTitle: { fontSize: 16, fontFamily: fonts.display, color: colors.ink, flex: 1 },

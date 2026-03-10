@@ -1135,7 +1135,7 @@ export default function TransactionCategorizationScreen({
                       disabled={!customAnswer.trim()}
                     >
                       <Text style={styles.submitButtonText}>Submit</Text>
-                      <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                      <Ionicons name="arrow-forward" size={16} color={colors.background} />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -1206,7 +1206,7 @@ export default function TransactionCategorizationScreen({
                         disabled={!customAnswer.trim()}
                       >
                         <Text style={styles.submitButtonText}>Submit</Text>
-                        <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                        <Ionicons name="arrow-forward" size={16} color={colors.background} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1357,7 +1357,7 @@ export default function TransactionCategorizationScreen({
                 disabled={recategorizing}
               >
                 <Text style={styles.buttonText}>Looks good</Text>
-                <Ionicons name="checkmark" size={20} color={colors.white} />
+                <Ionicons name="checkmark" size={20} color={colors.background} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1412,11 +1412,11 @@ export default function TransactionCategorizationScreen({
                     disabled={!feedback.trim() || recategorizing}
                   >
                     {recategorizing ? (
-                      <ActivityIndicator size="small" color={colors.white} />
+                      <ActivityIndicator size="small" color={colors.background} />
                     ) : (
                       <>
                         <Text style={styles.submitButtonText}>Update</Text>
-                        <Ionicons name="refresh" size={16} color={colors.white} />
+                        <Ionicons name="refresh" size={16} color={colors.background} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -1699,7 +1699,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
   skipButtonText: {
     fontSize: 16,
@@ -1736,7 +1736,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   customInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     fontSize: 16,
@@ -1783,7 +1783,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 15,
     fontFamily: fonts.bodyBold,
-    color: colors.white,
+    color: colors.background,
   },
   splitHeaderBadge: {
     flexDirection: 'row',

@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   headerTitle: {
     fontFamily: fonts.display,
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   transactionItem: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.background,
   },
   // Sort toggle styles
   sortToggleContainer: {

@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: 'transparent',

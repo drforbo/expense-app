@@ -318,10 +318,10 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
             disabled={processing || !selectedCategory}
           >
             {processing ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colors.background} />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                <Ionicons name="checkmark-circle" size={20} color={colors.background} />
                 <Text style={styles.confirmButtonText}>
                   Confirm & Categorize All
                 </Text>
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
   rejectButton: {
     backgroundColor: 'transparent',
@@ -618,6 +618,6 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
 });

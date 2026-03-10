@@ -8,48 +8,62 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, spacing, borderRadius, shadows } from './theme';
+import { colors, fonts, spacing, borderRadius, shadows } from './theme';
 
 const { width } = Dimensions.get('window');
 
-// Gradient Background Container
-interface GradientContainerProps {
-  children: React.ReactNode;
+// Solar Flare Glow - decorative background element
+interface SolarGlowProps {
+  variant?: 'primary' | 'secondary' | 'tertiary';
+  size?: number;
   style?: ViewStyle;
 }
 
-export const GradientContainer: React.FC<GradientContainerProps> = ({ children, style }) => {
+export const SolarGlow: React.FC<SolarGlowProps> = ({ variant = 'primary', size = 200, style }) => {
+  const glowColors: Record<string, [string, string, string, string]> = {
+    primary: ['#FF5C35', '#FFAA52', 'rgba(255,92,53,0.3)', 'transparent'],
+    secondary: ['#FFAA52', '#FF8C35', 'rgba(255,170,82,0.3)', 'transparent'],
+    tertiary: ['#FF6B8A', '#CC4466', 'rgba(255,100,120,0.2)', 'transparent'],
+  };
+
   return (
-    <LinearGradient
-      colors={[colors.deepPurple, colors.darkPurple]}
-      style={[styles.gradientContainer, style]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
+      style={[
+        {
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          opacity: 0.6,
+        },
+        style,
+      ]}
+      pointerEvents="none"
     >
-      {children}
-    </LinearGradient>
-  );
-};
-
-// Progress Bar
-interface ProgressBarProps {
-  progress: number; // 0 to 1
-}
-
-export const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
-  return (
-    <View style={styles.progressBarContainer}>
       <LinearGradient
-        colors={[colors.coral, colors.electricViolet]}
-        style={[styles.progressFill, { width: `${progress * 100}%` }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        colors={glowColors[variant]}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+        start={{ x: 0.5, y: 0.5 }}
+        end={{ x: 1, y: 1 }}
       />
     </View>
   );
 };
 
-// Glass Button
+// Progress Bar
+interface ProgressBarProps {
+  progress: number;
+}
+
+export const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
+  return (
+    <View style={styles.progressBarContainer}>
+      <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+    </View>
+  );
+};
+
+// Primary Button
 interface GlassButtonProps {
   title: string;
   onPress: () => void;
@@ -69,16 +83,9 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.8}
-        style={styles.buttonWrapper}
+        style={[styles.primaryButton, disabled && styles.disabledButton]}
       >
-        <LinearGradient
-          colors={[colors.electricViolet, colors.lightViolet]}
-          style={styles.primaryButton}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text style={styles.primaryButtonText}>{title}</Text>
-        </LinearGradient>
+        <Text style={styles.primaryButtonText}>{title}</Text>
       </TouchableOpacity>
     );
   }
@@ -88,9 +95,9 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
-      style={[styles.glassButton, disabled && styles.disabledButton]}
+      style={[styles.ghostButton, disabled && styles.disabledButton]}
     >
-      <Text style={styles.glassButtonText}>{title}</Text>
+      <Text style={styles.ghostButtonText}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -112,10 +119,9 @@ export const BackButton: React.FC<BackButtonProps> = ({ onPress }) => {
 export const Logo: React.FC = () => {
   return (
     <View style={styles.logoContainer}>
-      <Text style={styles.welcomeText}>Welcome to</Text>
-      <Text style={styles.logoText}>bopp</Text>
+      <Text style={styles.logoText}>bopp.</Text>
       <Text style={styles.tagline}>
-        Tax sorted for <Text style={styles.taglineHighlight}>hustlers</Text>
+        Taxes hit different when they actually make sense.
       </Text>
     </View>
   );
@@ -130,65 +136,63 @@ export const QuestionHeader: React.FC<QuestionHeaderProps> = ({ question }) => {
   return <Text style={styles.questionText}>{question}</Text>;
 };
 
-// Decorative Blobs (background decorations)
+// Eyebrow Label
+interface EyebrowProps {
+  text: string;
+}
+
+export const Eyebrow: React.FC<EyebrowProps> = ({ text }) => {
+  return <Text style={styles.eyebrow}>{text}</Text>;
+};
+
+// Decorative Blobs (solar flare glows)
 export const DecorativeBlobs: React.FC = () => {
   return (
     <>
-      <View style={styles.blob1} />
-      <View style={styles.blob2} />
+      <SolarGlow variant="primary" size={300} style={{ top: -100, right: -100 }} />
+      <SolarGlow variant="tertiary" size={250} style={{ bottom: -80, left: -80 }} />
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
-    padding: spacing.xl,
-    paddingTop: spacing.xxl,
-  },
   progressBarContainer: {
-    position: 'absolute',
-    top: 40,
-    left: spacing.xl,
-    right: spacing.xl,
     height: 4,
-    backgroundColor: colors.glassWhite,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
+    backgroundColor: colors.coralBlaze,
     borderRadius: borderRadius.sm,
   },
-  buttonWrapper: {
-    marginBottom: spacing.sm,
-  },
   primaryButton: {
-    paddingVertical: 18,
+    backgroundColor: colors.coralBlaze,
+    paddingVertical: 14,
     paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
-    ...shadows.md,
+    ...shadows.sm,
   },
   primaryButtonText: {
     color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: fonts.displaySemi,
   },
-  glassButton: {
-    backgroundColor: colors.glassWhite,
-    borderWidth: 2,
-    borderColor: colors.glassBorder,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 18,
+  ghostButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: colors.white,
+    borderRadius: borderRadius.sm,
+    paddingVertical: 14,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
     alignItems: 'center',
   },
-  glassButtonText: {
+  ghostButtonText: {
     color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: fonts.displaySemi,
   },
   disabledButton: {
     opacity: 0.5,
@@ -199,60 +203,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: colors.coral,
+    color: colors.coralBlaze,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.displaySemi,
   },
   logoContainer: {
     alignItems: 'center',
     marginBottom: spacing.xxl,
   },
-  welcomeText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: spacing.sm,
-  },
   logoText: {
     fontSize: 56,
-    fontWeight: '800',
-    color: colors.coral,
+    fontFamily: fonts.display,
+    color: colors.white,
     letterSpacing: -1,
     marginBottom: spacing.sm,
   },
   tagline: {
     fontSize: 15,
-    fontWeight: '600',
-    color: colors.white,
-  },
-  taglineHighlight: {
-    color: colors.coral,
+    fontFamily: fonts.body,
+    color: 'rgba(250,250,250,0.7)',
+    textAlign: 'center',
   },
   questionText: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fonts.display,
     color: colors.white,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
-  blob1: {
-    position: 'absolute',
-    top: -50,
-    right: -50,
-    width: 200,
-    height: 200,
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
-    borderRadius: 100,
-    opacity: 0.5,
-  },
-  blob2: {
-    position: 'absolute',
-    bottom: -100,
-    left: -50,
-    width: 250,
-    height: 250,
-    backgroundColor: 'rgba(255, 107, 107, 0.15)',
-    borderRadius: 125,
-    opacity: 0.5,
+  eyebrow: {
+    fontSize: 10,
+    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: 'rgba(250,250,250,0.4)',
+    marginBottom: spacing.md,
   },
 });

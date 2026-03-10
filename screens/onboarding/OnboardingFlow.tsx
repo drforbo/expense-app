@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   optionButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -1000,7 +1000,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   otherInputContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     ...shadows.sm,
@@ -1090,7 +1090,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   yesNoButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.lg,
@@ -1162,7 +1162,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   guideContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -1192,7 +1192,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   boppFeatureCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,

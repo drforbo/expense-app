@@ -228,8 +228,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const renderSignUp = () => (
     <View style={styles.stepContainer}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logo}>bopp</Text>
-        <Text style={styles.tagline}>Simple tax for side hustlers</Text>
+        <Text style={styles.logo}>bopp.</Text>
+        <Text style={styles.tagline}>Taxes hit different when they actually make sense.</Text>
       </View>
 
       {/* Auth mode toggle */}
@@ -321,13 +321,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colors.background} />
           ) : (
             <>
               <Text style={styles.primaryButtonText}>
                 {authMode === 'signup' ? 'Create account' : 'Log in'}
               </Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              <Ionicons name="arrow-forward" size={20} color={colors.background} />
             </>
           )}
         </TouchableOpacity>
@@ -383,7 +383,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             disabled={!customWorkType.trim()}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            <Ionicons name="arrow-forward" size={20} color={colors.background} />
           </TouchableOpacity>
         </View>
       )}
@@ -431,7 +431,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       <TouchableOpacity style={styles.primaryButton} onPress={handleIncomeNext}>
         <Text style={styles.primaryButtonText}>Continue</Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.white} />
+        <Ionicons name="arrow-forward" size={20} color={colors.background} />
       </TouchableOpacity>
     </View>
   );
@@ -563,7 +563,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             onPress={() => setCurrentStep('studentLoan')}
           >
             <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            <Ionicons name="arrow-forward" size={20} color={colors.background} />
           </TouchableOpacity>
         </View>
       )}
@@ -680,7 +680,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({ text, icon, onPress }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -699,13 +699,13 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 4,
-    backgroundColor: colors.mist,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.ink,
+    backgroundColor: colors.coralBlaze,
     borderRadius: borderRadius.xs,
   },
   content: {
@@ -726,23 +726,25 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 48,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     marginBottom: spacing.xs,
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.white,
+    opacity: 0.7,
     fontFamily: fonts.body,
   },
   authToggle: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: 4,
     marginBottom: spacing.lg,
     gap: 4,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   authToggleButton: {
     flex: 1,
@@ -751,7 +753,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   authToggleButtonActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.coralBlaze,
   },
   authToggleText: {
     fontSize: 15,
@@ -759,7 +761,7 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
   },
   authToggleTextActive: {
-    color: colors.white,
+    color: colors.background,
   },
   formContainer: {
     gap: spacing.md,
@@ -767,17 +769,17 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.white,
     marginBottom: -8,
   },
   input: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     fontSize: 16,
-    color: colors.ink,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    color: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
     fontFamily: fonts.body,
   },
   passwordContainer: {
@@ -793,7 +795,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   primaryButton: {
-    backgroundColor: colors.ember,
+    backgroundColor: colors.coralBlaze,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     flexDirection: 'row',
@@ -808,12 +810,12 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
   question: {
     fontSize: 28,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     marginBottom: spacing.xs,
   },
   questionSubtitle: {
@@ -824,20 +826,22 @@ const styles = StyleSheet.create({
   },
   employmentIncomeContainer: {
     marginTop: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   optionButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   optionContent: {
     flexDirection: 'row',
@@ -848,14 +852,14 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   optionText: {
     fontSize: 18,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.white,
   },
   otherInputContainer: {
     gap: spacing.md,
@@ -883,31 +887,33 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   currencyFieldContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     minWidth: 180,
     justifyContent: 'center',
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   currencyPrefix: {
     fontSize: 36,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
   },
   currencyInput: {
     fontSize: 36,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     minWidth: 60,
     textAlign: 'center',
     padding: 0,
@@ -933,31 +939,31 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.mist,
+    borderColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxBoxChecked: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+    backgroundColor: colors.coralBlaze,
+    borderColor: colors.coralBlaze,
   },
   checkboxLabel: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.white,
     flex: 1,
     fontFamily: fonts.body,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(245, 242, 236, 0.8)',
+    backgroundColor: 'rgba(10, 10, 10, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   // Tax residency styles
   optionButtonSelected: {
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.parchment,
+    borderColor: colors.coralBlaze,
+    backgroundColor: colors.surface,
   },
   optionSubtext: {
     fontSize: 13,
@@ -967,15 +973,16 @@ const styles = StyleSheet.create({
   },
   foreignCountriesSection: {
     marginTop: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   foreignCountriesLabel: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.white,
     marginBottom: 4,
   },
   foreignCountriesHint: {
@@ -993,17 +1000,17 @@ const styles = StyleSheet.create({
   countryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
     gap: spacing.xs,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   countryChipSelected: {
-    borderColor: colors.ink,
-    backgroundColor: colors.white,
+    borderColor: colors.coralBlaze,
+    backgroundColor: colors.surface,
   },
   countryFlag: {
     fontSize: 18,
@@ -1014,7 +1021,7 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
   },
   countryNameSelected: {
-    color: colors.ink,
+    color: colors.white,
   },
   skipLink: {
     alignItems: 'center',
@@ -1026,19 +1033,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.displayMed,
   },
   noticeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     alignItems: 'center',
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.ember,
-    ...shadows.sm,
+    borderColor: colors.coralBlaze,
   },
   noticeTitle: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },

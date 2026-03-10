@@ -1,42 +1,49 @@
-// Bopp Design System v2 — Clash Display + Satoshi
+// Bopp Design System — Solar Flare
 export const colors = {
-  // Brand
-  parchment: '#F5F2EC',   // app background
-  ink:       '#0D0D0D',   // primary text, buttons
-  volt:      '#E8FF47',   // primary accent — every positive action
-  ember:     '#FF4D1C',   // urgency, deadlines, CTAs
-  mist:      '#C8C4BA',   // dividers, disabled, captions
-  dark:      '#141414',   // dark cards
-
-  // UI
-  white:     '#FFFFFF',
-  midGrey:   '#6B6866',
-  card:      '#FFFFFF',
+  // Core
+  background:   '#0A0A0A',   // page background (void black)
+  surface:      '#141414',   // card/panel background
+  coralBlaze:   '#FF5C35',   // primary CTA, key accents
+  warmAmber:    '#FFAA52',   // secondary accent, glow highlights
+  deepViolet:   '#7B9CCB',   // subtle UI accents, tags
+  acidLime:     '#C8FF2E',   // tertiary accent, badges, highlights
+  white:        '#FAFAFA',   // body text, light UI elements
+  border:       'rgba(255,255,255,0.08)', // subtle borders
+  // Legacy aliases (for gradual migration)
+  parchment:    '#0A0A0A',
+  ink:          '#FAFAFA',
+  volt:         '#C8FF2E',
+  ember:        '#FF5C35',
+  mist:         'rgba(255,255,255,0.2)',
+  dark:         '#141414',
+  card:         '#141414',
+  midGrey:      'rgba(250,250,250,0.5)',
+  white100:     '#FFFFFF',
 
   // Tags
-  tagVoltBg:    '#F5FFB0',
-  tagVoltText:  '#5A6800',
-  tagEmberBg:   '#FFE4DC',
-  tagEmberText: '#C02800',
-  tagBlueBg:    '#E0ECFF',
-  tagBlueText:  '#1A3A8C',
-  tagGreenBg:   '#D4F5E8',
-  tagGreenText: '#0A6040',
-  tagInkBg:     '#0D0D0D',
-  tagInkText:   '#E8FF47',
+  tagVoltBg:    'rgba(200,255,46,0.15)',
+  tagVoltText:  '#C8FF2E',
+  tagEmberBg:   'rgba(255,92,53,0.2)',
+  tagEmberText: '#FF5C35',
+  tagBlueBg:    'rgba(123,156,203,0.2)',
+  tagBlueText:  '#7B9CCB',
+  tagGreenBg:   'rgba(200,255,46,0.15)',
+  tagGreenText: '#C8FF2E',
+  tagInkBg:     '#FAFAFA',
+  tagInkText:   '#0A0A0A',
 };
 
 export const fonts = {
-  display:      'ClashDisplay-Bold',       // headings, logo, numbers
-  displaySemi:  'ClashDisplay-SemiBold',   // subheadings, labels
-  displayMed:   'ClashDisplay-Medium',     // UI labels
-  body:         'Satoshi-Regular',         // body text, captions
-  bodyBold:     'Satoshi-Bold',            // body emphasis
+  display:      'Poppins_700Bold',
+  displaySemi:  'Poppins_600SemiBold',
+  displayMed:   'Poppins_600SemiBold',
+  body:         'Poppins_400Regular',
+  bodyBold:     'Poppins_700Bold',
 };
 
 export const spacing = {
-  xs:  8,
-  sm:  12,
+  xs:  4,
+  sm:  8,
   md:  16,
   lg:  24,
   xl:  32,
@@ -45,25 +52,26 @@ export const spacing = {
 
 export const borderRadius = {
   xs:   2,
-  sm:   4,
-  md:   8,
+  sm:   6,
+  md:   10,
   lg:   12,
+  xl:   24,
   full: 9999,
 };
 
 export const shadows = {
   sm: {
-    shadowColor: '#0D0D0D',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 1,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#0D0D0D',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
 };

@@ -594,11 +594,11 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             disabled={saving || uploading}
           >
             {saving ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colors.background} />
             ) : (
               <>
                 <Text style={styles.saveButtonText}>Save Evidence</Text>
-                <Ionicons name="checkmark" size={20} color={colors.white} />
+                <Ionicons name="checkmark" size={20} color={colors.background} />
               </>
             )}
           </TouchableOpacity>
@@ -982,7 +982,7 @@ const styles = StyleSheet.create({
   changeImageText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.white,
+    color: colors.background,
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
   skipButton: {
     backgroundColor: 'transparent',

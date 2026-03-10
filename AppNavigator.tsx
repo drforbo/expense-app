@@ -55,8 +55,8 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.orange,
-        tabBarInactiveTintColor: colors.midGrey,
+        tabBarActiveTintColor: colors.coralBlaze,
+        tabBarInactiveTintColor: 'rgba(250,250,250,0.4)',
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
@@ -145,7 +145,7 @@ export default function AppNavigator() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: colors.cream },
+          contentStyle: { backgroundColor: colors.background },
         }}
         initialRouteName={isOnboarded ? 'MainTabs' : 'Onboarding'}
       >
@@ -173,15 +173,15 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#F0EDE8',
+    borderTopColor: colors.border,
     paddingTop: 8,
     paddingBottom: 28,
     height: 90,
-    shadowColor: colors.charcoal,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 10,
   },

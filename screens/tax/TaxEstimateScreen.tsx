@@ -277,12 +277,12 @@ export default function TaxEstimateScreen({ navigation }: any) {
             onPress={() => navigation.navigate('FilingGuide')}
             activeOpacity={0.8}
           >
-            <Ionicons name="list-outline" size={20} color={colors.ink} />
+            <Ionicons name="list-outline" size={20} color={colors.background} />
             <View style={{ flex: 1 }}>
               <Text style={styles.filingGuideCtaTitle}>Your filing guide</Text>
               <Text style={styles.filingGuideCtaSub}>Personalised steps to file your Self Assessment</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.ink} />
+            <Ionicons name="chevron-forward" size={18} color={colors.background} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   backBtn: {
     width: 36,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   breakdownCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     ...shadows.sm,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   nextCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     ...shadows.sm,
@@ -502,13 +502,13 @@ const styles = StyleSheet.create({
   filingGuideCtaTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
-    color: colors.ink,
+    color: colors.background,
     marginBottom: 2,
   },
   filingGuideCtaSub: {
     fontFamily: fonts.body,
     fontSize: 12,
-    color: colors.ink,
+    color: colors.background,
     opacity: 0.7,
   },
   backToDashboard: {

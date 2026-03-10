@@ -1,31 +1,35 @@
 import React, { useEffect } from 'react';
+import { StatusBar } from 'react-native';
 import { UploadProvider } from './context/UploadContext';
 import AppNavigator from './AppNavigator';
-import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const [fontsLoaded, setFontsLoaded] = React.useState(false);
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   useEffect(() => {
-    Font.loadAsync({
-      'ClashDisplay-Bold':     require('./assets/fonts/ClashDisplay-Bold.ttf'),
-      'ClashDisplay-SemiBold': require('./assets/fonts/ClashDisplay-SemiBold.ttf'),
-      'ClashDisplay-Medium':   require('./assets/fonts/ClashDisplay-Medium.ttf'),
-      'Satoshi-Regular':       require('./assets/fonts/Satoshi-Regular.ttf'),
-      'Satoshi-Bold':          require('./assets/fonts/Satoshi-Bold.ttf'),
-    }).then(() => {
-      setFontsLoaded(true);
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
-    });
-  }, []);
+    }
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
   return (
     <UploadProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
       <AppNavigator />
     </UploadProvider>
   );

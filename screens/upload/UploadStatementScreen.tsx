@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   backButton: {
     width: 40,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     padding: 40,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     ...shadows.sm,
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   statementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,

@@ -1308,7 +1308,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
   },
   // Profile Incomplete Card Styles
   profileIncompleteCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -1448,7 +1448,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   limitedCompanyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -1484,7 +1484,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   taxCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -1574,7 +1574,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   incomeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
@@ -1643,7 +1643,7 @@ const styles = StyleSheet.create({
   },
   expenseCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
   },
@@ -1683,7 +1683,7 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
   },
   categoryList: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1730,7 +1730,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     minHeight: 120,
@@ -1761,7 +1761,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -1841,7 +1841,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   unqualifiedCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1960,7 +1960,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   breakdownModalContent: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -2076,7 +2076,7 @@ const styles = StyleSheet.create({
   },
   // Running tax card styles
   runningTaxCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -2161,7 +2161,7 @@ const styles = StyleSheet.create({
   },
   // Gifted items card styles
   giftedItemsCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
@@ -2197,7 +2197,7 @@ const styles = StyleSheet.create({
   },
   // Export button styles
   exportButton: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',

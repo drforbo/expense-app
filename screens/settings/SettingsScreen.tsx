@@ -127,7 +127,7 @@ export default function SettingsScreen({ navigation }: any) {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logo}>bo<Text style={styles.logoPop}>pp</Text></Text>
+          <Text style={styles.logo}>bopp.</Text>
           <Text style={styles.headerSub}>Settings</Text>
         </View>
 
@@ -151,15 +151,15 @@ export default function SettingsScreen({ navigation }: any) {
         <TouchableOpacity style={styles.exportCard} onPress={handleExport} activeOpacity={0.8} disabled={exporting}>
           <View style={styles.exportIcon}>
             {exporting
-              ? <ActivityIndicator size="small" color={colors.ink} />
-              : <Ionicons name="download-outline" size={22} color={colors.ink} />
+              ? <ActivityIndicator size="small" color={colors.background} />
+              : <Ionicons name="download-outline" size={22} color={colors.background} />
             }
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.exportTitle}>Export transactions</Text>
             <Text style={styles.exportSub}>Download as CSV with evidence</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+          <Ionicons name="chevron-forward" size={18} color={colors.background} />
         </TouchableOpacity>
 
         {/* Profile */}
@@ -230,7 +230,7 @@ const profileRowStyles = StyleSheet.create({
   },
   border: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   label: {
     fontFamily: fonts.body,
@@ -271,12 +271,6 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
     marginBottom: 2,
   },
-  logoPop: {
-    backgroundColor: colors.volt,
-    borderRadius: borderRadius.sm,
-    overflow: 'hidden',
-    paddingHorizontal: 4,
-  },
   headerSub: {
     fontFamily: fonts.body,
     fontSize: 14,
@@ -285,12 +279,13 @@ const styles = StyleSheet.create({
   accountCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.xl,
     gap: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   accountAvatar: {
     width: 46,
@@ -331,32 +326,34 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     gap: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   exportIcon: {
     width: 44,
     height: 44,
     borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   exportTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
-    color: colors.ink,
+    color: colors.background,
     marginBottom: 2,
   },
   exportSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: 'rgba(13,13,13,0.55)',
+    color: 'rgba(10,10,10,0.5)',
   },
   profileCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#141414',
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   editProfileBtn: {
     flexDirection: 'row',

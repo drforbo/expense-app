@@ -367,7 +367,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           disabled={saving || uploading}
         >
           {saving ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colors.background} />
           ) : (
             <Text style={styles.saveButtonText}>Save Evidence</Text>
           )}
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   changeImageText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.white,
+    color: colors.background,
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -569,6 +569,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.background,
   },
 });

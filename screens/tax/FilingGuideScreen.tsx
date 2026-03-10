@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.mist,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   backBtn: {
     width: 36,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   stepCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
