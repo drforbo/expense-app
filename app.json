@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.getbopp.app"
+      "bundleIdentifier": "com.getbopp.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,6 +36,11 @@
       "expo-font",
       "expo-mail-composer",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5639180c-ee01-4b15-b25b-efd8c8aab7bf"
+      }
+    }
   }
 }
