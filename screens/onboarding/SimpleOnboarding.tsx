@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Slider from '@react-native-community/slider';
 import { supabase } from '../../lib/supabase';
 import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
 
@@ -21,7 +20,7 @@ interface SimpleOnboardingProps {
   onComplete: () => void;
 }
 
-type Step = 'signup' | 'workType' | 'income' | 'registration' | 'employment' | 'studentLoan';
+type Step = 'signup' | 'workType' | 'income' | 'giftedItems' | 'registration' | 'employment' | 'studentLoan';
 type AuthMode = 'login' | 'signup';
 
 export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) {
@@ -30,6 +29,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [loading, setLoading] = useState(false);
 
   // Auth fields
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,8 +46,37 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>('none');
 
   const formatCurrency = (value: number) => {
-    if (value >= 10000) return `£${(value / 1000).toFixed(0)}k`;
     return `£${value.toLocaleString()}`;
+  };
+
+  const incrementTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startIncrement = useCallback((setter: React.Dispatch<React.SetStateAction<number>>, step: number, min: number) => {
+    const doStep = () => {
+      setter(prev => Math.max(min, prev + step));
+    };
+    doStep();
+    let delay = 200;
+    const accelerate = () => {
+      incrementTimerRef.current = setTimeout(() => {
+        doStep();
+        delay = Math.max(50, delay - 20);
+        accelerate();
+      }, delay);
+    };
+    accelerate();
+  }, []);
+
+  const stopIncrement = useCallback(() => {
+    if (incrementTimerRef.current) {
+      clearTimeout(incrementTimerRef.current);
+      incrementTimerRef.current = null;
+    }
+  }, []);
+
+  const handleCurrencyInput = (text: string, setter: React.Dispatch<React.SetStateAction<number>>) => {
+    const digits = text.replace(/[^0-9]/g, '');
+    setter(digits ? parseInt(digits, 10) : 0);
   };
 
   const handleLogin = async () => {
@@ -78,7 +108,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   };
 
   const handleSignUp = async () => {
-    if (!email.trim() || !password.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -93,6 +123,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
+        options: {
+          data: { first_name: firstName.trim(), last_name: lastName.trim() },
+        },
       });
 
       if (error) throw error;
@@ -125,7 +158,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   };
 
   const handleIncomeNext = () => {
-    setCurrentStep('registration');
+    setCurrentStep('giftedItems');
   };
 
   const handleComplete = async () => {
@@ -142,6 +175,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         .from('user_profiles')
         .upsert({
           user_id: user.id,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           work_type: workType,
           custom_work_type: workType === 'other' ? customWorkType : null,
           time_commitment: 'full_time', // Default
@@ -175,7 +210,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const goBack = () => {
     if (currentStep === 'workType') setCurrentStep('signup');
     else if (currentStep === 'income') setCurrentStep('workType');
-    else if (currentStep === 'registration') setCurrentStep('income');
+    else if (currentStep === 'giftedItems') setCurrentStep('income');
+    else if (currentStep === 'registration') setCurrentStep('giftedItems');
     else if (currentStep === 'employment') {
       setHasOtherEmployment(null);
       setCurrentStep('registration');
@@ -184,7 +220,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   };
 
   const getProgress = () => {
-    const steps = ['signup', 'workType', 'income', 'registration', 'employment', 'studentLoan'];
+    const steps = ['signup', 'workType', 'income', 'giftedItems', 'registration', 'employment', 'studentLoan'];
     const index = steps.indexOf(currentStep);
     return ((index + 1) / steps.length) * 100;
   };
@@ -217,6 +253,32 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       </View>
 
       <View style={styles.formContainer}>
+        {authMode === 'signup' && (
+          <>
+            <Text style={styles.inputLabel}>First name</Text>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="First name"
+              placeholderTextColor={colors.midGrey}
+              autoCapitalize="words"
+              autoComplete="given-name"
+            />
+
+            <Text style={styles.inputLabel}>Last name</Text>
+            <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Last name"
+              placeholderTextColor={colors.midGrey}
+              autoCapitalize="words"
+              autoComplete="family-name"
+            />
+          </>
+        )}
+
         <Text style={styles.inputLabel}>Email</Text>
         <TextInput
           style={styles.input}
@@ -330,44 +392,73 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderIncome = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Tell us about your income</Text>
+      <Text style={styles.question}>What's your monthly income?</Text>
+      <Text style={styles.questionSubtitle}>From your side hustle, before tax</Text>
 
-      <View style={styles.sliderSection}>
-        <Text style={styles.sliderLabel}>Monthly income</Text>
-        <Text style={styles.incomeDisplay}>{formatCurrency(monthlyIncome)}</Text>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={15000}
-          step={100}
-          value={monthlyIncome}
-          onValueChange={setMonthlyIncome}
-          minimumTrackTintColor={colors.ink}
-          maximumTrackTintColor={colors.mist}
-          thumbTintColor={colors.ember}
-        />
-        <View style={styles.sliderLabels}>
-          <Text style={styles.sliderLabelText}>£0</Text>
-          <Text style={styles.sliderLabelText}>£15k+</Text>
-        </View>
-      </View>
-
-      <View style={styles.checkboxSection}>
+      <View style={styles.currencyInputSection}>
         <TouchableOpacity
-          style={styles.checkbox}
-          onPress={() => setReceivesGiftedItems(!receivesGiftedItems)}
+          style={styles.incrementButton}
+          onPressIn={() => startIncrement(setMonthlyIncome, -100, 0)}
+          onPressOut={stopIncrement}
+          activeOpacity={0.6}
         >
-          <View style={[styles.checkboxBox, receivesGiftedItems && styles.checkboxBoxChecked]}>
-            {receivesGiftedItems && <Ionicons name="checkmark" size={16} color={colors.white} />}
-          </View>
-          <Text style={styles.checkboxLabel}>I receive gifted items/products</Text>
+          <Ionicons name="remove" size={28} color={colors.ink} />
+        </TouchableOpacity>
+
+        <View style={styles.currencyFieldContainer}>
+          <Text style={styles.currencyPrefix}>£</Text>
+          <TextInput
+            style={styles.currencyInput}
+            value={monthlyIncome > 0 ? monthlyIncome.toLocaleString() : ''}
+            onChangeText={(text) => handleCurrencyInput(text, setMonthlyIncome)}
+            keyboardType="number-pad"
+            placeholder="0"
+            placeholderTextColor={colors.midGrey}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={styles.incrementButton}
+          onPressIn={() => startIncrement(setMonthlyIncome, 100, 0)}
+          onPressOut={stopIncrement}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="add" size={28} color={colors.ink} />
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.incrementHint}>Tap or hold to adjust by £100</Text>
 
       <TouchableOpacity style={styles.primaryButton} onPress={handleIncomeNext}>
         <Text style={styles.primaryButtonText}>Continue</Text>
         <Ionicons name="arrow-forward" size={20} color={colors.white} />
       </TouchableOpacity>
+    </View>
+  );
+
+  const renderGiftedItems = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>Do you receive gifted items?</Text>
+      <Text style={styles.questionSubtitle}>
+        Gifted items such as PR packages count as income. This helps us track your tax accurately.
+      </Text>
+
+      <OptionButton
+        text="Yes, I receive gifted items"
+        icon="gift"
+        onPress={() => {
+          setReceivesGiftedItems(true);
+          setTimeout(() => setCurrentStep('registration'), 300);
+        }}
+      />
+      <OptionButton
+        text="No"
+        icon="close-circle-outline"
+        onPress={() => {
+          setReceivesGiftedItems(false);
+          setTimeout(() => setCurrentStep('registration'), 300);
+        }}
+      />
     </View>
   );
 
@@ -432,22 +523,41 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       {hasOtherEmployment === true && (
         <View style={styles.employmentIncomeContainer}>
           <Text style={styles.sliderLabel}>Approximate yearly salary (before tax)</Text>
-          <Text style={styles.incomeDisplay}>{formatCurrency(employmentIncome)}</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={10000}
-            maximumValue={150000}
-            step={5000}
-            value={employmentIncome}
-            onValueChange={setEmploymentIncome}
-            minimumTrackTintColor={colors.ink}
-            maximumTrackTintColor={colors.mist}
-            thumbTintColor={colors.ember}
-          />
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabelText}>£10k</Text>
-            <Text style={styles.sliderLabelText}>£150k+</Text>
+
+          <View style={styles.currencyInputSection}>
+            <TouchableOpacity
+              style={styles.incrementButton}
+              onPressIn={() => startIncrement(setEmploymentIncome, -1000, 0)}
+              onPressOut={stopIncrement}
+              activeOpacity={0.6}
+            >
+              <Ionicons name="remove" size={28} color={colors.ink} />
+            </TouchableOpacity>
+
+            <View style={styles.currencyFieldContainer}>
+              <Text style={styles.currencyPrefix}>£</Text>
+              <TextInput
+                style={styles.currencyInput}
+                value={employmentIncome > 0 ? employmentIncome.toLocaleString() : ''}
+                onChangeText={(text) => handleCurrencyInput(text, setEmploymentIncome)}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor={colors.midGrey}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.incrementButton}
+              onPressIn={() => startIncrement(setEmploymentIncome, 1000, 0)}
+              onPressOut={stopIncrement}
+              activeOpacity={0.6}
+            >
+              <Ionicons name="add" size={28} color={colors.ink} />
+            </TouchableOpacity>
           </View>
+
+          <Text style={styles.incrementHint}>Tap or hold to adjust by £1,000</Text>
+
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => setCurrentStep('studentLoan')}
@@ -539,6 +649,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           {currentStep === 'signup' && renderSignUp()}
           {currentStep === 'workType' && renderWorkType()}
           {currentStep === 'income' && renderIncome()}
+          {currentStep === 'giftedItems' && renderGiftedItems()}
           {currentStep === 'registration' && renderRegistration()}
           {currentStep === 'employment' && renderEmployment()}
           {currentStep === 'studentLoan' && renderStudentLoan()}
@@ -754,34 +865,59 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     fontFamily: fonts.body,
   },
-  sliderSection: {
-    marginBottom: spacing.xl,
-  },
   sliderLabel: {
     fontSize: 14,
     color: colors.midGrey,
     marginBottom: spacing.md,
     fontFamily: fonts.body,
   },
-  incomeDisplay: {
-    fontSize: 48,
+  currencyInputSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  incrementButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  currencyFieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    minWidth: 180,
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  currencyPrefix: {
+    fontSize: 36,
     fontFamily: fonts.display,
     color: colors.ink,
-    marginBottom: spacing.lg,
   },
-  slider: {
-    width: '100%',
-    height: 40,
+  currencyInput: {
+    fontSize: 36,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    minWidth: 60,
+    textAlign: 'center',
+    padding: 0,
   },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-  },
-  sliderLabelText: {
-    fontSize: 14,
+  incrementHint: {
+    fontSize: 13,
     color: colors.midGrey,
     fontFamily: fonts.body,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
   },
   checkboxSection: {
     gap: spacing.md,
