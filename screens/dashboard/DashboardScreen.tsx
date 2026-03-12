@@ -185,7 +185,7 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
           <TouchableOpacity
             style={styles.uploadButton}
-            onPress={() => navigation.navigate('UploadStatement')}
+            onPress={() => navigation.navigate('BankStatements')}
             activeOpacity={0.8}
           >
             <Ionicons name="add" size={18} color={colors.background} />
@@ -203,7 +203,7 @@ export default function DashboardScreen({ navigation }: any) {
         {!loadingCounts && !hasTransactions && (
           <TouchableOpacity
             style={styles.welcomeCard}
-            onPress={() => navigation.navigate('UploadStatement')}
+            onPress={() => navigation.navigate('BankStatements')}
             activeOpacity={0.8}
           >
             <View style={styles.welcomeIconWrap}>

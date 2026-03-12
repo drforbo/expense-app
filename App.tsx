@@ -3,6 +3,7 @@ import { StatusBar } from 'react-native';
 import { UploadProvider } from './context/UploadContext';
 import AppNavigator from './AppNavigator';
 import * as SplashScreen from 'expo-splash-screen';
+import { registerForPushNotifications } from './lib/notifications';
 import {
   useFonts,
   Poppins_400Regular,
@@ -22,6 +23,7 @@ export default function App() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      registerForPushNotifications().catch(console.error);
     }
   }, [fontsLoaded]);
 
