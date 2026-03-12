@@ -32,6 +32,9 @@ export default function DashboardScreen({ navigation }: any) {
   const [statementsProcessing, setStatementsProcessing] = useState(0);
   const [bankAccountCount, setBankAccountCount] = useState(0);
   const [uploadedMonthBanks, setUploadedMonthBanks] = useState(0);
+  const [totalTransactionCount, setTotalTransactionCount] = useState(0);
+  const [categorizedCount, setCategorizedCount] = useState(0);
+  const [qualifiedCount, setQualifiedCount] = useState(0);
   const slideAnim = useRef(new Animated.Value(-80)).current;
 
   const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
@@ -107,7 +110,8 @@ export default function DashboardScreen({ navigation }: any) {
 
       // Uncategorized count
       const uncategorizedData = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
-      setUncategorizedCount(uncategorizedData.count || 0);
+      const uncatCount = uncategorizedData.count || 0;
+      setUncategorizedCount(uncatCount);
 
       // Unqualified count
       const { data: unqualified } = await supabase
@@ -117,6 +121,17 @@ export default function DashboardScreen({ navigation }: any) {
         .eq('tax_deductible', true)
         .or('qualified.is.null,qualified.eq.false');
       setUnqualifiedCount(unqualified?.length || 0);
+
+      // Total categorized + qualified counts for progress
+      const { data: allCategorized } = await supabase
+        .from('categorized_transactions')
+        .select('id, tax_deductible, qualified')
+        .eq('user_id', user.id);
+      const catCount = allCategorized?.length || 0;
+      setCategorizedCount(catCount);
+      setTotalTransactionCount(catCount + uncatCount);
+      const qualCount = allCategorized?.filter(t => !t.tax_deductible || t.qualified)?.length || 0;
+      setQualifiedCount(qualCount);
 
       // Financial summary
       const { data: transactions } = await supabase
@@ -325,82 +340,137 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* To do section */}
-        <Text style={styles.sectionLabel}>TO DO</Text>
+        {/* Your progress */}
+        <Text style={styles.sectionLabel}>YOUR PROGRESS</Text>
 
-        {/* Categorize card */}
+        {/* Step 1: Upload */}
         <TouchableOpacity
-          style={[styles.actionCard, uncategorizedCount === 0 && styles.actionCardDone]}
+          style={styles.stepCard}
+          onPress={() => navigation.navigate('BankStatements')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.stepHeaderRow}>
+            <View style={[
+              styles.stepNumber,
+              bankAccountCount > 0 && uploadedMonthBanks >= bankAccountCount * 12 && styles.stepNumberDone,
+            ]}>
+              {bankAccountCount > 0 && uploadedMonthBanks >= bankAccountCount * 12
+                ? <Ionicons name="checkmark" size={14} color={colors.background} />
+                : <Text style={styles.stepNumberText}>1</Text>}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepTitle}>Upload statements</Text>
+              <Text style={styles.stepSub}>
+                {bankAccountCount > 0
+                  ? `${uploadedMonthBanks} of ${bankAccountCount * 12} uploads`
+                  : 'Add your bank statements'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+          </View>
+          {bankAccountCount > 0 && (
+            <View style={styles.stepProgressBg}>
+              <View style={[styles.stepProgressFill, {
+                width: `${Math.min(100, (uploadedMonthBanks / (bankAccountCount * 12)) * 100)}%`,
+                backgroundColor: colors.coralBlaze,
+              }]} />
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Step 2: Categorise */}
+        <TouchableOpacity
+          style={styles.stepCard}
           onPress={() => navigation.navigate('TransactionList')}
           activeOpacity={0.8}
         >
-          <View style={[styles.actionIcon, { backgroundColor: uncategorizedCount > 0 ? colors.volt : colors.tagGreenBg }]}>
-            <Ionicons
-              name={uncategorizedCount > 0 ? 'card-outline' : 'checkmark'}
-              size={22}
-              color={uncategorizedCount > 0 ? colors.background : colors.tagGreenText}
-            />
-          </View>
-          <View style={styles.actionText}>
-            <Text style={styles.actionTitle}>Categorise transactions</Text>
-            <Text style={styles.actionSub}>
-              {loadingCounts
-                ? 'Loading...'
-                : uncategorizedCount > 0
-                  ? `${uncategorizedCount} to review`
+          <View style={styles.stepHeaderRow}>
+            <View style={[
+              styles.stepNumber,
+              totalTransactionCount > 0 && uncategorizedCount === 0 && styles.stepNumberDone,
+            ]}>
+              {totalTransactionCount > 0 && uncategorizedCount === 0
+                ? <Ionicons name="checkmark" size={14} color={colors.background} />
+                : <Text style={styles.stepNumberText}>2</Text>}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepTitle}>Categorise transactions</Text>
+              <Text style={styles.stepSub}>
+                {loadingCounts ? 'Loading...'
+                  : totalTransactionCount === 0 ? 'Upload statements first'
+                  : uncategorizedCount > 0 ? `${categorizedCount} of ${totalTransactionCount} done`
                   : 'All done!'}
-            </Text>
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
+          {totalTransactionCount > 0 && (
+            <View style={styles.stepProgressBg}>
+              <View style={[styles.stepProgressFill, {
+                width: `${Math.min(100, (categorizedCount / totalTransactionCount) * 100)}%`,
+                backgroundColor: colors.acidLime,
+              }]} />
+            </View>
+          )}
         </TouchableOpacity>
 
-        {/* Qualify card */}
+        {/* Step 3: Add evidence */}
         <TouchableOpacity
-          style={[styles.actionCard, unqualifiedCount === 0 && styles.actionCardDone]}
+          style={styles.stepCard}
           onPress={() => navigation.navigate('QualifyTransactionList')}
           activeOpacity={0.8}
         >
-          <View style={[styles.actionIcon, { backgroundColor: unqualifiedCount > 0 ? colors.ember : colors.tagGreenBg }]}>
-            <Ionicons
-              name={unqualifiedCount > 0 ? 'shield-checkmark-outline' : 'checkmark'}
-              size={22}
-              color={unqualifiedCount > 0 ? colors.background : colors.tagGreenText}
-            />
-          </View>
-          <View style={styles.actionText}>
-            <Text style={styles.actionTitle}>Add evidence</Text>
-            <Text style={styles.actionSub}>
-              {loadingCounts
-                ? 'Loading...'
-                : unqualifiedCount > 0
-                  ? `${unqualifiedCount} need receipts`
+          <View style={styles.stepHeaderRow}>
+            <View style={[
+              styles.stepNumber,
+              categorizedCount > 0 && unqualifiedCount === 0 && styles.stepNumberDone,
+            ]}>
+              {categorizedCount > 0 && unqualifiedCount === 0
+                ? <Ionicons name="checkmark" size={14} color={colors.background} />
+                : <Text style={styles.stepNumberText}>3</Text>}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepTitle}>Add receipts & evidence</Text>
+              <Text style={styles.stepSub}>
+                {loadingCounts ? 'Loading...'
+                  : categorizedCount === 0 ? 'Categorise transactions first'
+                  : unqualifiedCount > 0 ? `${qualifiedCount} of ${categorizedCount} done`
                   : 'All done!'}
-            </Text>
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
+          {categorizedCount > 0 && (
+            <View style={styles.stepProgressBg}>
+              <View style={[styles.stepProgressFill, {
+                width: `${Math.min(100, (qualifiedCount / categorizedCount) * 100)}%`,
+                backgroundColor: colors.warmAmber,
+              }]} />
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* Gifted items card */}
         {receivesGifts && (
           <TouchableOpacity
-            style={styles.actionCard}
+            style={styles.stepCard}
             onPress={() => navigation.navigate('GiftedTracker')}
             activeOpacity={0.8}
           >
-            <View style={[styles.actionIcon, { backgroundColor: colors.tagBlueBg }]}>
-              <Ionicons name="gift-outline" size={22} color={colors.tagBlueText} />
-            </View>
-            <View style={styles.actionText}>
-              <Text style={styles.actionTitle}>Log gifted items</Text>
-              <Text style={styles.actionSub}>
-                {loadingCounts
-                  ? 'Loading...'
-                  : giftedItemsCount > 0
+            <View style={styles.stepHeaderRow}>
+              <View style={styles.stepNumber}>
+                <Ionicons name="gift" size={14} color={colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.stepTitle}>Log gifted items</Text>
+                <Text style={styles.stepSub}>
+                  {giftedItemsCount > 0
                     ? `${giftedItemsCount} item${giftedItemsCount !== 1 ? 's' : ''} logged`
                     : 'PR packages count as income'}
-              </Text>
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
           </TouchableOpacity>
         )}
 
@@ -582,9 +652,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  stepCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
@@ -592,30 +660,48 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  actionCardDone: {
-    opacity: 0.7,
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  actionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
   },
-  actionText: {
-    flex: 1,
+  stepNumberDone: {
+    backgroundColor: colors.acidLime,
   },
-  actionTitle: {
+  stepNumberText: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 13,
+    color: colors.white,
+  },
+  stepTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
     color: colors.ink,
     marginBottom: 2,
   },
-  actionSub: {
+  stepSub: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.midGrey,
+  },
+  stepProgressBg: {
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  stepProgressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   allTransactionsLink: {
     flexDirection: 'row',

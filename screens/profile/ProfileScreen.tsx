@@ -328,6 +328,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [customWorkType, setCustomWorkType] = useState('');
   const [receivesGiftedItems, setReceivesGiftedItems] = useState(false);
   const [hasInternationalIncome, setHasInternationalIncome] = useState(false);
+  const [bankAccountCount, setBankAccountCount] = useState(1);
 
   // Tax residency fields
   const [taxResidencyCountry, setTaxResidencyCountry] = useState<string>('GB');
@@ -730,6 +731,7 @@ export default function ProfileScreen({ navigation }: any) {
       setWorkType(data.work_type || 'content_creation');
       setCustomWorkType(data.custom_work_type || '');
       setReceivesGiftedItems(data.receives_gifted_items || false);
+      setBankAccountCount(data.bank_account_count || 1);
       setHasInternationalIncome(data.has_international_income || false);
       setTaxResidencyCountry(data.tax_residency_country || 'GB');
       setIsDigitalNomad(data.is_digital_nomad || false);
@@ -810,6 +812,7 @@ export default function ProfileScreen({ navigation }: any) {
           work_type: workType,
           custom_work_type: workType === 'other' ? customWorkType : null,
           receives_gifted_items: receivesGiftedItems,
+          bank_account_count: bankAccountCount,
           has_international_income: hasInternationalIncome,
           foreign_income_countries: foreignIncomeCountries,
           travels_for_work: travelsForWork,
@@ -1530,6 +1533,28 @@ export default function ProfileScreen({ navigation }: any) {
           </>
         );
 
+      case 'bankAccounts':
+        return (
+          <>
+            <Text style={styles.modalTitle}>Bank Accounts</Text>
+            <Text style={styles.modalSubtitle}>How many bank accounts do you use for your side hustle income or expenses?</Text>
+            <View style={styles.optionsList}>
+              {[1, 2, 3, 4, 5].map(n => (
+                <TouchableOpacity
+                  key={n}
+                  style={[styles.optionItem, bankAccountCount === n && styles.optionItemActive]}
+                  onPress={() => setBankAccountCount(n)}
+                >
+                  <Text style={[styles.optionText, bankAccountCount === n && styles.optionTextActive]}>
+                    {n === 5 ? '5 or more' : `${n}`}
+                  </Text>
+                  {bankAccountCount === n && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        );
+
       default:
         return null;
     }
@@ -1987,6 +2012,19 @@ export default function ProfileScreen({ navigation }: any) {
                     ].filter(Boolean).join(', ')
                   : 'None'}
               </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => openEditModal('bankAccounts')}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.infoLabel}>Bank Accounts</Text>
+            <View style={styles.infoValueRow}>
+              <Text style={styles.infoValue}>{bankAccountCount}</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
