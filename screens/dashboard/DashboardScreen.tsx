@@ -29,6 +29,7 @@ export default function DashboardScreen({ navigation }: any) {
   const [profileCompleted, setProfileCompleted] = useState(true);
   const [receivesGifts, setReceivesGifts] = useState(false);
   const [giftedItemsCount, setGiftedItemsCount] = useState(0);
+  const [statementsProcessing, setStatementsProcessing] = useState(0);
   const slideAnim = useRef(new Animated.Value(-80)).current;
 
   const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
@@ -85,6 +86,10 @@ export default function DashboardScreen({ navigation }: any) {
           .eq('user_id', user.id);
         setGiftedItemsCount(giftedItems?.length || 0);
       }
+
+      // Check if statements are being processed
+      const batchData = await apiPost('/api/batch_status', { user_id: user.id });
+      setStatementsProcessing((batchData?.processing || 0) + (batchData?.pending || 0));
 
       // Uncategorized count
       const uncategorizedData = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
@@ -156,6 +161,16 @@ export default function DashboardScreen({ navigation }: any) {
           <ActivityIndicator size="small" color={colors.background} />
           <Text style={styles.uploadBannerText}>
             {uploadState.status === 'uploading' ? 'Uploading...' : 'Reading your statement...'}
+          </Text>
+        </View>
+      )}
+
+      {/* Statements processing banner */}
+      {!isUploading && statementsProcessing > 0 && (
+        <View style={styles.processingBanner}>
+          <ActivityIndicator size="small" color={colors.acidLime} />
+          <Text style={styles.processingBannerText}>
+            Processing {statementsProcessing} statement{statementsProcessing > 1 ? 's' : ''}... We'll notify you when done
           </Text>
         </View>
       )}
@@ -377,6 +392,20 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.background,
+  },
+  processingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(200,255,46,0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  processingBannerText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.acidLime,
+    flex: 1,
   },
   toastBanner: {
     flexDirection: 'row',

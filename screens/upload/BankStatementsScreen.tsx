@@ -29,7 +29,7 @@ interface MonthData {
   key: string; // e.g. '2026-02'
   label: string; // e.g. 'February 2026'
   statements: Statement[];
-  status: 'empty' | 'pending' | 'complete';
+  status: 'empty' | 'pending' | 'processing' | 'complete';
 }
 
 // Generate UK tax year months (April 2025 - March 2026) in reverse chronological order
@@ -63,10 +63,12 @@ export default function BankStatementsScreen({ navigation }: any) {
   const [processing, setProcessing] = useState(false);
   const [batchStatus, setBatchStatus] = useState<any>(null);
 
-  // Reload data every time screen comes into focus
+  // Reload data every time screen comes into focus, poll while processing
   useFocusEffect(
     useCallback(() => {
       loadData();
+      const interval = setInterval(loadData, 10000); // poll every 10s
+      return () => clearInterval(interval);
     }, [])
   );
 
@@ -120,20 +122,25 @@ export default function BankStatementsScreen({ navigation }: any) {
 
       if (monthStatements.length > 0) {
         const allCompleted = monthStatements.every(s => s.status === 'completed');
-        status = allCompleted ? 'complete' : 'pending';
+        const anyProcessing = monthStatements.some(s => s.status === 'processing');
+        status = allCompleted ? 'complete' : anyProcessing ? 'processing' : 'pending';
       }
 
       return { key, label, statements: monthStatements, status };
     });
   };
 
-  const pendingCount = statements.filter(s => s.status !== 'completed').length;
+  const pendingCount = statements.filter(s => s.status === 'pending').length;
+  const processingCount = statements.filter(s => s.status === 'processing').length;
+  const isProcessing = processing || processingCount > 0;
   const monthsData = getMonthsData();
 
   const getStatusIcon = (status: MonthData['status']): { name: string; color: string } => {
     switch (status) {
       case 'complete':
         return { name: 'checkmark-circle', color: colors.acidLime };
+      case 'processing':
+        return { name: 'sync', color: colors.coralBlaze };
       case 'pending':
         return { name: 'time', color: colors.warmAmber };
       default:
@@ -159,29 +166,35 @@ export default function BankStatementsScreen({ navigation }: any) {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Process All CTA */}
-        {pendingCount > 0 && (
+        {/* Processing banner — shows when statements are being processed */}
+        {isProcessing && (
+          <View style={styles.processingBanner}>
+            <ActivityIndicator color={colors.acidLime} size="small" />
+            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+              <Text style={styles.processingBannerTitle}>Processing your statements...</Text>
+              <Text style={styles.processingBannerSub}>
+                {processingCount > 0
+                  ? `${processingCount} statement${processingCount > 1 ? 's' : ''} being read by AI`
+                  : 'Starting up...'}
+                {' · '}You'll get a notification when done
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Process All CTA — only show when there are unprocessed statements and not already processing */}
+        {pendingCount > 0 && !isProcessing && (
           <TouchableOpacity
-            style={[styles.processButton, processing && styles.processButtonDisabled]}
+            style={styles.processButton}
             onPress={handleProcessAll}
-            disabled={processing}
             activeOpacity={0.8}
           >
-            {processing ? (
-              <View style={styles.processingContent}>
-                <ActivityIndicator color={colors.background} size="small" />
-                <Text style={styles.processButtonText}>
-                  Processing... You'll get a notification when done
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.processingContent}>
-                <Ionicons name="flash" size={20} color={colors.background} />
-                <Text style={styles.processButtonText}>
-                  Process All Statements ({pendingCount} pending)
-                </Text>
-              </View>
-            )}
+            <View style={styles.processingContent}>
+              <Ionicons name="flash" size={20} color={colors.background} />
+              <Text style={styles.processButtonText}>
+                Process All Statements ({pendingCount} pending)
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -283,6 +296,27 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing.lg,
   },
+  processingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(200,255,46,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(200,255,46,0.2)',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  processingBannerTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.acidLime,
+  },
+  processingBannerSub: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.midGrey,
+    marginTop: 2,
+  },
   processButton: {
     backgroundColor: colors.coralBlaze,
     borderRadius: borderRadius.md,
@@ -290,9 +324,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
     ...shadows.md,
-  },
-  processButtonDisabled: {
-    opacity: 0.7,
   },
   processingContent: {
     flexDirection: 'row',
