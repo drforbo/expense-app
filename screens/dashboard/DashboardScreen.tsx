@@ -30,6 +30,8 @@ export default function DashboardScreen({ navigation }: any) {
   const [receivesGifts, setReceivesGifts] = useState(false);
   const [giftedItemsCount, setGiftedItemsCount] = useState(0);
   const [statementsProcessing, setStatementsProcessing] = useState(0);
+  const [bankAccountCount, setBankAccountCount] = useState(0);
+  const [uploadedMonthBanks, setUploadedMonthBanks] = useState(0);
   const slideAnim = useRef(new Animated.Value(-80)).current;
 
   const isUploading = uploadState.status === 'uploading' || uploadState.status === 'processing';
@@ -69,14 +71,15 @@ export default function DashboardScreen({ navigation }: any) {
       // Get user name from email
       setUserName(user.email?.split('@')[0] || 'there');
 
-      // Check profile completion + gifted items preference
+      // Check profile completion + gifted items preference + bank account count
       const { data: profileData } = await supabase
         .from('user_profiles')
-        .select('profile_completed, receives_gifted_items')
+        .select('profile_completed, receives_gifted_items, bank_account_count')
         .eq('user_id', user.id)
         .single();
       setProfileCompleted(profileData?.profile_completed ?? false);
       setReceivesGifts(profileData?.receives_gifted_items ?? false);
+      setBankAccountCount(profileData?.bank_account_count ?? 0);
 
       // Gifted items count
       if (profileData?.receives_gifted_items) {
@@ -87,9 +90,20 @@ export default function DashboardScreen({ navigation }: any) {
         setGiftedItemsCount(giftedItems?.length || 0);
       }
 
-      // Check if statements are being processed
-      const batchData = await apiPost('/api/batch_status', { user_id: user.id });
+      // Check if statements are being processed + count uploaded month/bank combos
+      const [batchData, statementsData] = await Promise.all([
+        apiPost('/api/batch_status', { user_id: user.id }),
+        apiPost('/api/get_statements_by_month', { user_id: user.id }),
+      ]);
       setStatementsProcessing((batchData?.processing || 0) + (batchData?.pending || 0));
+
+      // Count unique (statement_month, bank_name) pairs for progress
+      if (Array.isArray(statementsData)) {
+        const uniquePairs = new Set(
+          statementsData.map((s: any) => `${s.statement_month}|${s.bank_name || 'unknown'}`)
+        );
+        setUploadedMonthBanks(uniquePairs.size);
+      }
 
       // Uncategorized count
       const uncategorizedData = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
@@ -214,8 +228,36 @@ export default function DashboardScreen({ navigation }: any) {
           {!hasTransactions ? 'Let\'s get your taxes sorted' : 'Here\'s your tax snapshot'}
         </Text>
 
+        {/* Upload progress card */}
+        {!loadingCounts && bankAccountCount > 0 && uploadedMonthBanks < bankAccountCount * 12 && (
+          <TouchableOpacity
+            style={styles.uploadProgressCard}
+            onPress={() => navigation.navigate('BankStatements')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.uploadProgressHeader}>
+              <Ionicons name="documents-outline" size={22} color={colors.acidLime} />
+              <Text style={styles.uploadProgressTitle}>Statement uploads</Text>
+            </View>
+            <Text style={styles.uploadProgressSub}>
+              {uploadedMonthBanks} of {bankAccountCount * 12} month/account uploads done
+            </Text>
+            <View style={styles.uploadProgressBarBg}>
+              <View
+                style={[
+                  styles.uploadProgressBarFill,
+                  { width: `${Math.min(100, (uploadedMonthBanks / (bankAccountCount * 12)) * 100)}%` },
+                ]}
+              />
+            </View>
+            <Text style={styles.uploadProgressHint}>
+              {bankAccountCount} account{bankAccountCount > 1 ? 's' : ''} × 12 months · Tap to upload
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* First-time user: upload prompt */}
-        {!loadingCounts && !hasTransactions && (
+        {!loadingCounts && !hasTransactions && bankAccountCount === 0 && (
           <TouchableOpacity
             style={styles.welcomeCard}
             onPress={() => navigation.navigate('BankStatements')}
@@ -587,6 +629,48 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 14,
     color: colors.ember,
+  },
+  uploadProgressCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(200,255,46,0.2)',
+  },
+  uploadProgressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  uploadProgressTitle: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 16,
+    color: colors.white,
+  },
+  uploadProgressSub: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.midGrey,
+    marginBottom: spacing.sm,
+  },
+  uploadProgressBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: spacing.xs,
+  },
+  uploadProgressBarFill: {
+    height: '100%',
+    backgroundColor: colors.acidLime,
+    borderRadius: 4,
+  },
+  uploadProgressHint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.midGrey,
   },
   welcomeCard: {
     backgroundColor: colors.surface,

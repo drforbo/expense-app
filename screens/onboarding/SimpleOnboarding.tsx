@@ -20,7 +20,7 @@ interface SimpleOnboardingProps {
   onComplete: () => void;
 }
 
-type Step = 'signup' | 'workType' | 'income' | 'giftedItems' | 'registration' | 'employment' | 'studentLoan';
+type Step = 'signup' | 'workType' | 'income' | 'giftedItems' | 'bankAccounts' | 'registration' | 'employment' | 'studentLoan';
 type AuthMode = 'login' | 'signup';
 
 export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) {
@@ -44,6 +44,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [hasOtherEmployment, setHasOtherEmployment] = useState<boolean | null>(null);
   const [employmentIncome, setEmploymentIncome] = useState(30000);
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>('none');
+  const [bankAccountCount, setBankAccountCount] = useState(1);
 
   const formatCurrency = (value: number) => {
     return `£${value.toLocaleString()}`;
@@ -182,6 +183,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           time_commitment: 'full_time', // Default
           monthly_income: monthlyIncome,
           receives_gifted_items: receivesGiftedItems,
+          bank_account_count: bankAccountCount,
           has_international_income: false, // Default - can be updated in profile
           tracking_goal: trackingGoal,
           has_other_employment: hasOtherEmployment,
@@ -211,7 +213,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     if (currentStep === 'workType') setCurrentStep('signup');
     else if (currentStep === 'income') setCurrentStep('workType');
     else if (currentStep === 'giftedItems') setCurrentStep('income');
-    else if (currentStep === 'registration') setCurrentStep('giftedItems');
+    else if (currentStep === 'bankAccounts') setCurrentStep('giftedItems');
+    else if (currentStep === 'registration') setCurrentStep('bankAccounts');
     else if (currentStep === 'employment') {
       setHasOtherEmployment(null);
       setCurrentStep('registration');
@@ -220,7 +223,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   };
 
   const getProgress = () => {
-    const steps = ['signup', 'workType', 'income', 'giftedItems', 'registration', 'employment', 'studentLoan'];
+    const steps = ['signup', 'workType', 'income', 'giftedItems', 'bankAccounts', 'registration', 'employment', 'studentLoan'];
     const index = steps.indexOf(currentStep);
     return ((index + 1) / steps.length) * 100;
   };
@@ -448,7 +451,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         icon="gift"
         onPress={() => {
           setReceivesGiftedItems(true);
-          setTimeout(() => setCurrentStep('registration'), 300);
+          setTimeout(() => setCurrentStep('bankAccounts'), 300);
         }}
       />
       <OptionButton
@@ -456,9 +459,30 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         icon="close-circle-outline"
         onPress={() => {
           setReceivesGiftedItems(false);
-          setTimeout(() => setCurrentStep('registration'), 300);
+          setTimeout(() => setCurrentStep('bankAccounts'), 300);
         }}
       />
+    </View>
+  );
+
+  const renderBankAccounts = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>How many bank accounts?</Text>
+      <Text style={styles.questionSubtitle}>
+        Count every account where you receive side hustle income or pay side hustle expenses
+      </Text>
+
+      {[1, 2, 3, 4, 5].map(n => (
+        <OptionButton
+          key={n}
+          text={n === 5 ? '5 or more' : `${n}`}
+          icon={n === 1 ? 'card' : 'wallet'}
+          onPress={() => {
+            setBankAccountCount(n);
+            setTimeout(() => setCurrentStep('registration'), 300);
+          }}
+        />
+      ))}
     </View>
   );
 
@@ -650,6 +674,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           {currentStep === 'workType' && renderWorkType()}
           {currentStep === 'income' && renderIncome()}
           {currentStep === 'giftedItems' && renderGiftedItems()}
+          {currentStep === 'bankAccounts' && renderBankAccounts()}
           {currentStep === 'registration' && renderRegistration()}
           {currentStep === 'employment' && renderEmployment()}
           {currentStep === 'studentLoan' && renderStudentLoan()}
