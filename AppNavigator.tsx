@@ -20,6 +20,7 @@ import SubscriptionReviewScreen from './screens/transactions/SubscriptionReviewS
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import BankStatementsScreen from './screens/upload/BankStatementsScreen';
 import MonthDetailScreen from './screens/upload/MonthDetailScreen';
+import ReviewCategorizationScreen from './screens/transactions/ReviewCategorizationScreen';
 import TaxEstimateScreen from './screens/tax/TaxEstimateScreen';
 import FilingGuideScreen from './screens/tax/FilingGuideScreen';
 import ProfileScreen from './screens/profile/ProfileScreen';
@@ -43,6 +44,7 @@ type RootStackParamList = {
   GiftedTracker: undefined;
   BankStatements: undefined;
   MonthDetail: { month: string; monthLabel: string };
+  ReviewCategorization: undefined;
 };
 
 type TabParamList = {
@@ -172,6 +174,7 @@ export default function AppNavigator() {
         <Stack.Screen name="GiftedTracker" component={GiftedTrackerScreen} />
         <Stack.Screen name="BankStatements" component={BankStatementsScreen} />
         <Stack.Screen name="MonthDetail" component={MonthDetailScreen} />
+        <Stack.Screen name="ReviewCategorization" component={ReviewCategorizationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

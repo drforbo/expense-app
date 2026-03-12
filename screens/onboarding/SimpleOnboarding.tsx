@@ -20,7 +20,7 @@ interface SimpleOnboardingProps {
   onComplete: () => void;
 }
 
-type Step = 'signup' | 'workType' | 'income' | 'giftedItems' | 'bankAccounts' | 'registration' | 'employment' | 'studentLoan';
+type Step = 'signup' | 'workType' | 'jobRole' | 'mainClients' | 'workLocation' | 'income' | 'giftedItems' | 'bankAccounts' | 'registration' | 'employment' | 'studentLoan';
 type AuthMode = 'login' | 'signup';
 
 export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) {
@@ -45,6 +45,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [employmentIncome, setEmploymentIncome] = useState(30000);
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>('none');
   const [bankAccountCount, setBankAccountCount] = useState(1);
+  const [jobRole, setJobRole] = useState('');
+  const [mainClients, setMainClients] = useState(['', '', '']);
+  const [workLocation, setWorkLocation] = useState('');
 
   const formatCurrency = (value: number) => {
     return `£${value.toLocaleString()}`;
@@ -149,12 +152,25 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       return;
     }
     setWorkType(type);
-    setTimeout(() => setCurrentStep('income'), 300);
+    setTimeout(() => setCurrentStep('jobRole'), 300);
   };
 
   const handleOtherSubmit = () => {
     if (!customWorkType.trim()) return;
     setWorkType('other');
+    setTimeout(() => setCurrentStep('jobRole'), 300);
+  };
+
+  const handleJobRoleNext = () => {
+    setCurrentStep('mainClients');
+  };
+
+  const handleMainClientsNext = () => {
+    setCurrentStep('workLocation');
+  };
+
+  const handleWorkLocationSelect = (location: string) => {
+    setWorkLocation(location);
     setTimeout(() => setCurrentStep('income'), 300);
   };
 
@@ -184,6 +200,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           monthly_income: monthlyIncome,
           receives_gifted_items: receivesGiftedItems,
           bank_account_count: bankAccountCount,
+          job_role: jobRole.trim() || null,
+          main_clients: mainClients.filter(c => c.trim()).map(c => c.trim()),
+          work_location: workLocation || 'home',
           has_international_income: false, // Default - can be updated in profile
           tracking_goal: trackingGoal,
           has_other_employment: hasOtherEmployment,
@@ -211,7 +230,10 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const goBack = () => {
     if (currentStep === 'workType') setCurrentStep('signup');
-    else if (currentStep === 'income') setCurrentStep('workType');
+    else if (currentStep === 'jobRole') setCurrentStep('workType');
+    else if (currentStep === 'mainClients') setCurrentStep('jobRole');
+    else if (currentStep === 'workLocation') setCurrentStep('mainClients');
+    else if (currentStep === 'income') setCurrentStep('workLocation');
     else if (currentStep === 'giftedItems') setCurrentStep('income');
     else if (currentStep === 'bankAccounts') setCurrentStep('giftedItems');
     else if (currentStep === 'registration') setCurrentStep('bankAccounts');
@@ -223,7 +245,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   };
 
   const getProgress = () => {
-    const steps = ['signup', 'workType', 'income', 'giftedItems', 'bankAccounts', 'registration', 'employment', 'studentLoan'];
+    const steps = ['signup', 'workType', 'jobRole', 'mainClients', 'workLocation', 'income', 'giftedItems', 'bankAccounts', 'registration', 'employment', 'studentLoan'];
     const index = steps.indexOf(currentStep);
     return ((index + 1) / steps.length) * 100;
   };
@@ -390,6 +412,81 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           </TouchableOpacity>
         </View>
       )}
+    </View>
+  );
+
+  const renderJobRole = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>What exactly do you do?</Text>
+      <Text style={styles.questionSubtitle}>This helps us categorize your expenses more accurately</Text>
+
+      <TextInput
+        style={styles.input}
+        value={jobRole}
+        onChangeText={setJobRole}
+        placeholder="e.g., freelance photographer, UGC creator, social media manager"
+        placeholderTextColor={colors.midGrey}
+        autoFocus
+        onSubmitEditing={handleJobRoleNext}
+      />
+
+      <TouchableOpacity
+        style={[styles.primaryButton, !jobRole.trim() && styles.buttonDisabled]}
+        onPress={handleJobRoleNext}
+        disabled={!jobRole.trim()}
+      >
+        <Text style={styles.primaryButtonText}>Continue</Text>
+        <Ionicons name="arrow-forward" size={20} color={colors.background} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderMainClients = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>Who are your main clients?</Text>
+      <Text style={styles.questionSubtitle}>Helps us spot your income automatically</Text>
+
+      {mainClients.map((client, index) => (
+        <TextInput
+          key={index}
+          style={[styles.input, { marginBottom: spacing.sm }]}
+          value={client}
+          onChangeText={(text) => {
+            const updated = [...mainClients];
+            updated[index] = text;
+            setMainClients(updated);
+          }}
+          placeholder={index === 0 ? 'e.g., Nike' : index === 1 ? 'e.g., Gymshark' : 'e.g., Agency name'}
+          placeholderTextColor={colors.midGrey}
+          autoFocus={index === 0}
+        />
+      ))}
+
+      <TouchableOpacity style={styles.primaryButton} onPress={handleMainClientsNext}>
+        <Text style={styles.primaryButtonText}>Continue</Text>
+        <Ionicons name="arrow-forward" size={20} color={colors.background} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={handleMainClientsNext}
+      >
+        <Text style={styles.skipButtonText}>Skip for now</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderWorkLocation = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.question}>Where do you mainly work?</Text>
+      <Text style={styles.questionSubtitle}>Affects which expenses are deductible</Text>
+
+      <OptionButton text="From home" icon="home" onPress={() => handleWorkLocationSelect('home')} />
+      <OptionButton text="Rented office" icon="business" onPress={() => handleWorkLocationSelect('office')} />
+      <OptionButton text="Co-working space" icon="people" onPress={() => handleWorkLocationSelect('coworking')} />
+      <OptionButton text="Client sites" icon="location" onPress={() => handleWorkLocationSelect('client_sites')} />
+      <OptionButton text="On the road" icon="car" onPress={() => handleWorkLocationSelect('on_the_road')} />
+      <OptionButton text="Mixed / varies" icon="shuffle" onPress={() => handleWorkLocationSelect('mixed')} />
     </View>
   );
 
@@ -672,6 +769,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         >
           {currentStep === 'signup' && renderSignUp()}
           {currentStep === 'workType' && renderWorkType()}
+          {currentStep === 'jobRole' && renderJobRole()}
+          {currentStep === 'mainClients' && renderMainClients()}
+          {currentStep === 'workLocation' && renderWorkLocation()}
           {currentStep === 'income' && renderIncome()}
           {currentStep === 'giftedItems' && renderGiftedItems()}
           {currentStep === 'bankAccounts' && renderBankAccounts()}
@@ -1093,6 +1193,16 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     flex: 1,
     lineHeight: 18,
+    fontFamily: fonts.body,
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    marginTop: spacing.xs,
+  },
+  skipButtonText: {
+    fontSize: 15,
+    color: colors.midGrey,
     fontFamily: fonts.body,
   },
 });

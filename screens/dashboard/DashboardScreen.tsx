@@ -381,7 +381,7 @@ export default function DashboardScreen({ navigation }: any) {
         {/* Step 2: Categorise */}
         <TouchableOpacity
           style={styles.stepCard}
-          onPress={() => navigation.navigate('TransactionList')}
+          onPress={() => navigation.navigate('ReviewCategorization')}
           activeOpacity={0.8}
         >
           <View style={styles.stepHeaderRow}>

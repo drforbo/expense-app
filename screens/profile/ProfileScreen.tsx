@@ -329,6 +329,9 @@ export default function ProfileScreen({ navigation }: any) {
   const [receivesGiftedItems, setReceivesGiftedItems] = useState(false);
   const [hasInternationalIncome, setHasInternationalIncome] = useState(false);
   const [bankAccountCount, setBankAccountCount] = useState(1);
+  const [jobRole, setJobRole] = useState('');
+  const [mainClients, setMainClients] = useState<string[]>(['', '', '']);
+  const [workLocationVal, setWorkLocationVal] = useState('home');
 
   // Tax residency fields
   const [taxResidencyCountry, setTaxResidencyCountry] = useState<string>('GB');
@@ -732,6 +735,9 @@ export default function ProfileScreen({ navigation }: any) {
       setCustomWorkType(data.custom_work_type || '');
       setReceivesGiftedItems(data.receives_gifted_items || false);
       setBankAccountCount(data.bank_account_count || 1);
+      setJobRole(data.job_role || '');
+      setMainClients(data.main_clients?.length ? [...data.main_clients, ...Array(3 - data.main_clients.length).fill('')].slice(0, 3) : ['', '', '']);
+      setWorkLocationVal(data.work_location || 'home');
       setHasInternationalIncome(data.has_international_income || false);
       setTaxResidencyCountry(data.tax_residency_country || 'GB');
       setIsDigitalNomad(data.is_digital_nomad || false);
@@ -813,6 +819,9 @@ export default function ProfileScreen({ navigation }: any) {
           custom_work_type: workType === 'other' ? customWorkType : null,
           receives_gifted_items: receivesGiftedItems,
           bank_account_count: bankAccountCount,
+          job_role: jobRole.trim() || null,
+          main_clients: mainClients.filter(c => c.trim()).map(c => c.trim()),
+          work_location: workLocationVal,
           has_international_income: hasInternationalIncome,
           foreign_income_countries: foreignIncomeCountries,
           travels_for_work: travelsForWork,
@@ -1555,6 +1564,74 @@ export default function ProfileScreen({ navigation }: any) {
           </>
         );
 
+      case 'jobRole':
+        return (
+          <>
+            <Text style={styles.modalTitle}>Job Role</Text>
+            <Text style={styles.modalSubtitle}>What exactly do you do? This helps categorize expenses more accurately.</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={jobRole}
+              onChangeText={setJobRole}
+              placeholder="e.g., freelance photographer, UGC creator"
+              placeholderTextColor={colors.midGrey}
+              autoFocus
+            />
+          </>
+        );
+
+      case 'mainClients':
+        return (
+          <>
+            <Text style={styles.modalTitle}>Main Clients</Text>
+            <Text style={styles.modalSubtitle}>Who pays you? Helps spot your income automatically.</Text>
+            {mainClients.map((client, index) => (
+              <TextInput
+                key={index}
+                style={[styles.modalInput, { marginBottom: spacing.sm }]}
+                value={client}
+                onChangeText={(text) => {
+                  const updated = [...mainClients];
+                  updated[index] = text;
+                  setMainClients(updated);
+                }}
+                placeholder={index === 0 ? 'Client 1' : index === 1 ? 'Client 2' : 'Client 3'}
+                placeholderTextColor={colors.midGrey}
+                autoFocus={index === 0}
+              />
+            ))}
+          </>
+        );
+
+      case 'workLocation':
+        return (
+          <>
+            <Text style={styles.modalTitle}>Work Location</Text>
+            <Text style={styles.modalSubtitle}>Where do you mainly work?</Text>
+            <View style={styles.optionsList}>
+              {[
+                { value: 'home', label: 'From home' },
+                { value: 'office', label: 'Rented office' },
+                { value: 'coworking', label: 'Co-working space' },
+                { value: 'client_sites', label: 'Client sites' },
+                { value: 'on_the_road', label: 'On the road' },
+                { value: 'mixed', label: 'Mixed / varies' },
+              ].map(opt => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.optionItem, workLocationVal === opt.value && styles.optionItemActive]}
+                  onPress={() => setWorkLocationVal(opt.value)}
+                >
+                  <Text style={[styles.optionText, workLocationVal === opt.value && styles.optionTextActive]}>
+                    {opt.label}
+                  </Text>
+                  {workLocationVal === opt.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        );
+
       default:
         return null;
     }
@@ -2025,6 +2102,55 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Bank Accounts</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{bankAccountCount}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => openEditModal('jobRole')}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.infoLabel}>Job Role</Text>
+            <View style={styles.infoValueRow}>
+              <Text style={styles.infoValue} numberOfLines={1}>{jobRole || 'Not set'}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => openEditModal('mainClients')}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.infoLabel}>Main Clients</Text>
+            <View style={styles.infoValueRow}>
+              <Text style={styles.infoValue} numberOfLines={1}>
+                {mainClients.filter(c => c.trim()).join(', ') || 'Not set'}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => openEditModal('workLocation')}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.infoLabel}>Work Location</Text>
+            <View style={styles.infoValueRow}>
+              <Text style={styles.infoValue}>
+                {workLocationVal === 'home' ? 'From home'
+                  : workLocationVal === 'office' ? 'Rented office'
+                  : workLocationVal === 'coworking' ? 'Co-working space'
+                  : workLocationVal === 'client_sites' ? 'Client sites'
+                  : workLocationVal === 'on_the_road' ? 'On the road'
+                  : workLocationVal === 'mixed' ? 'Mixed / varies'
+                  : 'Not set'}
+              </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
             </View>
           </TouchableOpacity>
@@ -2911,6 +3037,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.midGrey,
     marginBottom: 24,
+  },
+  modalInput: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    fontSize: 16,
+    color: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    fontFamily: fonts.body,
+    marginBottom: spacing.md,
   },
   modalValue: {
     fontSize: 36,
