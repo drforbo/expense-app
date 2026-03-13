@@ -1,234 +1,143 @@
 # Bopp - AI-Powered Expense Tracking for UK Creators
 
-Bopp is a gamified mobile bookkeeping app designed specifically for UK content creators and freelancers. It uses AI to categorize expenses by asking behavioral questions instead of confusing tax jargon.
+Bopp is a mobile bookkeeping app built for UK content creators, freelancers, and side hustlers. It reads bank statements, uses AI to categorise transactions into HMRC-compliant categories, and helps users build evidence for their tax return — all through simple, jargon-free language.
 
-## 🎯 What Makes Bopp Different
+## What Makes Bopp Different
 
-- **Behavioral Questions**: Instead of "Is this a business expense?", we ask "What did you film with this?"
-- **AI-Powered Categorization**: Automatic HMRC-compliant tax categorization
-- **Gamified Experience**: Duolingo-style streaks and rewards for staying on top of expenses
-- **Creator-Focused**: Built specifically for content creators, freelancers, and side hustlers
+- **Bank statement upload** — upload PDF statements and Bopp reads them automatically
+- **AI categorisation** — Claude classifies transactions into HMRC expense categories with a learning loop
+- **Evidence qualification** — guided flow to attach receipts, links, and business-use explanations
+- **Tax estimation** — real-time estimated tax bill based on income, expenses, and personal allowance
+- **Export for accountants** — ZIP bundle with CSV transactions + receipt images
+- **Creator-focused** — built for content creators, freelancers, and resellers earning £1k–50k/year
 
-## 🎨 Brand
+## Design
 
-- **Colors**: Deep purple (#2E1A47), Electric violet (#7C3AED), Bright coral (#FF6B6B)
-- **Vibe**: Duolingo-inspired gamified energy
-- **Target**: UK content creators earning £1k-50k/year
+- **Style**: Light mode, editorial typography, orange-to-red gradients
+- **Fonts**: Poppins (Black, ExtraBold, Bold, SemiBold, Regular)
+- **Palette**: White (#FFFFFF) backgrounds, #F9F9F9 surfaces, gradient (#FF8C00 → #FF4500 → #CC1A00)
+- **Design system**: See `lib/theme.ts`
 
-## ✅ Current Features (Working)
+## Tech Stack
 
-### Onboarding Flow
-- Welcome screen with brand intro
-- 5-question personalized onboarding:
-  - Work type (content creation, freelancing, side hustle)
-  - Time commitment
-  - Monthly income slider
-  - Gifted items tracking
-  - International income
-  - Business registration status
-- AI-generated personalized tax guide (via Claude API)
-- "How Bopp Helps" feature showcase
-
-### Payment Flow
-- £2.99 first month intro offer
-- Supabase authentication (email/password)
-- Payment info collection (ready for RevenueCat)
-- Completion screen with profile summary
-
-### Tech Infrastructure
-- React Native (Expo)
+**App (this repo):**
+- React Native / Expo SDK 54
 - TypeScript
-- Supabase for auth and database
-- Express.js backend for AI guide generation
-- React Navigation for app structure
+- Supabase Auth + PostgreSQL
+- Poppins custom fonts (in `assets/fonts/`)
+- expo-linear-gradient, expo-file-system, expo-sharing
+- React Navigation 7
 
-## 🏗️ Project Structure
+**Server ([expense-app-server](https://github.com/drforbo/expense-app-server)):**
+- Node.js / Express
+- Claude API (claude-sonnet-4-6) for transaction categorisation
+- Supabase Storage for receipt images
+- archiver for ZIP export bundling
+- Deployed on Railway
+
+## Project Structure
 
 ```
 expense-app/
-├── App.tsx                          # Entry point
-├── AppNavigator.tsx                 # Navigation configuration
-├── OnboardingFlowScreen.tsx         # Onboarding wrapper
-│
-├── screens/
-│   ├── dashboard/
-│   │   └── DashboardScreen.tsx      # Main app (in progress)
-│   └── onboarding/
-│       ├── WelcomeScreen.tsx        # Brand introduction
-│       ├── OnboardingFlow.tsx       # 5 questions + AI guides
-│       ├── PaymentFlow.tsx          # Payment intro screen
-│       ├── SignUpScreen.tsx         # Create account
-│       └── PaymentInfoScreen.tsx    # Payment details
-│
+├── App.tsx                              # Entry point, font loading
+├── AppNavigator.tsx                     # Tab + stack navigation
+├── context/
+│   └── UploadContext.tsx                 # Upload state management
 ├── lib/
-│   ├── supabase.ts                  # Supabase client config
-│   └── components.tsx               # Shared components
-│
-└── archive/                         # Old/unused files
+│   ├── theme.ts                         # Design tokens (colors, fonts, spacing)
+│   ├── api.ts                           # API client helpers
+│   ├── supabase.ts                      # Supabase client config
+│   ├── notifications.ts                 # Push notification setup
+│   └── components.tsx                   # Shared UI components
+├── assets/fonts/                        # Poppins .ttf files
+├── screens/
+│   ├── onboarding/
+│   │   ├── WelcomeScreen.tsx            # Brand intro
+│   │   ├── SimpleOnboarding.tsx         # Multi-step onboarding questions
+│   │   ├── OnboardingFlow.tsx           # AI-generated tax guide
+│   │   ├── OnboardingStep.tsx           # Guide step component
+│   │   ├── QuickGuide.tsx               # Feature showcase
+│   │   ├── SignUpScreen.tsx             # Account creation
+│   │   ├── PaymentFlow.tsx              # Payment intro
+│   │   └── PaymentInfoScreen.tsx        # Card details
+│   ├── dashboard/
+│   │   └── DashboardScreen.tsx          # Home — tax summary, progress, recent transactions
+│   ├── upload/
+│   │   ├── BankStatementsScreen.tsx      # Statement management by month
+│   │   ├── MonthDetailScreen.tsx         # Transactions for a given month
+│   │   └── UploadStatementScreen.tsx     # PDF upload flow
+│   ├── transactions/
+│   │   ├── TransactionListScreen.tsx     # Uncategorised transaction list
+│   │   ├── TransactionCategorizationScreen.tsx  # AI bulk categorisation
+│   │   ├── ReviewCategorizationScreen.tsx       # Review AI suggestions
+│   │   ├── CategorizedTransactionsScreen.tsx    # All categorised transactions
+│   │   ├── EditTransactionScreen.tsx     # Edit single transaction
+│   │   ├── QualifyTransactionListScreen.tsx     # Transactions needing evidence
+│   │   ├── QualifyTransactionsScreen.tsx        # Guided evidence flow
+│   │   ├── AddEvidenceScreen.tsx         # Attach receipts/links
+│   │   └── SubscriptionReviewScreen.tsx  # Review recurring expenses
+│   ├── gifted/
+│   │   └── GiftedTrackerScreen.tsx       # Log PR/gifted items as income
+│   ├── tax/
+│   │   ├── TaxEstimateScreen.tsx         # Estimated tax breakdown
+│   │   └── FilingGuideScreen.tsx         # Step-by-step filing guide
+│   ├── overview/
+│   │   ├── OverviewScreen.tsx            # Financial overview + export
+│   │   └── TaxChecklistScreen.tsx        # Tax return checklist
+│   ├── profile/
+│   │   └── ProfileScreen.tsx             # Tax profile editor
+│   └── settings/
+│       └── SettingsScreen.tsx            # Account, export, logout
 ```
 
-## 🚀 Setup Instructions
+## Setup
 
 ### Prerequisites
-- Node.js 16+
-- Expo CLI
-- iOS Simulator or Android Emulator (or Expo Go app)
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- iOS Simulator or Expo Go
 
-### 1. Install Dependencies
+### Install & Run
 
 ```bash
-cd ~/Desktop/expense-app
 npm install
+npx expo start
 ```
 
-### 2. Environment Variables
+### Environment Variables
 
 Create a `.env` file:
 
-```bash
+```
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 3. Start Backend Server
+### Server
 
-```bash
-cd ~/Desktop/expense-app-server
-node server.js
-# Server runs on http://localhost:3000
-```
+The backend is in a separate repo: [expense-app-server](https://github.com/drforbo/expense-app-server). It handles:
+- Bank statement parsing (PDF → transactions)
+- AI transaction categorisation
+- Batch processing status
+- ZIP export (CSV + receipts)
 
-Update your local IP in `OnboardingFlow.tsx` (line ~111):
-```typescript
-const API_URL = 'http://YOUR_IP:3000';
-```
+## Key Features
 
-### 4. Start Expo App
+### Bank Statement Upload
+Upload PDF bank statements. The server parses them into individual transactions, stored in Supabase.
 
-```bash
-cd ~/Desktop/expense-app
-npx expo start
-```
+### AI Categorisation
+Transactions are bulk-categorised using Claude into HMRC expense categories (Travel, Office, Software, etc.) with tax-deductible flags and business-use percentages.
 
-Scan QR code with Expo Go app or press `i` for iOS simulator.
+### Evidence & Receipts
+For tax-deductible expenses, users add receipts (photo/PDF), content links, and business-use explanations to build audit-ready evidence.
 
-## 🎮 Testing the Flow
+### Tax Estimation
+Real-time tax calculation based on self-employment income, qualified expenses, personal allowance (£12,570), employment income, and student loan plan.
 
-1. **Welcome Screen** → Tap "Get Started"
-2. **Onboarding Questions** → Answer 5 questions about your work
-3. **AI Personalized Guide** → See your custom tax guidance
-4. **How Bopp Helps** → Feature showcase
-5. **Payment Intro** → £2.99 offer screen
-6. **Create Account** → Sign up with email/password
-7. **Payment Info** → Enter payment details (not processed yet)
-8. **Dashboard** → Main app (placeholder for now)
+### Export
+ZIP bundle containing `transactions.csv` (with qualification status, business-use explanations, receipt references) and a `receipts/` folder with all uploaded receipt images/PDFs.
 
-### Dev Tools
-
-- **Reset Onboarding**: In DashboardScreen, tap "Reset Onboarding", then restart app
-
-## 🛠️ Tech Stack
-
-**Frontend:**
-- React Native (Expo SDK 52)
-- TypeScript
-- React Navigation 7
-- Expo Vector Icons
-- React Native Markdown Display
-- AsyncStorage
-
-**Backend:**
-- Express.js
-- Anthropic Claude API (for personalized guides)
-- Supabase (auth + database)
-
-**Payment (Planned):**
-- RevenueCat for subscriptions
-- Apple Pay / Google Pay integration
-
-## 📱 Screens Overview
-
-| Screen | Status | Description |
-|--------|--------|-------------|
-| Welcome | ✅ Done | Brand intro with rocket animation |
-| Onboarding | ✅ Done | 5 behavioral questions |
-| AI Guide 1 | ✅ Done | Personalized tax guidance |
-| AI Guide 2 | ✅ Done | How Bopp helps you |
-| Payment Intro | ✅ Done | £2.99 first month offer |
-| Sign Up | ✅ Done | Email/password creation |
-| Payment Info | ✅ Done | Card details collection |
-| Complete | ✅ Done | Success + profile summary |
-| Dashboard | 🚧 In Progress | Main app home |
-| Add Expense | ⏳ To Do | Receipt scanning |
-| Expense List | ⏳ To Do | View all expenses |
-| Reports | ⏳ To Do | Tax reports |
-| Settings | ⏳ To Do | Account settings |
-
-## 🎯 Next Steps
-
-### Phase 1: Core Expense Tracking
-- [ ] Dashboard home screen design
-- [ ] Camera integration for receipt scanning
-- [ ] Manual expense entry
-- [ ] Expense list view
-- [ ] Basic categorization
-
-### Phase 2: Bank Integration
-- [ ] Plaid integration
-- [ ] Automatic transaction import
-- [ ] Transaction categorization
-
-### Phase 3: AI & Gamification
-- [ ] AI-powered expense categorization
-- [ ] Streak system
-- [ ] Badges and achievements
-- [ ] Daily reminders
-
-### Phase 4: Tax & Compliance
-- [ ] HMRC-compliant reports
-- [ ] Tax estimation
-- [ ] Quarterly reminders
-- [ ] Export to accountant format
-
-## 🔐 Environment Setup
-
-### Supabase Tables
-
-**users** table (managed by Supabase Auth)
-
-**onboarding_data** table:
-```sql
-create table onboarding_data (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid references auth.users not null,
-  work_type text not null,
-  custom_work_type text,
-  time_commitment text not null,
-  monthly_income integer not null,
-  receives_gifted_items boolean not null,
-  has_international_income boolean not null,
-  tracking_goal text not null,
-  created_at timestamp default now()
-);
-```
-
-## 📝 Notes
-
-- **iOS Autofill**: Password fields use light purple background to work with iOS autofill styling
-- **Payment Processing**: Not yet integrated - card details are collected but not processed
-- **Onboarding Persistence**: Uses AsyncStorage to remember completion status
-- **AI Guide**: Requires backend server running for personalized tax guidance
-
-## 🐛 Known Issues
-
-- [ ] iOS password autofill creates yellow highlight (mitigated with light purple inputs)
-- [ ] Payment intro screen needs to fit without scrolling on smaller devices
-- [ ] Backend server needs environment variable for local IP (not hardcoded)
-
-## 📄 License
+## License
 
 Proprietary - All rights reserved
-
----
-
-**Built with ❤️ for UK content creators**
