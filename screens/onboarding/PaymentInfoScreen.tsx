@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface PaymentInfoScreenProps {
   email: string;
@@ -129,6 +130,9 @@ export default function PaymentInfoScreen({
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
+        {/* Screen label */}
+        <Text style={styles.screenLabel}>PAYMENT</Text>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Complete Your Purchase</Text>
@@ -178,7 +182,7 @@ export default function PaymentInfoScreen({
               <TextInput
                 style={styles.input}
                 placeholder="1234 5678 9012 3456"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 value={cardNumber}
                 onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                 keyboardType="numeric"
@@ -200,7 +204,7 @@ export default function PaymentInfoScreen({
                 <TextInput
                   style={styles.input}
                   placeholder="MM/YY"
-                  placeholderTextColor={colors.midGrey}
+                  placeholderTextColor={colors.muted}
                   value={expiry}
                   onChangeText={(text) => setExpiry(formatExpiry(text))}
                   keyboardType="numeric"
@@ -220,7 +224,7 @@ export default function PaymentInfoScreen({
                 <TextInput
                   style={styles.input}
                   placeholder="123"
-                  placeholderTextColor={colors.midGrey}
+                  placeholderTextColor={colors.muted}
                   value={cvv}
                   onChangeText={setCvv}
                   keyboardType="numeric"
@@ -238,7 +242,7 @@ export default function PaymentInfoScreen({
 
         {/* Security Note */}
         <View style={styles.securityNote}>
-          <Ionicons name="shield-checkmark" size={16} color={colors.tagGreenText} />
+          <Ionicons name="shield-checkmark" size={16} color={colors.positive} />
           <Text style={styles.securityText}>
             Your payment info is secure and encrypted
           </Text>
@@ -246,18 +250,25 @@ export default function PaymentInfoScreen({
 
         {/* Continue Button */}
         <TouchableOpacity
-          style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
           onPress={handleContinue}
           disabled={isLoading}
+          activeOpacity={0.85}
         >
-          {isLoading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <>
-              <Text style={styles.continueButtonText}>Pay £2.99</Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.white} />
-            </>
-          )}
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Text style={styles.continueButtonText}>Pay £2.99</Text>
+                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Footer */}
@@ -272,32 +283,43 @@ export default function PaymentInfoScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: 60,
     paddingBottom: 40,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.xl,
-    ...shadows.sm,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.bodyBold,
+    marginBottom: spacing.sm,
   },
   header: {
     marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 32,
+    fontSize: 38,
     fontFamily: fonts.display,
     color: colors.ink,
-    marginBottom: spacing.xs,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 16,
@@ -309,7 +331,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   trialRow: {
     flexDirection: 'row',
@@ -329,18 +352,18 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: colors.mist,
+    backgroundColor: colors.border,
     marginVertical: spacing.sm,
   },
   trialNote: {
     fontSize: 14,
-    color: colors.tagGreenText,
+    color: colors.positive,
     lineHeight: 20,
     fontFamily: fonts.body,
   },
   applePayButton: {
-    backgroundColor: colors.dark,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.ink,
+    borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -361,7 +384,7 @@ const styles = StyleSheet.create({
   orLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.mist,
+    backgroundColor: colors.border,
   },
   orText: {
     fontSize: 14,
@@ -386,15 +409,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.mist,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
   },
   inputIcon: {
     marginLeft: spacing.md,
   },
   input: {
     flex: 1,
-    height: 56,
+    height: 52,
     fontSize: 16,
     color: colors.ink,
     paddingHorizontal: spacing.sm,
@@ -415,13 +439,12 @@ const styles = StyleSheet.create({
   },
   securityText: {
     fontSize: 14,
-    color: colors.tagGreenText,
+    color: colors.positive,
     marginLeft: spacing.xs,
     fontFamily: fonts.body,
   },
   continueButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',

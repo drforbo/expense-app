@@ -17,9 +17,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import Markdown from 'react-native-markdown-display';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -356,9 +357,9 @@ Ready to get started? Let's make tax simple.`;
               step={100}
               value={monthlyIncome}
               onValueChange={setMonthlyIncome}
-              minimumTrackTintColor={colors.ink}
-              maximumTrackTintColor={colors.mist}
-              thumbTintColor={colors.ember}
+              minimumTrackTintColor={colors.gradientMid}
+              maximumTrackTintColor={colors.border}
+              thumbTintColor={colors.gradientStart}
             />
 
             <View style={styles.sliderLabels}>
@@ -367,9 +368,16 @@ Ready to get started? Let's make tax simple.`;
             </View>
           </View>
 
-          <TouchableOpacity style={styles.continueButton} onPress={handleIncomeNext}>
-            <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          <TouchableOpacity style={styles.continueButtonWrap} onPress={handleIncomeNext} activeOpacity={0.85}>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueGradient}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       );
@@ -388,33 +396,45 @@ Ready to get started? Let's make tax simple.`;
 
           <View style={styles.yesNoContainer}>
             <TouchableOpacity
-              style={[
-                styles.yesNoButton,
-                receivesGiftedItems === true && styles.yesNoButtonSelected,
-              ]}
+              style={styles.yesNoButtonWrap}
               onPress={() => handleGiftedItemsAnswer(true)}
+              activeOpacity={0.85}
             >
-              <Text style={[
-                styles.yesNoText,
-                receivesGiftedItems === true && styles.yesNoTextSelected,
-              ]}>
-                Yes
-              </Text>
+              {receivesGiftedItems === true ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.yesNoGradient}
+                >
+                  <Text style={styles.yesNoTextSelected}>Yes</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.yesNoUnselected}>
+                  <Text style={styles.yesNoText}>Yes</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.yesNoButton,
-                receivesGiftedItems === false && styles.yesNoButtonSelected,
-              ]}
+              style={styles.yesNoButtonWrap}
               onPress={() => handleGiftedItemsAnswer(false)}
+              activeOpacity={0.85}
             >
-              <Text style={[
-                styles.yesNoText,
-                receivesGiftedItems === false && styles.yesNoTextSelected,
-              ]}>
-                No
-              </Text>
+              {receivesGiftedItems === false ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.yesNoGradient}
+                >
+                  <Text style={styles.yesNoTextSelected}>No</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.yesNoUnselected}>
+                  <Text style={styles.yesNoText}>No</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -434,33 +454,45 @@ Ready to get started? Let's make tax simple.`;
 
           <View style={styles.yesNoContainer}>
             <TouchableOpacity
-              style={[
-                styles.yesNoButton,
-                hasInternationalIncome === true && styles.yesNoButtonSelected,
-              ]}
+              style={styles.yesNoButtonWrap}
               onPress={() => handleInternationalAnswer(true)}
+              activeOpacity={0.85}
             >
-              <Text style={[
-                styles.yesNoText,
-                hasInternationalIncome === true && styles.yesNoTextSelected,
-              ]}>
-                Yes
-              </Text>
+              {hasInternationalIncome === true ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.yesNoGradient}
+                >
+                  <Text style={styles.yesNoTextSelected}>Yes</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.yesNoUnselected}>
+                  <Text style={styles.yesNoText}>Yes</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.yesNoButton,
-                hasInternationalIncome === false && styles.yesNoButtonSelected,
-              ]}
+              style={styles.yesNoButtonWrap}
               onPress={() => handleInternationalAnswer(false)}
+              activeOpacity={0.85}
             >
-              <Text style={[
-                styles.yesNoText,
-                hasInternationalIncome === false && styles.yesNoTextSelected,
-              ]}>
-                No
-              </Text>
+              {hasInternationalIncome === false ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.yesNoGradient}
+                >
+                  <Text style={styles.yesNoTextSelected}>No</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.yesNoUnselected}>
+                  <Text style={styles.yesNoText}>No</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -474,7 +506,7 @@ Ready to get started? Let's make tax simple.`;
     if (guideLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
           <Text style={styles.loadingText}>
             Creating your personalized guide...
           </Text>
@@ -513,9 +545,16 @@ Ready to get started? Let's make tax simple.`;
             </View>
           )}
 
-          <TouchableOpacity style={styles.continueButton} onPress={handleGuideComplete}>
-            <Text style={styles.continueButtonText}>How can bopp help?</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          <TouchableOpacity style={styles.continueButtonWrap} onPress={handleGuideComplete} activeOpacity={0.85}>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueGradient}
+            >
+              <Text style={styles.continueButtonText}>How can bopp help?</Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -534,7 +573,7 @@ Ready to get started? Let's make tax simple.`;
     if (boppScreenLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
           <Text style={styles.loadingText}>
             Personalizing your experience...
           </Text>
@@ -627,9 +666,16 @@ Ready to get started? Let's make tax simple.`;
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.continueButton} onPress={handleBoppComplete}>
-            <Text style={styles.continueButtonText}>Try bopp</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          <TouchableOpacity style={styles.continueButtonWrap} onPress={handleBoppComplete} activeOpacity={0.85}>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueGradient}
+            >
+              <Text style={styles.continueButtonText}>Try bopp</Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </LinearGradient>
           </TouchableOpacity>
 
 
@@ -678,21 +724,33 @@ Ready to get started? Let's make tax simple.`;
                   value={customWorkType}
                   onChangeText={setCustomWorkType}
                   placeholder="e.g., dog walking, consulting"
-                  placeholderTextColor={colors.midGrey}
+                  placeholderTextColor={colors.muted}
                   autoFocus
                   onSubmitEditing={handleOtherSubmit}
                   returnKeyType="done"
                 />
                 <TouchableOpacity
-                  style={[
-                    styles.otherSubmitButton,
-                    !customWorkType.trim() && styles.otherSubmitButtonDisabled,
-                  ]}
+                  style={styles.otherSubmitWrap}
                   onPress={handleOtherSubmit}
                   disabled={!customWorkType.trim()}
+                  activeOpacity={0.85}
                 >
-                  <Text style={styles.otherSubmitText}>Continue</Text>
-                  <Ionicons name="arrow-forward" size={20} color={colors.white} />
+                  {!customWorkType.trim() ? (
+                    <View style={[styles.otherSubmitDisabled]}>
+                      <Text style={styles.otherSubmitTextDisabled}>Continue</Text>
+                      <Ionicons name="arrow-forward" size={20} color={colors.muted} />
+                    </View>
+                  ) : (
+                    <LinearGradient
+                      colors={gradients.primary as unknown as string[]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.otherSubmitGradient}
+                    >
+                      <Text style={styles.otherSubmitText}>Continue</Text>
+                      <Ionicons name="arrow-forward" size={20} color={colors.white} />
+                    </LinearGradient>
+                  )}
                 </TouchableOpacity>
               </View>
             )}
@@ -775,12 +833,14 @@ Ready to get started? Let's make tax simple.`;
         {currentScreen !== 'personalizedGuide' && currentScreen !== 'howBoppHelps' && (
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${getProgressPercentage()}%` },
-                ]}
-              />
+              <View style={[styles.progressTrack, { width: `${getProgressPercentage()}%` }]}>
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -818,7 +878,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
     >
       <View style={styles.optionContent}>
         <View style={styles.optionIconContainer}>
-          <Ionicons name={icon} size={24} color={colors.ember} />
+          <Ionicons name={icon} size={24} color={colors.gradientMid} />
         </View>
         <View style={styles.optionTextContainer}>
           <Text style={styles.optionText}>{text}</Text>
@@ -843,7 +903,7 @@ const markdownStyles: any = {
     marginBottom: 16,
   },
   heading2: {
-    color: colors.ember,
+    color: colors.gradientMid,
     fontSize: 18,
     fontFamily: fonts.display,
     marginTop: 20,
@@ -892,7 +952,7 @@ const markdownStyles: any = {
   },
   strong: {
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.gradientMid,
   },
   em: {
     fontStyle: 'italic' as 'italic',
@@ -909,10 +969,10 @@ const markdownStyles: any = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
@@ -923,25 +983,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressContainer: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.mist,
+    backgroundColor: colors.border,
     borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
-  progressFill: {
+  progressTrack: {
     height: '100%',
-    backgroundColor: colors.ink,
     borderRadius: borderRadius.xs,
+    overflow: 'hidden',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: 40,
   },
   screenContainer: {
@@ -969,7 +1029,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   optionContent: {
     flexDirection: 'row',
@@ -980,7 +1041,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -1003,7 +1064,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   otherLabel: {
     fontSize: 16,
@@ -1012,32 +1074,48 @@ const styles = StyleSheet.create({
     fontFamily: fonts.displaySemi,
   },
   otherInput: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     fontSize: 16,
     color: colors.ink,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
     fontFamily: fonts.body,
   },
-  otherSubmitButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  otherSubmitWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
     marginTop: spacing.md,
+  },
+  otherSubmitGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.full,
   },
-  otherSubmitButtonDisabled: {
-    backgroundColor: colors.mist,
-    opacity: 0.5,
+  otherSubmitDisabled: {
+    backgroundColor: colors.border,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.full,
   },
   otherSubmitText: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
     color: colors.white,
+    marginRight: spacing.xs,
+  },
+  otherSubmitTextDisabled: {
+    fontSize: 16,
+    fontFamily: fonts.displaySemi,
+    color: colors.muted,
     marginRight: spacing.xs,
   },
   sliderContainer: {
@@ -1071,11 +1149,14 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     fontFamily: fonts.body,
   },
-  continueButton: {
-    backgroundColor: colors.ember,
+  continueButtonWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  continueGradient: {
     paddingVertical: 18,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1089,18 +1170,22 @@ const styles = StyleSheet.create({
   yesNoContainer: {
     gap: spacing.md,
   },
-  yesNoButton: {
-    backgroundColor: colors.surface,
+  yesNoButtonWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  yesNoGradient: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.sm,
+    borderRadius: borderRadius.full,
   },
-  yesNoButtonSelected: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ember,
+  yesNoUnselected: {
+    backgroundColor: colors.background,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   yesNoText: {
     color: colors.ink,
@@ -1110,6 +1195,9 @@ const styles = StyleSheet.create({
   },
   yesNoTextSelected: {
     color: colors.white,
+    fontSize: 20,
+    fontFamily: fonts.displaySemi,
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -1135,7 +1223,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   guideScrollContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: 40,
   },
@@ -1166,16 +1254,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   errorContainer: {
-    backgroundColor: '#FFF0ED',
+    backgroundColor: colors.tagExpenseBg,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   errorText: {
-    color: colors.ember,
+    color: colors.negative,
     fontSize: 14,
     textAlign: 'center',
     fontFamily: fonts.body,
@@ -1196,7 +1285,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   featureEmoji: {
     fontSize: 32,
@@ -1215,7 +1305,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   highlightBox: {
-    backgroundColor: '#FFF0ED',
+    backgroundColor: colors.tagExpenseBg,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginTop: spacing.xs,
@@ -1223,7 +1313,7 @@ const styles = StyleSheet.create({
   },
   highlightText: {
     fontSize: 15,
-    color: colors.ember,
+    color: colors.gradientMid,
     fontFamily: fonts.displaySemi,
     textAlign: 'center',
     lineHeight: 22,

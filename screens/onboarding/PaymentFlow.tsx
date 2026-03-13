@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import SignUpScreen from './SignUpScreen';
 import PaymentInfoScreen from './PaymentInfoScreen';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface PaymentFlowProps {
   onComplete: () => void;
@@ -57,11 +58,11 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
+        {/* Screen label */}
+        <Text style={styles.screenLabel}>PAYMENT</Text>
+
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="rocket" size={36} color={colors.ember} />
-          </View>
           <Text style={styles.title}>Ready to start?</Text>
           <Text style={styles.subtitle}>
             Try Bopp for just £2.99 your first month
@@ -72,28 +73,28 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
         <View style={styles.features}>
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
+              <Ionicons name="checkmark" size={20} color={colors.positive} />
             </View>
             <Text style={styles.featureText}>AI-powered expense categorization</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
+              <Ionicons name="checkmark" size={20} color={colors.positive} />
             </View>
             <Text style={styles.featureText}>HMRC-compliant tax reports</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
+              <Ionicons name="checkmark" size={20} color={colors.positive} />
             </View>
             <Text style={styles.featureText}>Gamified daily habit building</Text>
           </View>
 
           <View style={styles.feature}>
             <View style={styles.featureIcon}>
-              <Ionicons name="checkmark" size={20} color={colors.tagGreenText} />
+              <Ionicons name="checkmark" size={20} color={colors.positive} />
             </View>
             <Text style={styles.featureText}>Cancel anytime, no commitments</Text>
           </View>
@@ -113,11 +114,18 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
 
         {/* CTA Button */}
         <TouchableOpacity
-          style={styles.ctaButton}
           onPress={() => setCurrentStep('signup')}
+          activeOpacity={0.85}
         >
-          <Text style={styles.ctaButtonText}>Get Started</Text>
-          <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ctaButton}
+          >
+            <Text style={styles.ctaButtonText}>Get Started</Text>
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Footer */}
@@ -132,51 +140,49 @@ export default function PaymentFlow({ onComplete, onBack }: PaymentFlowProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    ...shadows.sm,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
     justifyContent: 'space-between',
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.surface,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.bodyBold,
+    marginBottom: spacing.sm,
+  },
+  header: {
     marginBottom: 14,
-    ...shadows.sm,
   },
   title: {
-    fontSize: 28,
+    fontSize: 38,
     fontFamily: fonts.display,
     color: colors.ink,
-    textAlign: 'center',
-    marginBottom: 6,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
     color: colors.midGrey,
-    textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     fontFamily: fonts.body,
   },
   features: {
@@ -188,10 +194,10 @@ const styles = StyleSheet.create({
     marginBottom: 11,
   },
   featureIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.surface,
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.tagIncomeBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -209,7 +215,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 2,
     borderColor: colors.ink,
-    ...shadows.sm,
   },
   pricingTitle: {
     fontSize: 13,
@@ -235,12 +240,11 @@ const styles = StyleSheet.create({
   },
   pricingNote: {
     fontSize: 13,
-    color: colors.tagGreenText,
+    color: colors.positive,
     fontFamily: fonts.body,
   },
   ctaButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',

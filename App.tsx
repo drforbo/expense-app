@@ -1,23 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { StatusBar } from 'react-native';
 import { UploadProvider } from './context/UploadContext';
 import AppNavigator from './AppNavigator';
 import * as SplashScreen from 'expo-splash-screen';
 import { registerForPushNotifications } from './lib/notifications';
-import {
-  useFonts,
-  Poppins_400Regular,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-} from '@expo-google-fonts/poppins';
+import { useFonts } from 'expo-font';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
+    'Poppins-Regular': require('./assets/fonts/Poppins-Regular.ttf'),
+    'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
+    'Poppins-Bold': require('./assets/fonts/Poppins-Bold.ttf'),
+    'Poppins-ExtraBold': require('./assets/fonts/Poppins-ExtraBold.ttf'),
+    'Poppins-Black': require('./assets/fonts/Poppins-Black.ttf'),
   });
 
   useEffect(() => {
@@ -31,7 +28,7 @@ export default function App() {
 
   return (
     <UploadProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <AppNavigator />
     </UploadProvider>
   );

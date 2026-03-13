@@ -10,10 +10,21 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  'Office Supplies': '\u{1F58A}\uFE0F', 'Travel': '\u2708\uFE0F', 'Meals': '\u{1F37D}\uFE0F', 'Software': '\u{1F4BB}',
+  'Marketing': '\u{1F4E3}', 'Insurance': '\u{1F6E1}\uFE0F', 'Utilities': '\u26A1', 'Rent': '\u{1F3E0}',
+  'Professional Services': '\u{1F454}', 'Training': '\u{1F4DA}', 'Equipment': '\u{1F527}',
+  'Phone': '\u{1F4F1}', 'Internet': '\u{1F310}', 'Subscriptions': '\u{1F504}', 'Bank Fees': '\u{1F3E6}',
+  'Transport': '\u{1F697}', 'Clothing': '\u{1F455}', 'Entertainment': '\u{1F3AD}', 'Health': '\u{1F48A}',
+  'Gifts': '\u{1F381}', 'Income': '\u{1F4B0}', 'Other': '\u{1F4CB}',
+};
+const getCategoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] || '\u{1F4CB}';
 
 interface Transaction {
   transaction_id: string;
@@ -66,13 +77,11 @@ export default function TransactionListScreen({ navigation }: any) {
 
   const loadTransactions = async () => {
     try {
-      console.log('🔄 Starting transaction load...');
+      console.log('Starting transaction load...');
       setLoading(true);
 
       // Get current user
-      console.log('👤 Getting user...');
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('✅ User ID:', user?.id);
 
       if (!user) {
         Alert.alert('Error', 'You must be logged in');
@@ -81,14 +90,12 @@ export default function TransactionListScreen({ navigation }: any) {
       }
 
       // Fetch uncategorized transactions from server
-      console.log('📡 Fetching uncategorized transactions...');
       const startTime = Date.now();
 
       const data = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
 
       const loadTime = Date.now() - startTime;
-      console.log(`⏱️  Server response time: ${loadTime}ms`);
-      console.log('📊 Received transactions:', data.transactions?.length || 0);
+      console.log(`Server response time: ${loadTime}ms`);
 
       if (data.transactions && data.transactions.length > 0) {
         setTransactions(data.transactions);
@@ -99,16 +106,14 @@ export default function TransactionListScreen({ navigation }: any) {
         // Detect subscriptions in the background
         detectSubscriptions(user.id);
       } else {
-        console.log('⚠️  No uncategorized transactions');
         setTransactions([]);
         setDetectedSubscriptions([]);
       }
     } catch (error: any) {
-      console.error('❌ Error loading transactions:', error);
+      console.error('Error loading transactions:', error);
       Alert.alert('Error', 'Failed to load transactions: ' + error.message);
     } finally {
       setLoading(false);
-      console.log('✅ Transaction load complete');
     }
   };
 
@@ -117,7 +122,7 @@ export default function TransactionListScreen({ navigation }: any) {
       const data = await apiPost('/api/detect_subscriptions', { user_id: userId });
 
       if (data.success && data.subscriptions?.length > 0) {
-        console.log(`🔄 Detected ${data.subscriptions.length} subscriptions`);
+        console.log(`Detected ${data.subscriptions.length} subscriptions`);
         setDetectedSubscriptions(data.subscriptions);
         setSubscriptionBannerDismissed(false);
       } else {
@@ -125,29 +130,22 @@ export default function TransactionListScreen({ navigation }: any) {
       }
     } catch (error) {
       console.error('Error detecting subscriptions:', error);
-      // Don't show error to user - this is a background optimization
     }
   };
 
   const preGenerateQuestions = async (txns: Transaction[], userId: string | undefined) => {
-    // Skip if already pre-generating or if transaction count hasn't changed significantly
     if (isPreGenerating.current) {
-      console.log('⏭️ Skipping pre-generation - already in progress');
       return;
     }
 
-    // Only re-generate if transaction count changed (new transactions added or categorized)
     if (lastTransactionCount.current === txns.length && Object.keys(preGeneratedQuestions).length > 0) {
-      console.log('⏭️ Skipping pre-generation - no new transactions');
       return;
     }
 
     try {
       isPreGenerating.current = true;
       lastTransactionCount.current = txns.length;
-      console.log('⚡ Pre-generating Q1 for', txns.length, 'transactions...');
 
-      // Get user profile for better questions
       let userProfile = {};
       if (userId) {
         const { data } = await supabase
@@ -163,7 +161,6 @@ export default function TransactionListScreen({ navigation }: any) {
         userProfile
       });
 
-      // Map results by transaction_id for quick lookup
       const questionsMap: Record<string, any> = {};
       data.results.forEach((result: any) => {
         if (result.questions) {
@@ -172,10 +169,8 @@ export default function TransactionListScreen({ navigation }: any) {
       });
 
       setPreGeneratedQuestions(questionsMap);
-      console.log('✅ Pre-generated Q1 for', Object.keys(questionsMap).length, 'transactions');
     } catch (error) {
       console.error('Error pre-generating questions:', error);
-      // Don't alert user - this is a background optimization
     } finally {
       isPreGenerating.current = false;
     }
@@ -208,7 +203,6 @@ export default function TransactionListScreen({ navigation }: any) {
     }
   };
 
-  // Normalize merchant name for grouping
   const normalizeMerchantName = (name: string): string => {
     return (name || 'Unknown')
       .toLowerCase()
@@ -218,7 +212,6 @@ export default function TransactionListScreen({ navigation }: any) {
       .trim();
   };
 
-  // Get sorted and optionally grouped transactions
   const getSortedTransactions = (): Transaction[] => {
     const sorted = [...transactions];
 
@@ -238,7 +231,6 @@ export default function TransactionListScreen({ navigation }: any) {
     }
   };
 
-  // Group transactions by merchant (only used when sorted by merchant)
   const getGroupedTransactions = (): TransactionGroup[] => {
     if (sortBy !== 'merchant') {
       return [{
@@ -268,12 +260,10 @@ export default function TransactionListScreen({ navigation }: any) {
     }));
   };
 
-  // Handle pressing "Categorize All" for a merchant group
   const handleCategorizeGroup = (group: TransactionGroup) => {
     if (group.transactions.length === 1) {
       handleTransactionPress(group.transactions[0]);
     } else {
-      // Navigate with all transactions from this group
       navigation.navigate('TransactionCategorization', {
         transaction: group.transactions[0],
         allTransactions: group.transactions,
@@ -287,7 +277,7 @@ export default function TransactionListScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.ember} />
+        <ActivityIndicator size="large" color={colors.gradientMid} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -295,28 +285,45 @@ export default function TransactionListScreen({ navigation }: any) {
 
   if (transactions.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.ink} />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Gradient Header */}
+        <LinearGradient
+          colors={gradients.primary as unknown as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientHeader}
+        >
+          {/* Flare overlays */}
+          <View style={styles.flareTopRight} />
+          <View style={styles.flareBottomLeft} />
+
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>{'\u2190'}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Transactions</Text>
-          <View style={{ width: 24 }} />
-        </View>
+          <Text style={styles.screenLabel}>TRANSACTIONS</Text>
+          <Text style={styles.headerTitle}>{'all your\ntransactions.'}</Text>
+        </LinearGradient>
 
         <View style={styles.centerContainer}>
           <View style={styles.emptyStateIcon}>
-            <Ionicons name="checkmark-circle" size={64} color={colors.tagGreenText} />
+            <Ionicons name="checkmark-circle" size={64} color={colors.positive} />
           </View>
           <Text style={styles.emptyStateTitle}>All done!</Text>
           <Text style={styles.emptyStateText}>
             All transactions have been categorized
           </Text>
           <TouchableOpacity
-            style={styles.button}
             onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Back to Dashboard</Text>
+            <LinearGradient
+              colors={gradients.primary as unknown as [string, string, ...string[]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>Back to Dashboard</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -324,23 +331,30 @@ export default function TransactionListScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Transactions</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Gradient Header */}
+      <LinearGradient
+        colors={gradients.primary as unknown as [string, string, ...string[]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientHeader}
+      >
+        {/* Flare overlays */}
+        <View style={styles.flareTopRight} />
+        <View style={styles.flareBottomLeft} />
 
-      {/* Stats Bar */}
-      <View style={styles.statsBar}>
-        <View style={styles.statItem}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>{'\u2190'}</Text>
+        </TouchableOpacity>
+        <Text style={styles.screenLabel}>TRANSACTIONS</Text>
+        <Text style={styles.headerTitle}>{'all your\ntransactions.'}</Text>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
           <Text style={styles.statNumber}>{transactions.length}</Text>
           <Text style={styles.statLabel}>to categorize</Text>
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Subscription Detection Banner */}
       {detectedSubscriptions.length > 0 && !subscriptionBannerDismissed && (
@@ -350,7 +364,7 @@ export default function TransactionListScreen({ navigation }: any) {
           activeOpacity={0.8}
         >
           <View style={styles.subscriptionBannerIcon}>
-            <Ionicons name="repeat" size={20} color={colors.ember} />
+            <Ionicons name="repeat" size={20} color={colors.tagExpenseText} />
           </View>
           <View style={styles.subscriptionBannerContent}>
             <Text style={styles.subscriptionBannerTitle}>
@@ -361,7 +375,7 @@ export default function TransactionListScreen({ navigation }: any) {
             </Text>
           </View>
           <View style={styles.subscriptionBannerActions}>
-            <Ionicons name="chevron-forward" size={20} color={colors.ember} />
+            <Ionicons name="chevron-forward" size={20} color={colors.tagExpenseText} />
             <TouchableOpacity
               style={styles.subscriptionBannerDismiss}
               onPress={(e) => {
@@ -382,18 +396,27 @@ export default function TransactionListScreen({ navigation }: any) {
           {(['date', 'merchant', 'amount'] as SortOption[]).map((option) => (
             <TouchableOpacity
               key={option}
-              style={[
-                styles.sortOption,
-                sortBy === option && styles.sortOptionActive
-              ]}
+              activeOpacity={0.8}
               onPress={() => setSortBy(option)}
             >
-              <Text style={[
-                styles.sortOptionText,
-                sortBy === option && styles.sortOptionTextActive
-              ]}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
-              </Text>
+              {sortBy === option ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as [string, string, ...string[]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.sortOptionPill}
+                >
+                  <Text style={styles.sortOptionTextActive}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.sortOptionPill}>
+                  <Text style={styles.sortOptionText}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -403,7 +426,7 @@ export default function TransactionListScreen({ navigation }: any) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
         {getGroupedTransactions().map((group, groupIndex) => (
           <View key={`group-${groupIndex}`}>
-            {/* Group Header (only show when sorted by merchant and group has multiple items) */}
+            {/* Group Header (only show when sorted by merchant) */}
             {sortBy === 'merchant' && (
               <View style={styles.groupHeader}>
                 <View style={styles.groupHeaderLeft}>
@@ -418,7 +441,7 @@ export default function TransactionListScreen({ navigation }: any) {
                     onPress={() => handleCategorizeGroup(group)}
                   >
                     <Text style={styles.categorizeAllText}>Categorize All</Text>
-                    <Ionicons name="arrow-forward" size={14} color={colors.ember} />
+                    <Ionicons name="arrow-forward" size={14} color={colors.tagExpenseText} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -427,12 +450,13 @@ export default function TransactionListScreen({ navigation }: any) {
             {/* Transactions in this group */}
             {group.transactions.map((transaction) => {
               const isIncome = transaction.amount < 0;
+              const category = transaction.category?.[0] || 'Other';
+              const taxSaving = !isIncome ? Math.abs(transaction.amount) * 0.2 : 0;
               return (
                 <TouchableOpacity
                   key={transaction.transaction_id}
                   style={[
                     styles.transactionItem,
-                    { backgroundColor: isIncome ? `${colors.tagEmberBg}` : colors.white },
                     sortBy === 'merchant' && styles.transactionItemGrouped
                   ]}
                   onPress={() => handleTransactionPress(transaction)}
@@ -440,27 +464,22 @@ export default function TransactionListScreen({ navigation }: any) {
                 >
                   <View style={[
                     styles.transactionIcon,
-                    { backgroundColor: isIncome ? colors.tagEmberBg : colors.tagVoltBg }
+                    { backgroundColor: isIncome ? colors.tagIncomeBg : colors.tagExpenseBg }
                   ]}>
-                    <Ionicons
-                      name={isIncome ? "trending-up" : "receipt-outline"}
-                      size={24}
-                      color={isIncome ? colors.ember : colors.tagVoltText}
-                    />
+                    <Text style={styles.emojiIcon}>{getCategoryEmoji(isIncome ? 'Income' : category)}</Text>
                   </View>
 
                   <View style={styles.transactionDetails}>
                     {sortBy !== 'merchant' && (
-                      <Text style={styles.merchantName}>
+                      <Text style={styles.merchantName} numberOfLines={1}>
                         {transaction.merchant_name || transaction.name}
                       </Text>
                     )}
-                    <Text style={[
-                      styles.transactionDate,
-                      sortBy === 'merchant' && styles.transactionDatePrimary
-                    ]}>
-                      {formatDate(transaction.date)}
-                    </Text>
+                    <View style={styles.transactionMeta}>
+                      <Text style={styles.transactionDate}>
+                        {formatDate(transaction.date)}
+                      </Text>
+                    </View>
                     {transaction.statement_filename && sortBy !== 'merchant' && (
                       <Text style={styles.statementSource}>
                         {transaction.statement_filename.replace(/\.pdf$/i, '')}
@@ -471,12 +490,16 @@ export default function TransactionListScreen({ navigation }: any) {
                   <View style={styles.transactionRight}>
                     <Text style={[
                       styles.transactionAmount,
-                      { color: isIncome ? colors.ember : colors.ink }
+                      { color: isIncome ? colors.positive : colors.negative }
                     ]}>
                       {isIncome ? '+' : ''}£{Math.abs(transaction.amount).toFixed(2)}
                     </Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
+                    {!isIncome && taxSaving > 0 && (
+                      <Text style={styles.taxSaving}>saves £{taxSaving.toFixed(2)}</Text>
+                    )}
                   </View>
+
+                  <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                 </TouchableOpacity>
               );
             })}
@@ -488,110 +511,282 @@ export default function TransactionListScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.parchment,
+    padding: spacing.xl,
+    backgroundColor: colors.white,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  // Gradient Header
+  gradientHeader: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+    overflow: 'hidden',
+  },
+  flareTopRight: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,224,128,0.15)',
+  },
+  flareBottomLeft: {
+    position: 'absolute',
+    bottom: -30,
+    left: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
+    marginBottom: spacing.lg,
+  },
+  backButtonText: {
+    color: colors.white,
+    fontSize: 18,
+    fontFamily: fonts.body,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.bodyBold,
+    marginBottom: spacing.xs,
   },
   headerTitle: {
     fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.ink,
+    fontSize: 28,
+    color: colors.white,
+    lineHeight: 34,
   },
-  statsBar: {
-    backgroundColor: colors.dark,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  statsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
+    alignItems: 'baseline',
+    marginTop: spacing.lg,
+    gap: spacing.sm,
   },
   statNumber: {
     fontFamily: fonts.display,
-    fontSize: 32,
-    color: colors.volt,
-    marginBottom: 4,
+    fontSize: 36,
+    color: colors.white,
   },
   statLabel: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.mist,
+    color: 'rgba(255,255,255,0.6)',
+    textTransform: 'uppercase',
   },
+  // Sort toggle
+  sortToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  sortLabel: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.midGrey,
+    marginRight: 12,
+    textTransform: 'uppercase',
+  },
+  sortToggle: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  sortOptionPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  sortOptionText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.ink,
+  },
+  sortOptionTextActive: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.white,
+  },
+  // Transaction list
   scrollView: {
     flex: 1,
   },
   listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   transactionItem: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  transactionItemGrouped: {
+    marginLeft: spacing.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.border,
+    paddingLeft: spacing.sm,
   },
   transactionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.tagVoltBg,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  emojiIcon: {
+    fontSize: 18,
   },
   transactionDetails: {
     flex: 1,
   },
   merchantName: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
+    fontSize: 13,
     color: colors.ink,
-    marginBottom: 4,
+    marginBottom: 3,
+  },
+  transactionMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   transactionDate: {
     fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.midGrey,
+    fontSize: 10,
+    color: colors.muted,
   },
   statementSource: {
     fontFamily: fonts.body,
-    fontSize: 11,
-    color: colors.mist,
+    fontSize: 10,
+    color: colors.muted,
     marginTop: 2,
   },
   transactionRight: {
+    alignItems: 'flex-end',
+    marginRight: spacing.sm,
+  },
+  transactionAmount: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+  taxSaving: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.positive,
+    marginTop: 2,
+  },
+  // Group header
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingTop: spacing.lg,
+    marginBottom: 4,
+  },
+  groupHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  groupTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.ink,
+    marginRight: 8,
+  },
+  groupBadge: {
+    backgroundColor: colors.tagExpenseBg,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
+  groupBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.tagExpenseText,
+  },
+  categorizeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tagExpenseBg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
+  categorizeAllText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.tagExpenseText,
+  },
+  // Subscription banner
+  subscriptionBanner: {
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: borderRadius.lg,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  subscriptionBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.tagExpenseBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  subscriptionBannerContent: {
+    flex: 1,
+  },
+  subscriptionBannerTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  subscriptionBannerSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.midGrey,
+  },
+  subscriptionBannerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  transactionAmount: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.ink,
+  subscriptionBannerDismiss: {
+    padding: 4,
   },
+  // Loading / empty
   loadingText: {
     fontFamily: fonts.body,
     marginTop: spacing.md,
@@ -601,8 +796,8 @@ const styles = StyleSheet.create({
   emptyStateIcon: {
     width: 100,
     height: 100,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.tagGreenBg,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.tagIncomeBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -620,149 +815,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
-  button: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  primaryButton: {
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
   },
-  buttonText: {
+  primaryButtonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.background,
-  },
-  // Sort toggle styles
-  sortToggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  sortLabel: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.midGrey,
-    marginRight: 12,
-  },
-  sortToggle: {
-    flexDirection: 'row',
-    backgroundColor: colors.mist,
-    borderRadius: borderRadius.sm,
-    padding: 3,
-  },
-  sortOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: borderRadius.xs,
-  },
-  sortOptionActive: {
-    backgroundColor: colors.ink,
-  },
-  sortOptionText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.midGrey,
-  },
-  sortOptionTextActive: {
     color: colors.white,
-  },
-  // Group header styles
-  groupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingTop: 16,
-    marginBottom: 4,
-  },
-  groupHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  groupTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.ink,
-    marginRight: 8,
-  },
-  groupBadge: {
-    backgroundColor: colors.tagVoltBg,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  groupBadgeText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.tagVoltText,
-  },
-  categorizeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.tagEmberBg,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: borderRadius.sm,
-    gap: 4,
-  },
-  categorizeAllText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.ember,
-  },
-  transactionItemGrouped: {
-    marginBottom: 8,
-    marginLeft: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.mist,
   },
   transactionDatePrimary: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
+    fontSize: 14,
     color: colors.ink,
-  },
-  // Subscription banner styles
-  subscriptionBanner: {
-    backgroundColor: colors.tagEmberBg,
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    borderRadius: borderRadius.md,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: `${colors.ember}40`,
-  },
-  subscriptionBannerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: `${colors.ember}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  subscriptionBannerContent: {
-    flex: 1,
-  },
-  subscriptionBannerTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.ink,
-    marginBottom: 2,
-  },
-  subscriptionBannerSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.midGrey,
-  },
-  subscriptionBannerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  subscriptionBannerDismiss: {
-    padding: 4,
   },
 });

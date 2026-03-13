@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,24 +59,26 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Progress bar */}
+      {/* Progress bar — row of segments */}
       <View style={styles.progressContainer}>
-        <View style={styles.progressBackground}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: progressAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
-                backgroundColor: colors.ink,
-              },
-            ]}
-          />
+        <View style={styles.progressRow}>
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <View key={i} style={styles.progressSegmentWrap}>
+              {i < step ? (
+                <LinearGradient
+                  colors={gradients.primary as unknown as string[]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.progressSegmentActive}
+                />
+              ) : (
+                <View style={styles.progressSegmentInactive} />
+              )}
+            </View>
+          ))}
         </View>
         <Text style={styles.stepCounter}>
-          {step} of {totalSteps}
+          {step} OF {totalSteps}
         </Text>
       </View>
 
@@ -183,21 +186,24 @@ export const OptionCard: React.FC<OptionCardProps> = ({
           styles.card,
           {
             transform: [{ scale: scaleAnim }],
-            borderColor: selected ? colors.ink : 'transparent',
           },
+          !selected && styles.cardUnselected,
         ]}
       >
-        {selected && (
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.parchment }]}
+        {selected ? (
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
           />
-        )}
+        ) : null}
 
         <View style={styles.cardContent}>
           <Text style={styles.cardIcon}>{icon}</Text>
           <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>{title}</Text>
-            <Text style={styles.cardDescription}>{description}</Text>
+            <Text style={[styles.cardTitle, selected && styles.cardTitleSelected]}>{title}</Text>
+            <Text style={[styles.cardDescription, selected && styles.cardDescriptionSelected]}>{description}</Text>
           </View>
         </View>
 
@@ -276,15 +282,23 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
       <Animated.View
         style={[
           styles.button,
-          disabled && styles.buttonDisabled,
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <View style={styles.buttonInner}>
-          <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>
-            {text}
-          </Text>
-        </View>
+        {disabled ? (
+          <View style={styles.buttonDisabledInner}>
+            <Text style={styles.buttonTextDisabled}>{text}</Text>
+          </View>
+        ) : (
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.buttonInner}
+          >
+            <Text style={styles.buttonText}>{text}</Text>
+          </LinearGradient>
+        )}
       </Animated.View>
     </TouchableOpacity>
   );
@@ -293,30 +307,41 @@ export const ContinueButton: React.FC<ContinueButtonProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   progressContainer: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
-  progressBackground: {
+  progressRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  progressSegmentWrap: {
+    flex: 1,
     height: 4,
-    backgroundColor: colors.mist,
     borderRadius: borderRadius.xs,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
+  progressSegmentActive: {
+    flex: 1,
+    borderRadius: borderRadius.xs,
+  },
+  progressSegmentInactive: {
+    flex: 1,
+    backgroundColor: colors.border,
     borderRadius: borderRadius.xs,
   },
   stepCounter: {
     fontFamily: fonts.displaySemi,
-    fontSize: 14,
-    color: colors.midGrey,
+    fontSize: 10,
+    color: colors.tagExpenseText,
     marginTop: spacing.sm,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
   },
   keyboardAvoid: {
     flex: 1,
@@ -326,7 +351,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: Platform.OS === 'ios' ? 40 : spacing.lg,
   },
   content: {
@@ -338,9 +363,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 36,
+    fontSize: 38,
     color: colors.ink,
-    lineHeight: 44,
+    lineHeight: 46,
+    letterSpacing: -2,
     marginBottom: spacing.sm,
   },
   subtitle: {
@@ -352,14 +378,17 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
   },
+  // ── Option cards ──
   card: {
-    backgroundColor: colors.surface,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 0,
     marginBottom: spacing.md,
     overflow: 'hidden',
-    ...shadows.sm,
+  },
+  cardUnselected: {
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   cardContent: {
     flexDirection: 'row',
@@ -379,11 +408,17 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginBottom: 6,
   },
+  cardTitleSelected: {
+    color: colors.white,
+  },
   cardDescription: {
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.midGrey,
     lineHeight: 21,
+  },
+  cardDescriptionSelected: {
+    color: 'rgba(255,255,255,0.8)',
   },
   checkmark: {
     position: 'absolute',
@@ -392,33 +427,36 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.ember,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkmarkText: {
     fontSize: 16,
-    color: colors.white,
+    color: colors.gradientMid,
     fontFamily: fonts.bodyBold,
   },
+  // ── CTA button ──
   buttonContainer: {
     marginTop: spacing.xl,
     marginBottom: spacing.md,
   },
   button: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
-    ...shadows.md,
-  },
-  buttonDisabled: {
-    shadowOpacity: 0,
   },
   buttonInner: {
-    backgroundColor: colors.ember,
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
+  },
+  buttonDisabledInner: {
+    backgroundColor: colors.border,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.full,
   },
   buttonText: {
     fontFamily: fonts.display,
@@ -428,6 +466,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   buttonTextDisabled: {
-    color: colors.mist,
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

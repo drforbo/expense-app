@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 const PERSONAL_ALLOWANCE = 12570;
 const BASIC_RATE = 0.2;
@@ -149,22 +150,25 @@ export default function TaxEstimateScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tax estimate</Text>
-        <View style={{ width: 36 }} />
+        <Text style={styles.screenLabel}>TAX ESTIMATE</Text>
+        <View style={{ width: 32 }} />
       </View>
 
       {loading ? (
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.ember} />
+          <ActivityIndicator color={colors.gradientMid} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
+          {/* Hero heading */}
+          <Text style={styles.heroHeading}>{'your tax\nestimate.'}</Text>
+
           {/* Total owed */}
           <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>Owed via Self Assessment</Text>
+            <Text style={styles.totalLabel}>OWED VIA SELF ASSESSMENT</Text>
             <Text style={styles.totalValue}>{breakdown ? fmt(breakdown.totalTaxOwed) : '—'}</Text>
             <Text style={styles.totalSub}>2025–26 tax year estimate</Text>
           </View>
@@ -182,8 +186,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
             )}
             <Row label="Total income" value={breakdown ? fmt(breakdown.totalIncome) : '—'} bold />
             <Divider />
-            <Row label="Personal allowance" value={breakdown ? `− ${fmt(breakdown.personalAllowance)}` : '—'} color={colors.tagGreenText} />
-            <Row label="Qualified business expenses" value={breakdown ? `− ${fmt(breakdown.qualifiedExpenses)}` : '—'} color={colors.tagGreenText} />
+            <Row label="Personal allowance" value={breakdown ? `− ${fmt(breakdown.personalAllowance)}` : '—'} color={colors.positive} />
+            <Row label="Qualified business expenses" value={breakdown ? `− ${fmt(breakdown.qualifiedExpenses)}` : '—'} color={colors.positive} />
             <Divider />
             <Row label="Taxable income" value={breakdown ? fmt(breakdown.taxableIncome) : '—'} bold />
           </View>
@@ -193,7 +197,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
           <View style={styles.breakdownCard}>
             <Row label="Income tax on all earnings" value={breakdown ? fmt(breakdown.incomeTax) : '—'} />
             {breakdown && breakdown.taxPaidViaPAYE > 0 && (
-              <Row label="Already paid via PAYE" value={`− ${fmt(breakdown.taxPaidViaPAYE)}`} color={colors.tagGreenText} />
+              <Row label="Already paid via PAYE" value={`− ${fmt(breakdown.taxPaidViaPAYE)}`} color={colors.positive} />
             )}
             {breakdown && breakdown.taxPaidViaPAYE > 0 && (
               <Row label="Income tax still owed" value={fmt(breakdown.incomeTaxRemaining)} bold />
@@ -209,7 +213,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
           {/* PAYE explainer */}
           {breakdown && breakdown.taxPaidViaPAYE > 0 && (
             <View style={styles.payeNote}>
-              <Ionicons name="briefcase-outline" size={16} color={colors.tagGreenText} />
+              <Ionicons name="briefcase-outline" size={16} color={colors.positive} />
               <Text style={styles.payeNoteText}>
                 Your employer has already paid {fmt(breakdown.taxPaidViaPAYE)} in income tax on your PAYE earnings. The figure above is only what you owe on top of that via Self Assessment.
               </Text>
@@ -218,7 +222,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           {/* Disclaimer */}
           <View style={styles.disclaimer}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.midGrey} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
             <Text style={styles.disclaimerText}>
               This is an estimate based on your transactions and profile. It does not account for all allowances or reliefs. Consult an accountant for your official return.
             </Text>
@@ -229,8 +233,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           <View style={styles.nextCard}>
             <View style={styles.nextItem}>
-              <View style={[styles.nextIcon, { backgroundColor: colors.tagVoltBg }]}>
-                <Ionicons name="wallet-outline" size={20} color={colors.ink} />
+              <View style={[styles.nextIcon, { backgroundColor: colors.tagIncomeBg }]}>
+                <Ionicons name="wallet-outline" size={20} color={colors.positive} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.nextTitle}>Set money aside</Text>
@@ -245,8 +249,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
             <View style={styles.nextDivider} />
 
             <View style={styles.nextItem}>
-              <View style={[styles.nextIcon, { backgroundColor: colors.tagEmberBg }]}>
-                <Ionicons name="receipt-outline" size={20} color={colors.ember} />
+              <View style={[styles.nextIcon, { backgroundColor: colors.tagExpenseBg }]}>
+                <Ionicons name="receipt-outline" size={20} color={colors.tagExpenseText} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.nextTitle}>Review your expenses</Text>
@@ -273,16 +277,23 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           {/* Filing guide CTA */}
           <TouchableOpacity
-            style={styles.filingGuideCta}
             onPress={() => navigation.navigate('FilingGuide')}
             activeOpacity={0.8}
+            style={{ marginTop: spacing.lg }}
           >
-            <Ionicons name="list-outline" size={20} color={colors.background} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.filingGuideCtaTitle}>Your filing guide</Text>
-              <Text style={styles.filingGuideCtaSub}>Personalised steps to file your Self Assessment</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.background} />
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.filingGuideCta}
+            >
+              <Ionicons name="list-outline" size={20} color={colors.white} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.filingGuideCtaTitle}>Your filing guide</Text>
+                <Text style={styles.filingGuideCtaSub}>Personalised steps to file your Self Assessment</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.white} />
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -312,7 +323,7 @@ function Row({ label, value, bold, color, accent }: {
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: colors.mist, marginVertical: 10 }} />;
+  return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />;
 }
 
 const rowStyles = StyleSheet.create({
@@ -324,13 +335,13 @@ const rowStyles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     flex: 1,
   },
   value: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     textAlign: 'right',
   },
@@ -341,37 +352,51 @@ const rowStyles = StyleSheet.create({
   accent: {
     fontFamily: fonts.display,
     fontSize: 18,
-    color: colors.ember,
+    color: colors.negative,
   },
 });
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontFamily: fonts.display,
-    fontSize: 18,
+  backBtnText: {
+    fontSize: 16,
     color: colors.ink,
+    fontFamily: fonts.bodyBold,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+  },
+  heroHeading: {
+    fontFamily: fonts.display,
+    fontSize: 38,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
   },
   loading: {
     flex: 1,
@@ -379,50 +404,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
     paddingBottom: 48,
   },
   totalCard: {
-    backgroundColor: colors.dark,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.xl,
-    ...shadows.md,
   },
   totalLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.8,
+    fontSize: 10,
+    color: colors.muted,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   totalValue: {
     fontFamily: fonts.display,
     fontSize: 52,
-    color: colors.volt,
+    color: colors.negative,
     letterSpacing: -2,
     marginBottom: 6,
   },
   totalSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
+    color: colors.muted,
   },
   sectionLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: colors.midGrey,
-    letterSpacing: 1.4,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   breakdownCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    ...shadows.sm,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
   },
   disclaimer: {
     flexDirection: 'row',
@@ -437,28 +462,27 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     borderRadius: borderRadius.sm,
   },
   payeNoteText: {
     flex: 1,
     fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.tagGreenText,
+    fontSize: 13,
+    color: colors.positive,
     lineHeight: 18,
   },
   disclaimerText: {
     flex: 1,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.tagBlueText,
     lineHeight: 18,
   },
   nextCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    ...shadows.sm,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
   },
   nextItem: {
     flexDirection: 'row',
@@ -469,13 +493,13 @@ const styles = StyleSheet.create({
   nextIcon: {
     width: 40,
     height: 40,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
   },
   nextTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 2,
   },
@@ -487,28 +511,27 @@ const styles = StyleSheet.create({
   },
   nextDivider: {
     height: 1,
-    backgroundColor: colors.mist,
+    backgroundColor: colors.border,
     marginVertical: 4,
   },
   filingGuideCta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.volt,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     padding: spacing.md,
-    marginTop: spacing.lg,
+    paddingHorizontal: spacing.xl,
   },
   filingGuideCtaTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.background,
+    fontSize: 16,
+    color: colors.white,
     marginBottom: 2,
   },
   filingGuideCtaSub: {
     fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.background,
+    fontSize: 13,
+    color: colors.white,
     opacity: 0.7,
   },
   backToDashboard: {
@@ -517,7 +540,7 @@ const styles = StyleSheet.create({
   },
   backToDashboardText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ember,
+    fontSize: 16,
+    color: colors.gradientMid,
   },
 });

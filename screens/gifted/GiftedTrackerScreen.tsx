@@ -16,10 +16,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface GiftedItem {
   id: string;
@@ -144,17 +145,17 @@ export default function GiftedTrackerScreen({ navigation }: any) {
   const recognizeItem = async (base64: string) => {
     try {
       setRecognizing(true);
-      console.log('🔍 Recognizing item...');
+      console.log('Recognizing item...');
 
       const result = await apiPost('/api/recognize_item', { image_base64: base64 });
-      console.log('✅ Item recognized:', result);
+      console.log('Item recognized:', result);
 
       setItemName(result.item_name);
       setRrp(result.estimated_rrp.toString());
 
       Alert.alert(
         'Item Recognized',
-        `${result.item_name} - £${result.estimated_rrp}\n\nYou can edit these details before saving.`
+        `${result.item_name} - \u00A3${result.estimated_rrp}\n\nYou can edit these details before saving.`
       );
     } catch (error: any) {
       console.error('Error recognizing item:', error);
@@ -326,6 +327,8 @@ export default function GiftedTrackerScreen({ navigation }: any) {
     });
   };
 
+  const totalValue = items.reduce((sum, item) => sum + item.rrp, 0);
+
   const renderItem = ({ item }: { item: GiftedItem }) => (
     <TouchableOpacity
       style={styles.itemCard}
@@ -341,15 +344,15 @@ export default function GiftedTrackerScreen({ navigation }: any) {
       )}
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.item_name}</Text>
-        <Text style={styles.itemRrp}>£{item.rrp.toFixed(2)}</Text>
+        <Text style={styles.itemRrp}>{'\u00A3'}{item.rrp.toFixed(2)}</Text>
         <Text style={styles.itemDate}>Received: {formatDate(item.received_date)}</Text>
         {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
       </View>
       <TouchableOpacity
-        style={styles.deleteButton}
+        style={styles.deleteBtn}
         onPress={() => deleteItem(item.id)}
       >
-        <Ionicons name="trash" size={20} color={colors.ember} />
+        <Ionicons name="trash" size={18} color="#FF4500" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -358,17 +361,36 @@ export default function GiftedTrackerScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backArrow}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gifted items</Text>
-        <View style={{ width: 36 }} />
+        <View style={{ flex: 1 }} />
       </View>
+
+      {/* Screen Label + Hero */}
+      <View style={styles.heroSection}>
+        <Text style={styles.screenLabel}>GIFTED TRACKER</Text>
+        <Text style={styles.heroHeading}>{'gifted\ntracker.'}</Text>
+      </View>
+
+      {/* Summary */}
+      {items.length > 0 && (
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Total items</Text>
+            <Text style={styles.summaryValue}>{items.length}</Text>
+          </View>
+          <View style={[styles.summaryRow, { borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: spacing.sm }]}>
+            <Text style={styles.summaryLabel}>Total value</Text>
+            <Text style={styles.summaryValueGreen}>{'\u00A3'}{totalValue.toFixed(2)}</Text>
+          </View>
+        </View>
+      )}
 
       {/* List */}
       {loading && items.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.midGrey} />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -388,12 +410,18 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           </View>
 
           <TouchableOpacity
-            style={styles.emptyAddBtn}
             onPress={openAddModal}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={18} color={colors.background} />
-            <Text style={styles.emptyAddBtnText}>Add your first item</Text>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.emptyAddBtn}
+            >
+              <Ionicons name="add" size={18} color={colors.white} />
+              <Text style={styles.emptyAddBtnText}>Add your first item</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       ) : (
@@ -415,14 +443,23 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         />
       )}
 
-      {/* Add Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={openAddModal}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={32} color={colors.background} />
-      </TouchableOpacity>
+      {/* Add FAB */}
+      {items.length > 0 && (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={openAddModal}
+          style={styles.fabContainer}
+        >
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.addButton}
+          >
+            <Ionicons name="add" size={32} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
 
       {/* Add/Edit Modal */}
       <Modal
@@ -434,16 +471,16 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={closeModal}>
-              <Text style={styles.cancelButton}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>
               {selectedItem ? 'Edit Item' : 'Add New Item'}
             </Text>
             <TouchableOpacity onPress={saveItem} disabled={loading}>
               {loading ? (
-                <ActivityIndicator color={colors.ink} />
+                <ActivityIndicator color={colors.gradientMid} />
               ) : (
-                <Text style={styles.saveButton}>Save</Text>
+                <Text style={styles.saveButtonText}>Save</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -468,7 +505,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={48} color={colors.midGrey} />
+                  <Ionicons name="camera" size={48} color={colors.muted} />
                   <Text style={styles.photoPlaceholderText}>No photo</Text>
                 </View>
               )}
@@ -495,7 +532,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 
               {recognizing && (
                 <View style={styles.recognizingContainer}>
-                  <ActivityIndicator color={colors.ink} />
+                  <ActivityIndicator color={colors.gradientMid} />
                   <Text style={styles.recognizingText}>Recognizing item...</Text>
                 </View>
               )}
@@ -509,19 +546,17 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={itemName}
                 onChangeText={setItemName}
                 placeholder="e.g. iPhone 15 Pro"
-                placeholderTextColor={colors.midGrey}
-                keyboardAppearance="dark"
+                placeholderTextColor={colors.muted}
               />
 
-              <Text style={styles.label}>RRP (£) *</Text>
+              <Text style={styles.label}>RRP ({'\u00A3'}) *</Text>
               <TextInput
                 style={styles.input}
                 value={rrp}
                 onChangeText={setRrp}
                 placeholder="0.00"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
-                keyboardAppearance="dark"
               />
 
               <Text style={styles.label}>Received Date *</Text>
@@ -530,8 +565,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={receivedDate}
                 onChangeText={setReceivedDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.midGrey}
-                keyboardAppearance="dark"
+                placeholderTextColor={colors.muted}
               />
 
               <Text style={styles.label}>Brand Name (Optional)</Text>
@@ -540,10 +574,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={receivedFrom}
                 onChangeText={setReceivedFrom}
                 placeholder="e.g., Apple, Samsung, Nike..."
-                placeholderTextColor={colors.midGrey}
-                keyboardAppearance="dark"
-                selectionColor={colors.ink}
-                cursorColor={colors.ink}
+                placeholderTextColor={colors.muted}
               />
 
               <Text style={styles.label}>Notes (Optional)</Text>
@@ -552,13 +583,10 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Add extra details like the video you featured it in, or why you received the item..."
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
-                keyboardAppearance="dark"
-                selectionColor={colors.ink}
-                cursorColor={colors.ink}
               />
             </View>
           </ScrollView>
@@ -572,30 +600,77 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
+  backArrow: {
+    fontSize: 16,
+    color: colors.ink,
+    fontFamily: fonts.display,
+    marginTop: -1,
+  },
+  heroSection: {
+    paddingHorizontal: spacing.xl,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.sm,
+  },
+  heroHeading: {
+    fontSize: 38,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
+  },
+  summaryCard: {
+    marginHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
+  },
+  summaryValue: {
     fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
+  },
+  summaryValueGreen: {
+    fontSize: 18,
+    fontFamily: fonts.display,
+    color: colors.positive,
   },
   loadingContainer: {
     flex: 1,
@@ -606,7 +681,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    paddingHorizontal: 32,
   },
   emptyIconWrap: {
     width: 64,
@@ -624,11 +699,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: spacing.lg,
   },
   taxInfoBanner: {
@@ -642,7 +717,7 @@ const styles = StyleSheet.create({
   taxInfoText: {
     flex: 1,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.tagBlueText,
     lineHeight: 18,
   },
@@ -650,18 +725,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.volt,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 14,
+    borderRadius: borderRadius.full,
   },
   emptyAddBtnText: {
     fontFamily: fonts.display,
-    fontSize: 15,
-    color: colors.background,
+    fontSize: 16,
+    color: colors.white,
   },
   listContent: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: 100,
   },
   listTaxNote: {
     flexDirection: 'row',
@@ -674,18 +749,19 @@ const styles = StyleSheet.create({
   listTaxNoteText: {
     flex: 1,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.tagBlueText,
     lineHeight: 17,
   },
   itemCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.sm,
   },
   itemImage: {
     width: 80,
@@ -705,66 +781,67 @@ const styles = StyleSheet.create({
   itemRrp: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.tagGreenText,
+    color: colors.positive,
     marginBottom: 4,
   },
   itemDate: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
     marginBottom: 4,
   },
   itemNotes: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
     fontStyle: 'italic',
   },
-  deleteButton: {
+  deleteBtn: {
     padding: spacing.xs,
   },
-  addButton: {
+  fabContainer: {
     position: 'absolute',
     bottom: spacing.lg,
     right: spacing.lg,
+  },
+  addButton: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.ember,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.md,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 18,
     fontFamily: fonts.displaySemi,
     color: colors.ink,
   },
-  cancelButton: {
+  cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
-  saveButton: {
+  saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.gradientMid,
   },
   modalContent: {
     flex: 1,
-    padding: spacing.md,
+    padding: spacing.xl,
   },
   photoSection: {
     alignItems: 'center',
@@ -781,16 +858,18 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: borderRadius.lg,
     backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
-    ...shadows.sm,
   },
   photoPlaceholderText: {
     marginTop: spacing.xs,
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.muted,
   },
   photoButtons: {
     flexDirection: 'row',
@@ -803,9 +882,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.ink,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
   },
   photoButtonText: {
     fontSize: 14,
@@ -819,7 +898,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   recognizingText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -827,7 +906,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
     marginBottom: spacing.xs,
@@ -835,15 +914,17 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
+    paddingHorizontal: 14,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   textArea: {
     height: 100,
-    paddingTop: spacing.sm,
+    paddingTop: 14,
+    textAlignVertical: 'top',
   },
 });

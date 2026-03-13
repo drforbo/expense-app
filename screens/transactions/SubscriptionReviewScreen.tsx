@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface SubscriptionTransaction {
   id: string;
@@ -151,11 +152,18 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
-          <Ionicons name="checkmark-circle" size={64} color={colors.tagGreenText} />
+          <Ionicons name="checkmark-circle" size={64} color={colors.positive} />
           <Text style={styles.emptyTitle}>All Done!</Text>
           <Text style={styles.emptyText}>No more subscriptions to review</Text>
-          <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.doneButtonText}>Back to Transactions</Text>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()}>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.doneButton}
+            >
+              <Text style={styles.doneButtonText}>Back to Transactions</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -164,27 +172,22 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.ink} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backArrow}>{'\u2190'}</Text>
           </TouchableOpacity>
           <Text style={styles.progress}>
             {currentIndex + 1} / {subscriptions.length}
           </Text>
         </View>
 
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <View style={styles.subscriptionIcon}>
-            <Ionicons name="repeat" size={28} color={colors.ember} />
-          </View>
-          <Text style={styles.title}>Subscription Detected</Text>
-          <Text style={styles.subtitle}>
-            We found a recurring charge that looks like a subscription
-          </Text>
-        </View>
+        {/* Screen Label */}
+        <Text style={styles.screenLabel}>SUBSCRIPTIONS</Text>
+
+        {/* Hero Heading */}
+        <Text style={styles.heroHeading}>{'review\nsubscriptions.'}</Text>
 
         {/* Subscription Card */}
         <View style={styles.subscriptionCard}>
@@ -200,7 +203,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
           <View style={styles.subscriptionDetails}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Amount</Text>
-              <Text style={styles.detailValue}>£{currentSubscription.amount.toFixed(2)}</Text>
+              <Text style={styles.detailValue}>{'\u00A3'}{currentSubscription.amount.toFixed(2)}</Text>
             </View>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Occurrences</Text>
@@ -236,7 +239,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
               {currentSubscription.transactions.map((txn, index) => (
                 <View key={txn.id} style={styles.transactionItem}>
                   <Text style={styles.transactionDate}>{formatDate(txn.date)}</Text>
-                  <Text style={styles.transactionAmount}>£{txn.amount.toFixed(2)}</Text>
+                  <Text style={styles.transactionAmount}>{'\u00A3'}{txn.amount.toFixed(2)}</Text>
                 </View>
               ))}
             </View>
@@ -263,7 +266,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
                 <Ionicons
                   name={cat.icon as any}
                   size={24}
-                  color={selectedCategory === cat.id ? colors.white : colors.ember}
+                  color={selectedCategory === cat.id ? colors.white : colors.gradientMid}
                 />
                 <Text style={[
                   styles.categoryButtonText,
@@ -283,7 +286,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
             ))}
           </View>
 
-          {/* Business Percentage Slider */}
+          {/* Business Percentage Buttons */}
           {selectedCategory && (
             <View style={styles.businessSection}>
               <Text style={styles.businessLabel}>Business Use: {businessPercent}%</Text>
@@ -313,20 +316,27 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.confirmButton, !selectedCategory && styles.confirmButtonDisabled]}
+            activeOpacity={0.8}
             onPress={handleConfirm}
             disabled={processing || !selectedCategory}
           >
-            {processing ? (
-              <ActivityIndicator color={colors.background} />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={20} color={colors.background} />
-                <Text style={styles.confirmButtonText}>
-                  Confirm & Categorize All
-                </Text>
-              </>
-            )}
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.confirmButton, !selectedCategory && styles.confirmButtonDisabled]}
+            >
+              {processing ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                  <Text style={styles.confirmButtonText}>
+                    Confirm & Categorize All
+                  </Text>
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -345,13 +355,13 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
     paddingBottom: 40,
   },
   header: {
@@ -359,43 +369,51 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: 16,
+    color: colors.ink,
+    fontFamily: fonts.display,
+    marginTop: -1,
   },
   progress: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
     color: colors.midGrey,
   },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.sm,
   },
-  subscriptionIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.tagEmberBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: 24,
+  heroHeading: {
+    fontSize: 38,
     fontFamily: fonts.display,
     color: colors.ink,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: fonts.body,
-    color: colors.midGrey,
-    textAlign: 'center',
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
   },
   subscriptionCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
     marginBottom: spacing.lg,
-    ...shadows.sm,
   },
   subscriptionHeader: {
     flexDirection: 'row',
@@ -410,15 +428,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   frequencyBadge: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.tagExpenseBg,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xs,
   },
   frequencyText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.displaySemi,
-    color: colors.white,
+    color: colors.tagExpenseText,
   },
   subscriptionDetails: {
     gap: spacing.sm,
@@ -428,12 +446,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
   },
@@ -443,12 +461,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.md,
     paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.mist,
+    borderTopWidth: 1.5,
+    borderTopColor: colors.border,
     gap: spacing.xs,
   },
   expandButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -459,7 +477,9 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: spacing.sm,
     borderRadius: borderRadius.md,
   },
@@ -488,21 +508,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoryButton: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: spacing.md,
     alignItems: 'center',
     width: '47%',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.sm,
   },
   categoryButtonSelected: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+    backgroundColor: colors.gradientMid,
+    borderColor: colors.gradientMid,
   },
   categoryButtonText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: fonts.displaySemi,
     color: colors.ink,
     marginTop: spacing.xs,
@@ -512,23 +531,24 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   categoryBusinessLabel: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.tagGreenText,
+    color: colors.positive,
     marginTop: 4,
   },
   categoryBusinessLabelSelected: {
-    color: colors.volt,
+    color: 'rgba(255,255,255,0.8)',
   },
   businessSection: {
     marginTop: spacing.md,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
   },
   businessLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.displaySemi,
     color: colors.ink,
     marginBottom: spacing.sm,
@@ -541,13 +561,16 @@ const styles = StyleSheet.create({
   },
   percentButton: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     paddingVertical: 10,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
   },
   percentButtonActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
+    borderColor: colors.gradientMid,
   },
   percentButtonText: {
     fontSize: 14,
@@ -561,34 +584,33 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   confirmButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.full,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
   },
   confirmButtonDisabled: {
-    backgroundColor: colors.mist,
+    opacity: 0.4,
   },
   confirmButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.background,
+    color: colors.white,
   },
   rejectButton: {
     backgroundColor: 'transparent',
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.mist,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   rejectButtonText: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    color: colors.ink,
   },
   emptyState: {
     flex: 1,
@@ -610,14 +632,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   doneButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
     paddingHorizontal: spacing.xl,
   },
   doneButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.background,
+    color: colors.white,
   },
 });

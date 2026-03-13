@@ -5,10 +5,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+
+const { width, height } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   onComplete: () => void;
@@ -120,43 +124,56 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View
-        style={[
-          styles.floatingShape,
-          styles.shape1,
-          { transform: [{ translateY: float1Y }] },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.floatingShape,
-          styles.shape2,
-          { transform: [{ translateY: float2Y }] },
-        ]}
-      />
+    <View style={styles.screen}>
+      {/* Top hero gradient half */}
+      <LinearGradient
+        colors={gradients.hero as unknown as string[]}
+        locations={gradients.heroLocations as unknown as number[]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroSection}
+      >
+        {/* Flare overlay circles */}
+        <Animated.View
+          style={[
+            styles.flareCircle,
+            styles.flare1,
+            { transform: [{ translateY: float1Y }] },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.flareCircle,
+            styles.flare2,
+            { transform: [{ translateY: float2Y }] },
+          ]}
+        />
 
-      <View style={styles.content}>
-        <View style={styles.headingContainer}>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.boppText}>bopp</Text>
-        </View>
+        <SafeAreaView style={styles.heroContent} edges={['top']}>
+          <View style={styles.headingContainer}>
+            <Text style={styles.welcomeText}>Welcome to</Text>
+            <Text style={styles.boppText}>bopp</Text>
+          </View>
 
-        <View style={styles.taglineContainer}>
-          <Text style={styles.taglineStatic}>Tax sorted for</Text>
-          <Animated.View
-            style={[
-              styles.animatedTextContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <Text style={styles.taglineAnimated}>{USER_TYPES[currentIndex]}</Text>
-          </Animated.View>
-        </View>
+          <View style={styles.taglineContainer}>
+            <Text style={styles.taglineStatic}>Tax sorted for</Text>
+            <Animated.View
+              style={[
+                styles.animatedTextContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <Text style={styles.taglineAnimated}>{USER_TYPES[currentIndex]}</Text>
+            </Animated.View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
+      {/* Bottom white half */}
+      <View style={styles.bottomSection}>
         <View style={styles.featuresContainer}>
           <Feature
             text="Your personal tax to-do list"
@@ -173,15 +190,22 @@ export default function WelcomeScreen({ onComplete }: WelcomeScreenProps) {
         </View>
 
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%' }}>
-          <TouchableOpacity style={styles.ctaButton} onPress={onComplete}>
-            <Text style={styles.ctaButtonText}>Show me!</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          <TouchableOpacity style={styles.ctaButton} onPress={onComplete} activeOpacity={0.85}>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ctaGradient}
+            >
+              <Text style={styles.ctaButtonText}>let's go</Text>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
 
         <Text style={styles.bottomText}>No spreadsheets. No stress.</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -200,36 +224,37 @@ const Feature: React.FC<FeatureProps> = ({ text, emoji }) => (
 );
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
+  },
+  // ── Hero (top half) ──
+  heroSection: {
+    flex: 1,
     overflow: 'hidden',
   },
-  floatingShape: {
+  flareCircle: {
     position: 'absolute',
-    borderRadius: 100,
-    opacity: 0.15,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  shape1: {
-    width: 150,
-    height: 150,
-    backgroundColor: colors.volt,
-    top: 60,
-    right: -50,
+  flare1: {
+    width: 180,
+    height: 180,
+    top: 40,
+    right: -60,
   },
-  shape2: {
-    width: 120,
-    height: 120,
-    backgroundColor: colors.ember,
-    bottom: 100,
-    left: -40,
+  flare2: {
+    width: 140,
+    height: 140,
+    bottom: 20,
+    left: -50,
   },
-  content: {
+  heroContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-    zIndex: 1,
   },
   headingContainer: {
     alignItems: 'center',
@@ -237,7 +262,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 20,
-    color: colors.midGrey,
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: spacing.xs,
     fontFamily: fonts.displayMed,
   },
@@ -245,16 +270,15 @@ const styles = StyleSheet.create({
     fontSize: 64,
     fontFamily: fonts.display,
     letterSpacing: -3,
-    color: colors.ink,
+    color: colors.white,
   },
   taglineContainer: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
     height: 80,
   },
   taglineStatic: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: spacing.xs,
     fontFamily: fonts.displayMed,
   },
@@ -265,12 +289,22 @@ const styles = StyleSheet.create({
   taglineAnimated: {
     fontSize: 26,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.white,
     textAlign: 'center',
+  },
+
+  // ── Bottom (white half) ──
+  bottomSection: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingHorizontal: 28,
+    paddingTop: 24,
+    paddingBottom: 32,
+    justifyContent: 'center',
   },
   featuresContainer: {
     width: '100%',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   feature: {
     flexDirection: 'row',
@@ -278,15 +312,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: borderRadius.md,
     paddingVertical: 14,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   featureIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 10,
-    backgroundColor: colors.parchment,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -302,16 +337,17 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: '100%',
-    borderRadius: 14,
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
-    backgroundColor: colors.ember,
-    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+  },
+  ctaGradient: {
+    paddingVertical: 18,
     paddingHorizontal: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
-    ...shadows.md,
+    borderRadius: borderRadius.full,
   },
   ctaButtonText: {
     fontSize: 18,

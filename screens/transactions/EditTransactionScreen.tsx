@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface Transaction {
   id: string;
@@ -137,7 +138,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
   };
 
   const formatCurrency = (amount: number) => {
-    return `£${Math.abs(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u00A3${Math.abs(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -152,7 +153,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ink} />
+          <ActivityIndicator size="large" color={colors.midGrey} />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
@@ -173,25 +174,29 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
+          <Text style={styles.backArrow}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit {isIncome ? 'Income' : 'Expense'}</Text>
-        <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-          <Ionicons name="trash-outline" size={24} color={colors.ember} />
-        </TouchableOpacity>
+        <View style={{ flex: 1 }} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Screen Label */}
+        <Text style={styles.screenLabel}>EDIT</Text>
+
+        {/* Hero Heading */}
+        <Text style={styles.heroHeading}>{'edit\ntransaction.'}</Text>
+
         {/* Transaction Details (Read-only) */}
         <View style={styles.detailsCard}>
           <View style={styles.merchantRow}>
-            <View style={[styles.iconContainer, { backgroundColor: isIncome ? colors.tagGreenBg : colors.tagEmberBg }]}>
+            <View style={[styles.iconContainer, { backgroundColor: isIncome ? colors.tagIncomeBg : colors.tagExpenseBg }]}>
               <Ionicons
                 name={isIncome ? 'trending-up' : 'receipt-outline'}
                 size={24}
-                color={isIncome ? colors.tagGreenText : colors.ember}
+                color={isIncome ? colors.tagIncomeText : colors.tagExpenseText}
               />
             </View>
             <View style={styles.merchantInfo}>
@@ -202,7 +207,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
           <View style={styles.amountRow}>
             <Text style={styles.amountLabel}>Total Amount</Text>
-            <Text style={[styles.amountValue, { color: isIncome ? colors.tagGreenText : colors.ember }]}>
+            <Text style={[styles.amountValue, { color: isIncome ? colors.positive : colors.negative }]}>
               {formatCurrency(transaction.amount)}
             </Text>
           </View>
@@ -228,7 +233,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               keyboardType="numeric"
               maxLength={3}
               placeholder="100"
-              placeholderTextColor={colors.midGrey}
+              placeholderTextColor={colors.muted}
             />
             <Text style={styles.percentSign}>%</Text>
           </View>
@@ -244,7 +249,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
             value={explanation}
             onChangeText={setExplanation}
             placeholder="Why is this a business expense?"
-            placeholderTextColor={colors.midGrey}
+            placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -257,9 +262,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
             <Ionicons
               name={transaction.tax_deductible ? 'checkmark-circle' : 'close-circle'}
               size={16}
-              color={transaction.tax_deductible ? colors.tagGreenText : colors.midGrey}
+              color={transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey}
             />
-            <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagGreenText : colors.midGrey }]}>
+            <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey }]}>
               {transaction.tax_deductible ? 'Tax Deductible' : 'Not Deductible'}
             </Text>
           </View>
@@ -269,9 +274,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               <Ionicons
                 name={transaction.qualified ? 'checkmark-circle' : 'document-text-outline'}
                 size={16}
-                color={transaction.qualified ? colors.tagGreenText : colors.ember}
+                color={transaction.qualified ? colors.tagIncomeText : colors.tagExpenseText}
               />
-              <Text style={[styles.statusText, { color: transaction.qualified ? colors.tagGreenText : colors.ember }]}>
+              <Text style={[styles.statusText, { color: transaction.qualified ? colors.tagIncomeText : colors.tagExpenseText }]}>
                 {transaction.qualified ? 'Has Evidence' : 'Needs Evidence'}
               </Text>
             </View>
@@ -285,28 +290,39 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               navigation.navigate('QualifyTransactions', { transaction });
             }}
           >
-            <Ionicons name="document-attach" size={20} color={colors.ember} />
+            <Ionicons name="document-attach" size={20} color={colors.tagExpenseText} />
             <Text style={styles.addEvidenceText}>Add Receipt & Evidence</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.ember} />
+            <Ionicons name="chevron-forward" size={20} color={colors.tagExpenseText} />
           </TouchableOpacity>
         )}
+
+        {/* Delete Button */}
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Text style={styles.deleteButtonText}>Delete Transaction</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Save Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={saving}
+          activeOpacity={0.8}
         >
-          {saving ? (
-            <ActivityIndicator size="small" color={colors.background} />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.background} />
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            </>
-          )}
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Text style={styles.saveButtonText}>save changes {'\u2192'}</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -316,7 +332,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -332,33 +348,52 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
   },
   backButton: {
-    padding: spacing.xs,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: fonts.display,
+  backArrow: {
+    fontSize: 16,
     color: colors.ink,
-  },
-  deleteButton: {
-    padding: spacing.xs,
+    fontFamily: fonts.display,
+    marginTop: -1,
   },
   content: {
     flex: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.sm,
+  },
+  heroHeading: {
+    fontSize: 38,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
   },
   detailsCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
     marginBottom: spacing.lg,
-    ...shadows.sm,
   },
   merchantRow: {
     flexDirection: 'row',
@@ -368,7 +403,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -383,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   transactionDate: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -392,11 +427,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.mist,
+    borderTopWidth: 1.5,
+    borderTopColor: colors.border,
   },
   amountLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -409,40 +444,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.mist,
+    borderTopWidth: 1.5,
+    borderTopColor: colors.border,
   },
   categoryLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
   categoryBadge: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.xs,
   },
   categoryText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.tagEmberText,
+    color: colors.tagExpenseText,
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemi,
     color: colors.ink,
     marginBottom: spacing.sm,
   },
   inputCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
     marginBottom: spacing.md,
-    ...shadows.sm,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.displaySemi,
     color: colors.midGrey,
     marginBottom: spacing.xs,
@@ -453,18 +489,21 @@ const styles = StyleSheet.create({
   },
   percentInput: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    fontSize: 18,
-    fontFamily: fonts.displaySemi,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
+    paddingHorizontal: 14,
+    fontSize: 22,
+    fontFamily: fonts.display,
     color: colors.ink,
   },
   percentSign: {
-    fontSize: 18,
-    fontFamily: fonts.displaySemi,
+    fontSize: 22,
+    fontFamily: fonts.display,
     color: colors.midGrey,
-    marginLeft: spacing.xs,
+    marginLeft: spacing.sm,
   },
   inputHelper: {
     fontSize: 12,
@@ -473,9 +512,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   explanationInput: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
@@ -484,7 +526,7 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   statusBadge: {
@@ -493,16 +535,18 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.xs,
   },
   statusActive: {
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
   },
   statusInactive: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   statusWarning: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
   },
   statusText: {
     fontSize: 13,
@@ -512,30 +556,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.tagEmberBg,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.md,
     padding: spacing.md,
     gap: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.ember,
     marginBottom: spacing.lg,
   },
   addEvidenceText: {
     fontSize: 15,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.tagExpenseText,
     flex: 1,
   },
+  deleteButton: {
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,69,0,0.2)',
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    fontFamily: fonts.displaySemi,
+    color: '#FF4500',
+  },
   footer: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
     paddingBottom: 34,
-    borderTopWidth: 1,
-    borderTopColor: colors.mist,
   },
   saveButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.full,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -547,6 +600,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.background,
+    color: colors.white,
   },
 });

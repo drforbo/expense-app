@@ -14,11 +14,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../../lib/supabase';
 import { apiPost, apiUpload } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface Statement {
   id: string;
@@ -204,11 +205,11 @@ export default function MonthDetailScreen({ navigation, route }: any) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return { label: 'Completed', bg: colors.tagGreenBg, color: colors.tagGreenText };
+        return { label: 'Completed', bg: colors.tagIncomeBg, color: colors.tagIncomeText };
       case 'processing':
-        return { label: 'Processing', bg: colors.tagEmberBg, color: colors.tagEmberText };
+        return { label: 'Processing', bg: colors.tagExpenseBg, color: colors.tagExpenseText };
       default:
-        return { label: 'Pending', bg: 'rgba(255,255,255,0.1)', color: colors.midGrey };
+        return { label: 'Pending', bg: colors.surface, color: colors.midGrey };
     }
   };
 
@@ -221,47 +222,93 @@ export default function MonthDetailScreen({ navigation, route }: any) {
     });
   };
 
+  // Extract editorial month name from monthLabel (e.g. "February 2026" -> "february.")
+  const editorialMonth = monthLabel.split(' ')[0].toLowerCase() + '.';
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{monthLabel}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      {/* Gradient Header Block */}
+      <LinearGradient
+        colors={gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        {/* Flare overlays */}
+        <View style={styles.flareTopRight} />
+        <View style={styles.flareBottomLeft} />
+
+        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
+          <View style={styles.headerInner}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backArrow}>{'<'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.screenLabel}>MONTH DETAIL</Text>
+            <Text style={styles.heading}>{editorialMonth}</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Add Statement CTA */}
         <TouchableOpacity
-          style={[styles.addButton, uploading && styles.addButtonDisabled]}
           onPress={handleAddStatement}
           disabled={uploading}
           activeOpacity={0.8}
+          style={{ marginBottom: spacing.lg, opacity: uploading ? 0.7 : 1 }}
         >
-          {uploading ? (
-            <View style={styles.addButtonContent}>
-              <ActivityIndicator color={colors.background} size="small" />
-              <Text style={styles.addButtonText}>Uploading...</Text>
-            </View>
-          ) : (
-            <View style={styles.addButtonContent}>
-              <Ionicons name="add-circle" size={22} color={colors.background} />
-              <Text style={styles.addButtonText}>Add Statement</Text>
-            </View>
-          )}
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.addButton}
+          >
+            {uploading ? (
+              <View style={styles.addButtonContent}>
+                <ActivityIndicator color={colors.white} size="small" />
+                <Text style={styles.addButtonText}>Uploading...</Text>
+              </View>
+            ) : (
+              <View style={styles.addButtonContent}>
+                <Ionicons name="add-circle" size={22} color={colors.white} />
+                <Text style={styles.addButtonText}>Add Statement</Text>
+              </View>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
+
+        {/* Summary Stats */}
+        {statements.length > 0 && (
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{statements.length}</Text>
+              <Text style={styles.statLabel}>Statements</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>
+                {statements.filter(s => s.status === 'completed').length}
+              </Text>
+              <Text style={styles.statLabel}>Processed</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>
+                {statements.reduce((sum, s) => sum + (s.transaction_count || 0), 0)}
+              </Text>
+              <Text style={styles.statLabel}>Transactions</Text>
+            </View>
+          </View>
+        )}
 
         {/* Statements List */}
         <Text style={styles.sectionTitle}>Uploaded Statements</Text>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.gradientMid} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color={colors.midGrey} />
+            <Ionicons name="document-outline" size={48} color={colors.muted} />
             <Text style={styles.emptyText}>No statements for {monthLabel}</Text>
             <Text style={styles.emptySubtext}>
               Tap "Add Statement" to upload a PDF bank statement
@@ -275,7 +322,7 @@ export default function MonthDetailScreen({ navigation, route }: any) {
             return (
               <View key={stmt.id} style={styles.statementCard}>
                 <View style={styles.statementIcon}>
-                  <Ionicons name="document-text" size={24} color={colors.ember} />
+                  <Text style={{ fontSize: 20 }}>📄</Text>
                 </View>
 
                 <View style={styles.statementInfo}>
@@ -345,7 +392,7 @@ export default function MonthDetailScreen({ navigation, route }: any) {
               value={bankName}
               onChangeText={handleBankNameChange}
               placeholder="e.g. Barclays, Monzo, HSBC..."
-              placeholderTextColor="rgba(250,250,250,0.3)"
+              placeholderTextColor={colors.muted}
               autoFocus
               autoCapitalize="words"
               returnKeyType="done"
@@ -419,10 +466,18 @@ export default function MonthDetailScreen({ navigation, route }: any) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.modalConfirm}
+                style={styles.modalConfirmWrap}
                 onPress={handleUploadConfirm}
+                activeOpacity={0.8}
               >
-                <Text style={styles.modalConfirmText}>Upload</Text>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalConfirm}
+                >
+                  <Text style={styles.modalConfirmText}>Upload</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -435,45 +490,75 @@ export default function MonthDetailScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
+  headerGradient: {
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    overflow: 'hidden',
+  },
+  flareTopRight: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  flareBottomLeft: {
+    position: 'absolute',
+    bottom: -30,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  headerInner: {
+    paddingTop: spacing.sm,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
-  headerTitle: {
+  backArrow: {
     fontFamily: fonts.display,
     fontSize: 18,
-    color: colors.ink,
+    color: colors.white,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.xs,
+  },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.white,
+    letterSpacing: -1.5,
+    lineHeight: 34,
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   addButton: {
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     paddingVertical: 16,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    ...shadows.md,
-  },
-  addButtonDisabled: {
-    opacity: 0.7,
+    paddingHorizontal: spacing.xl,
   },
   addButtonContent: {
     flexDirection: 'row',
@@ -482,16 +567,42 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   addButtonText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 15,
-    color: colors.background,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.white,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.ink,
+    letterSpacing: -0.5,
+  },
+  statLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.midGrey,
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
+    fontSize: 13,
+    color: colors.midGrey,
     marginBottom: spacing.md,
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     textTransform: 'uppercase',
   },
   loadingContainer: {
@@ -502,8 +613,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    ...shadows.sm,
+    borderRadius: borderRadius.lg,
   },
   emptyText: {
     fontFamily: fonts.bodyBold,
@@ -513,8 +623,8 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontFamily: fonts.body,
-    color: colors.mist,
-    fontSize: 14,
+    color: colors.muted,
+    fontSize: 16,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -523,31 +633,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   statementIcon: {
     width: 44,
     height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.tagEmberBg,
+    borderRadius: 22,
+    backgroundColor: colors.tagExpenseBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statementInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   bankName: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 2,
   },
   filename: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     marginBottom: spacing.xs,
   },
@@ -559,17 +668,17 @@ const styles = StyleSheet.create({
   statusBadge: {
     borderRadius: borderRadius.xs,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   statusText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   txCount: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
   },
   deleteButton: {
@@ -581,20 +690,21 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    padding: spacing.xl,
+    paddingBottom: 40,
   },
   modalTitle: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 22,
     color: colors.ink,
+    letterSpacing: -0.2,
     marginBottom: spacing.xs,
   },
   modalSubtitle: {
@@ -604,34 +714,37 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   bankInput: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
+    padding: spacing.lg,
     fontFamily: fonts.body,
     fontSize: 16,
     color: colors.ink,
     marginBottom: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   suggestionsContainer: {
     marginBottom: spacing.md,
   },
   suggestionChip: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xs,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: spacing.xs,
     marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   suggestionText: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.white,
+    color: colors.ink,
   },
   previousBankChip: {
     backgroundColor: colors.tagBlueBg,
+    borderColor: colors.tagBlueBg,
   },
   previousBankText: {
     color: colors.tagBlueText,
@@ -641,11 +754,11 @@ const styles = StyleSheet.create({
   },
   commonBanksLabel: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
   },
   commonBanksGrid: {
     flexDirection: 'row',
@@ -655,33 +768,33 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   modalCancel: {
     flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: colors.white,
-    borderRadius: borderRadius.sm,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
     paddingVertical: 14,
     alignItems: 'center',
   },
   modalCancelText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 14,
-    color: colors.white,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  modalConfirmWrap: {
+    flex: 1,
   },
   modalConfirm: {
-    flex: 1,
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
     paddingVertical: 14,
     alignItems: 'center',
-    ...shadows.sm,
   },
   modalConfirmText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 14,
-    color: colors.background,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.white,
   },
 });

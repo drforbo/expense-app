@@ -11,9 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { supabase } from '../../lib/supabase';
-import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { apiPost, API_URL } from '../../lib/api';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface UserProfile {
   work_type: string;
@@ -54,6 +57,7 @@ const GOAL_LABELS: Record<string, string> = {
 export default function SettingsScreen({ navigation }: any) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -68,6 +72,7 @@ export default function SettingsScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserEmail(user.email || '');
+      setUserName(user.user_metadata?.full_name || user.user_metadata?.first_name || '');
 
       const { data } = await supabase
         .from('user_profiles')
@@ -88,11 +93,46 @@ export default function SettingsScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const data = await apiPost('/api/export_transactions', { user_id: user.id, format: 'csv' });
-      if (data.error) throw new Error('Export failed');
-      Alert.alert('Export ready', 'Your transactions have been exported. Check your downloads.');
-    } catch (error) {
-      Alert.alert('Export failed', 'Please try again.');
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      // Download ZIP bundle (CSV + receipts)
+      const fileUri = `${FileSystem.cacheDirectory}bopp_export.zip`;
+      const result = await FileSystem.downloadAsync(
+        `${API_URL}/api/export_bundle`,
+        fileUri,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          httpMethod: 'POST',
+          body: JSON.stringify({ user_id: user.id }),
+        }
+      );
+
+      if (result.status === 404) {
+        Alert.alert('Nothing to export', 'Upload some bank statements first, then you can export your transactions.');
+        return;
+      }
+      if (result.status !== 200) {
+        throw new Error('Export failed');
+      }
+
+      // Open share sheet so user can save/send the ZIP
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(result.uri, {
+          mimeType: 'application/zip',
+          dialogTitle: 'Export transactions & receipts',
+          UTI: 'public.zip-archive',
+        });
+      } else {
+        Alert.alert('Export ready', 'File saved but sharing is not available on this device.');
+      }
+    } catch (error: any) {
+      console.error('Export error:', error);
+      Alert.alert('Export failed', error.message || 'Please try again.');
     } finally {
       setExporting(false);
     }
@@ -115,7 +155,7 @@ export default function SettingsScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.ember} />
+          <ActivityIndicator color={colors.gradientMid} />
         </View>
       </SafeAreaView>
     );
@@ -125,65 +165,73 @@ export default function SettingsScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>bopp.</Text>
-          <Text style={styles.headerSub}>Settings</Text>
-        </View>
+        {/* Screen label + wordmark */}
+        <Text style={styles.screenLabel}>SETTINGS</Text>
+        <Text style={styles.logo}>bopp.</Text>
 
         {/* Account */}
         <View style={styles.accountCard}>
-          <View style={styles.accountAvatar}>
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.accountAvatar}
+          >
             <Text style={styles.accountAvatarText}>
-              {userEmail.charAt(0).toUpperCase()}
+              {(userName || userEmail).charAt(0).toUpperCase()}
             </Text>
-          </View>
+          </LinearGradient>
           <View style={{ flex: 1 }}>
+            <Text style={styles.accountName}>{userName || userEmail.split('@')[0]}</Text>
             <Text style={styles.accountEmail}>{userEmail}</Text>
-            <Text style={styles.accountPlan}>
-              {profile ? (GOAL_LABELS[profile.tracking_goal] || profile.tracking_goal) : ''}
-            </Text>
           </View>
         </View>
 
         {/* Export */}
         <Text style={styles.sectionLabel}>EXPORT</Text>
-        <TouchableOpacity style={styles.exportCard} onPress={handleExport} activeOpacity={0.8} disabled={exporting}>
-          <View style={styles.exportIcon}>
-            {exporting
-              ? <ActivityIndicator size="small" color={colors.background} />
-              : <Ionicons name="download-outline" size={22} color={colors.background} />
-            }
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.exportTitle}>Export transactions</Text>
-            <Text style={styles.exportSub}>Download as CSV with evidence</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.background} />
+        <TouchableOpacity onPress={handleExport} activeOpacity={0.8} disabled={exporting}>
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.exportCard}
+          >
+            <View style={styles.exportIcon}>
+              {exporting
+                ? <ActivityIndicator size="small" color={colors.white} />
+                : <Ionicons name="download-outline" size={22} color={colors.white} />
+              }
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.exportTitle}>Export transactions</Text>
+              <Text style={styles.exportSub}>CSV + receipt images as ZIP</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.white} />
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Profile */}
-        <Text style={[styles.sectionLabel, { marginTop: spacing.lg }]}>YOUR PROFILE</Text>
+        <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>YOUR PROFILE</Text>
         <View style={styles.profileCard}>
           <ProfileRow
             label="Work type"
-            value={profile ? (WORK_TYPE_LABELS[profile.work_type] || profile.custom_work_type || profile.work_type) : '—'}
+            value={profile ? (WORK_TYPE_LABELS[profile.work_type] || profile.custom_work_type || profile.work_type) : '--'}
           />
           <ProfileRow
             label="HMRC registration"
-            value={profile ? (GOAL_LABELS[profile.tracking_goal] || '—') : '—'}
+            value={profile ? (GOAL_LABELS[profile.tracking_goal] || '--') : '--'}
           />
           <ProfileRow
             label="Monthly income"
-            value={profile ? `£${profile.monthly_income?.toLocaleString()}` : '—'}
+            value={profile ? `\u00A3${profile.monthly_income?.toLocaleString()}` : '--'}
           />
           <ProfileRow
             label="Employment income"
-            value={profile?.has_other_employment ? `£${(profile.employment_income || 0).toLocaleString()}/yr` : 'None'}
+            value={profile?.has_other_employment ? `\u00A3${(profile.employment_income || 0).toLocaleString()}/yr` : 'None'}
           />
           <ProfileRow
             label="Student loan"
-            value={profile ? (LOAN_LABELS[profile.student_loan_plan] || 'None') : '—'}
+            value={profile ? (LOAN_LABELS[profile.student_loan_plan] || 'None') : '--'}
           />
           <ProfileRow
             label="Works from home"
@@ -198,12 +246,12 @@ export default function SettingsScreen({ navigation }: any) {
 
         <TouchableOpacity style={styles.editProfileBtn} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.editProfileText}>Edit tax profile</Text>
-          <Ionicons name="pencil" size={14} color={colors.ember} />
+          <Ionicons name="pencil" size={14} color={colors.gradientMid} />
         </TouchableOpacity>
 
-        {/* Danger zone */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={18} color={colors.ember} />
+        {/* Log out */}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
+          <Ionicons name="log-out-outline" size={18} color={colors.gradientMid} />
           <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
 
@@ -230,17 +278,17 @@ const profileRowStyles = StyleSheet.create({
   },
   border: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: colors.border,
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     flex: 1,
   },
   value: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     textAlign: 'right',
     flex: 1,
@@ -250,7 +298,7 @@ const profileRowStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   loading: {
     flex: 1,
@@ -258,102 +306,97 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
     paddingBottom: 100,
   },
-  header: {
-    marginBottom: spacing.xl,
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.xs,
   },
   logo: {
     fontFamily: fonts.display,
-    fontSize: 28,
+    fontSize: 38,
     color: colors.ink,
-    letterSpacing: -1,
-    marginBottom: 2,
-  },
-  headerSub: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.midGrey,
+    letterSpacing: -2,
+    lineHeight: 44,
+    marginBottom: spacing.xl,
   },
   accountCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141414',
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.xl,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   accountAvatar: {
-    width: 46,
-    height: 46,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.ink,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   accountAvatarText: {
     fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.volt,
+    fontSize: 18,
+    color: colors.white,
   },
-  accountEmail: {
+  accountName: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 2,
   },
-  accountPlan: {
+  accountEmail: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
   },
   sectionLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: colors.midGrey,
-    letterSpacing: 1.4,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   exportCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.volt,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   exportIcon: {
     width: 44,
     height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.xl,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   exportTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.background,
+    fontSize: 16,
+    color: colors.white,
     marginBottom: 2,
   },
   exportSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: 'rgba(10,10,10,0.5)',
+    color: 'rgba(255,255,255,0.6)',
   },
   profileCard: {
-    backgroundColor: '#141414',
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: spacing.lg,
   },
   editProfileBtn: {
     flexDirection: 'row',
@@ -365,8 +408,8 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ember,
+    fontSize: 16,
+    color: colors.gradientMid,
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -374,15 +417,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginTop: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
+    paddingVertical: 14,
+    borderRadius: borderRadius.full,
     borderWidth: 1.5,
-    borderColor: `${colors.ember}30`,
-    backgroundColor: `${colors.ember}08`,
+    borderColor: 'rgba(255,69,0,0.2)',
+    backgroundColor: colors.background,
   },
   logoutText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.ember,
+    fontSize: 16,
+    color: colors.gradientMid,
   },
 });

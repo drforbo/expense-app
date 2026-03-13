@@ -11,8 +11,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fonts, spacing, borderRadius } from '../../lib/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 import { apiPost } from '../../lib/api';
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  'Office Supplies': '🖊️', 'Travel': '✈️', 'Meals': '🍽️', 'Software': '💻',
+  'Marketing': '📣', 'Insurance': '🛡️', 'Utilities': '⚡', 'Rent': '🏠',
+  'Professional Services': '👔', 'Training': '📚', 'Equipment': '🔧',
+  'Phone': '📱', 'Internet': '🌐', 'Subscriptions': '🔄', 'Bank Fees': '🏦',
+  'Transport': '🚗', 'Clothing': '👕', 'Entertainment': '🎭', 'Health': '💊',
+  'Gifts': '🎁', 'Income': '💰', 'Other': '📋',
+};
+const getCategoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] || '📋';
 
 const CATEGORY_LABELS: Record<string, string> = {
   supplies: 'Supplies & Equipment',
@@ -216,7 +227,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
             styles.categoryPillText,
             type === 'business' ? styles.businessPillText : styles.personalPillText
           ]} numberOfLines={1}>
-            {CATEGORY_LABELS[item.auto_category_id] || item.auto_category_name || 'Unknown'}
+            {getCategoryEmoji(CATEGORY_LABELS[item.auto_category_id] || item.auto_category_name || '')} {CATEGORY_LABELS[item.auto_category_id] || item.auto_category_name || 'Unknown'}
           </Text>
         </View>
       </View>
@@ -246,7 +257,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
           <Ionicons
             name={type === 'business' ? 'close-circle' : 'checkmark-circle'}
             size={20}
-            color={type === 'business' ? colors.midGrey : colors.acidLime}
+            color={type === 'business' ? colors.midGrey : colors.positive}
           />
         </TouchableOpacity>
       )}
@@ -299,7 +310,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
             navigation.navigate('TransactionList');
           }}
         >
-          <Text style={styles.groupActionText}>It's a mix</Text>
+          <Text style={styles.groupActionMixText}>It's a mix</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -309,7 +320,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.coralBlaze} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
           <Text style={styles.loadingText}>Loading transactions...</Text>
         </View>
       </SafeAreaView>
@@ -321,19 +332,24 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.white} />
+          <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Review & Categorize</Text>
+        <Text style={styles.screenLabel}>REVIEW</Text>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      {/* Hero heading */}
+      <View style={styles.heroContainer}>
+        <Text style={styles.heroHeading}>{'review\ncategories.'}</Text>
+      </View>
+
+      <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentContainer}>
         {/* Learning phase indicator */}
         <View style={styles.phaseCard}>
           <View style={styles.phaseRow}>
             <Ionicons
               name={learningPhase >= 3 ? 'sparkles' : learningPhase >= 2 ? 'trending-up' : 'school'}
               size={20}
-              color={colors.acidLime}
+              color={colors.gradientMid}
             />
             <Text style={styles.phaseText}>
               {learningPhase === 1
@@ -344,41 +360,53 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
             </Text>
           </View>
           <View style={styles.phaseBar}>
-            <View style={[styles.phaseFill, {
-              width: `${learningPhase === 3 ? 100 : learningPhase === 2
-                ? ((totalConfirmed - 50) / 150 * 100)
-                : (totalConfirmed / 50 * 100)}%`
-            }]} />
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.phaseFill, {
+                width: `${learningPhase === 3 ? 100 : learningPhase === 2
+                  ? ((totalConfirmed - 50) / 150 * 100)
+                  : (totalConfirmed / 50 * 100)}%`
+              }]}
+            />
           </View>
         </View>
 
         {/* Run smart categorization if pending */}
         {pendingCount > 0 && (
           <TouchableOpacity
-            style={[styles.categorizeButton, categorizing && styles.buttonDisabled]}
+            style={[styles.categorizeButtonWrap, categorizing && styles.buttonDisabled]}
             onPress={handleSmartCategorize}
             disabled={categorizing}
           >
-            {categorizing ? (
-              <>
-                <ActivityIndicator size="small" color={colors.background} />
-                <Text style={styles.categorizeButtonText}>Categorizing {pendingCount} transactions...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="sparkles" size={20} color={colors.background} />
-                <Text style={styles.categorizeButtonText}>
-                  Smart categorize {pendingCount} transaction{pendingCount !== 1 ? 's' : ''}
-                </Text>
-              </>
-            )}
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              {categorizing ? (
+                <>
+                  <ActivityIndicator size="small" color={colors.white} />
+                  <Text style={styles.gradientButtonText}>Categorizing {pendingCount} transactions...</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="sparkles" size={20} color={colors.white} />
+                  <Text style={styles.gradientButtonText}>
+                    Smart categorize {pendingCount} transaction{pendingCount !== 1 ? 's' : ''}
+                  </Text>
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
         {/* Nothing to review */}
         {totalAutoCount === 0 && totalReviewCount === 0 && pendingCount === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="checkmark-circle" size={48} color={colors.acidLime} />
+            <Ionicons name="checkmark-circle" size={48} color={colors.positive} />
             <Text style={styles.emptyTitle}>All caught up!</Text>
             <Text style={styles.emptySubtext}>No transactions to review</Text>
           </View>
@@ -392,7 +420,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
               onPress={() => setExpandedSection(expandedSection === 'business' ? null : 'business')}
             >
               <View style={styles.sectionHeaderLeft}>
-                <View style={[styles.statusDot, { backgroundColor: colors.acidLime }]} />
+                <View style={[styles.statusDot, { backgroundColor: colors.positive }]} />
                 <Text style={styles.sectionTitle}>Business expenses</Text>
                 <View style={styles.countBadge}>
                   <Text style={styles.countBadgeText}>{autoBusiness.length}</Text>
@@ -411,14 +439,21 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
                   {autoBusiness.map(t => renderTransactionRow(t, learningPhase <= 2, 'business'))}
                 </View>
                 <TouchableOpacity
-                  style={[styles.confirmAllButton, confirming && styles.buttonDisabled]}
+                  style={[styles.confirmAllButtonWrap, confirming && styles.buttonDisabled]}
                   onPress={() => handleConfirmAll(autoBusiness, 'business')}
                   disabled={confirming}
                 >
-                  <Ionicons name="checkmark-done" size={20} color={colors.background} />
-                  <Text style={styles.confirmAllText}>
-                    {confirming ? 'Confirming...' : `Confirm all ${autoBusiness.length} as business`}
-                  </Text>
+                  <LinearGradient
+                    colors={gradients.primary}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.gradientButton}
+                  >
+                    <Ionicons name="checkmark-done" size={20} color={colors.white} />
+                    <Text style={styles.gradientButtonText}>
+                      {confirming ? 'Confirming...' : `Confirm all ${autoBusiness.length} as business`}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </>
             )}
@@ -452,12 +487,12 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
                   {autoPersonal.map(t => renderTransactionRow(t, learningPhase <= 2, 'personal'))}
                 </View>
                 <TouchableOpacity
-                  style={[styles.confirmAllButtonPersonal, confirming && styles.buttonDisabled]}
+                  style={[styles.confirmAllPersonalButton, confirming && styles.buttonDisabled]}
                   onPress={() => handleConfirmAll(autoPersonal, 'personal')}
                   disabled={confirming}
                 >
-                  <Ionicons name="checkmark-done" size={20} color={colors.white} />
-                  <Text style={styles.confirmAllTextPersonal}>
+                  <Ionicons name="checkmark-done" size={20} color={colors.ink} />
+                  <Text style={styles.confirmAllPersonalText}>
                     {confirming ? 'Confirming...' : `Confirm all ${autoPersonal.length} as personal`}
                   </Text>
                 </TouchableOpacity>
@@ -471,7 +506,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionHeaderLeft}>
-                <View style={[styles.statusDot, { backgroundColor: colors.warmAmber }]} />
+                <View style={[styles.statusDot, { backgroundColor: colors.gradientMid }]} />
                 <Text style={styles.sectionTitle}>Needs your input</Text>
                 <View style={styles.countBadge}>
                   <Text style={styles.countBadgeText}>{totalReviewCount}</Text>
@@ -500,39 +535,62 @@ const styles = StyleSheet.create({
   loadingText: {
     color: colors.midGrey,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 20,
     paddingVertical: spacing.md,
     gap: spacing.md,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  headerTitle: {
-    fontSize: 20,
+  backArrow: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.ink,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+  },
+  heroContainer: {
+    paddingHorizontal: 20,
+    marginBottom: spacing.xl,
+  },
+  heroHeading: {
+    fontSize: 36,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
+    lineHeight: 40,
+    letterSpacing: -0.5,
   },
-  content: {
+  contentScroll: {
     flex: 1,
   },
   contentContainer: {
-    padding: spacing.lg,
+    paddingHorizontal: 20,
     paddingBottom: 40,
   },
   phaseCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
     borderColor: colors.border,
   },
   phaseRow: {
@@ -542,62 +600,65 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   phaseText: {
-    color: colors.white,
+    color: colors.ink,
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 16,
   },
   phaseBar: {
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.border,
     borderRadius: 2,
     overflow: 'hidden',
   },
   phaseFill: {
     height: '100%',
-    backgroundColor: colors.acidLime,
     borderRadius: 2,
   },
-  categorizeButton: {
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
+  categorizeButtonWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
     marginBottom: spacing.lg,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  categorizeButtonText: {
-    color: colors.background,
-    fontFamily: fonts.display,
-    fontSize: 16,
+  gradientButton: {
+    borderRadius: borderRadius.full,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  gradientButtonText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '800',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.xxxl,
     gap: spacing.md,
   },
   emptyTitle: {
     fontSize: 22,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
+    letterSpacing: -0.2,
   },
   emptySubtext: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
   section: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xxl,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
@@ -610,33 +671,35 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: fonts.displaySemi,
-    color: colors.white,
+    color: colors.ink,
   },
   countBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   countBadgeText: {
     fontSize: 13,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   transactionList: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   transactionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -645,12 +708,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   merchantName: {
-    fontSize: 15,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
+    fontSize: 16,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   transactionDate: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
     marginTop: 2,
@@ -660,31 +723,34 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   transactionAmount: {
-    fontSize: 15,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
+    fontSize: 16,
+    fontFamily: fonts.bodyBold,
+    color: colors.negative,
   },
   incomeAmount: {
-    color: colors.acidLime,
+    color: colors.positive,
   },
   categoryPill: {
-    borderRadius: 8,
+    borderRadius: borderRadius.xs,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    maxWidth: 130,
+    paddingVertical: 3,
+    maxWidth: 160,
   },
   businessPill: {
-    backgroundColor: colors.tagVoltBg,
+    backgroundColor: colors.tagExpenseBg,
   },
   personalPill: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   categoryPillText: {
     fontSize: 11,
     fontFamily: fonts.body,
+    letterSpacing: 0.2,
   },
   businessPillText: {
-    color: colors.tagVoltText,
+    color: colors.tagExpenseText,
   },
   personalPillText: {
     color: colors.midGrey,
@@ -693,53 +759,43 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     marginLeft: spacing.sm,
   },
-  confirmAllButton: {
-    backgroundColor: colors.acidLime,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+  confirmAllButtonWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+    marginTop: spacing.md,
+  },
+  confirmAllPersonalButton: {
+    backgroundColor: 'transparent',
+    borderRadius: borderRadius.full,
+    padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  confirmAllText: {
-    color: colors.background,
-    fontFamily: fonts.display,
-    fontSize: 15,
-  },
-  confirmAllButtonPersonal: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-    borderWidth: 1,
+    marginTop: spacing.md,
+    borderWidth: 1.5,
     borderColor: colors.border,
   },
-  confirmAllTextPersonal: {
-    color: colors.white,
-    fontFamily: fonts.display,
+  confirmAllPersonalText: {
+    color: colors.ink,
+    fontFamily: fonts.bodyBold,
     fontSize: 15,
   },
   groupCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1.5,
     borderColor: colors.border,
   },
   groupHeader: {
     marginBottom: spacing.md,
   },
   groupMerchant: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
   },
   groupSubtext: {
     fontSize: 13,
@@ -753,33 +809,42 @@ const styles = StyleSheet.create({
   },
   groupActionPersonal: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm + 2,
+    backgroundColor: 'transparent',
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.md,
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   groupActionBusiness: {
     flex: 1,
-    backgroundColor: colors.tagVoltBg,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm + 2,
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   groupActionMix: {
     flex: 1,
-    backgroundColor: 'rgba(255,170,82,0.15)',
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm + 2,
+    backgroundColor: 'transparent',
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.md,
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   groupActionText: {
     fontSize: 13,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   groupActionBusinessText: {
     fontSize: 13,
-    fontFamily: fonts.displaySemi,
-    color: colors.acidLime,
+    fontFamily: fonts.bodyBold,
+    color: colors.tagExpenseText,
+  },
+  groupActionMixText: {
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
 });

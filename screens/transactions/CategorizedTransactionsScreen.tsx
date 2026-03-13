@@ -9,9 +9,20 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  'Office Supplies': '\u{1F58A}\uFE0F', 'Travel': '\u2708\uFE0F', 'Meals': '\u{1F37D}\uFE0F', 'Software': '\u{1F4BB}',
+  'Marketing': '\u{1F4E3}', 'Insurance': '\u{1F6E1}\uFE0F', 'Utilities': '\u26A1', 'Rent': '\u{1F3E0}',
+  'Professional Services': '\u{1F454}', 'Training': '\u{1F4DA}', 'Equipment': '\u{1F527}',
+  'Phone': '\u{1F4F1}', 'Internet': '\u{1F310}', 'Subscriptions': '\u{1F504}', 'Bank Fees': '\u{1F3E6}',
+  'Transport': '\u{1F697}', 'Clothing': '\u{1F455}', 'Entertainment': '\u{1F3AD}', 'Health': '\u{1F48A}',
+  'Gifts': '\u{1F381}', 'Income': '\u{1F4B0}', 'Other': '\u{1F4CB}',
+};
+const getCategoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] || '\u{1F4CB}';
 
 interface Transaction {
   id: string;
@@ -65,7 +76,7 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
   };
 
   const formatCurrency = (amount: number) => {
-    return `£${Math.abs(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `\u00A3${Math.abs(amount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -75,9 +86,36 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
     });
   };
 
+  const renderFilterTab = (filter: 'all' | 'expense' | 'income', label: string) => {
+    const isActive = activeFilter === filter;
+    return (
+      <TouchableOpacity
+        key={filter}
+        activeOpacity={0.8}
+        onPress={() => setActiveFilter(filter)}
+      >
+        {isActive ? (
+          <LinearGradient
+            colors={gradients.primary as unknown as [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.filterTabPill}
+          >
+            <Text style={styles.filterTabTextActive}>{label}</Text>
+          </LinearGradient>
+        ) : (
+          <View style={styles.filterTabOutlined}>
+            <Text style={styles.filterTabText}>{label}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const isIncome = item.transaction_type === 'income';
     const businessAmount = Math.abs(item.amount) * (item.business_percent / 100);
+    const taxSaving = !isIncome ? businessAmount * 0.2 : 0;
 
     return (
       <TouchableOpacity
@@ -86,20 +124,21 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
           transactionId: item.id,
           transactionType: item.transaction_type,
         })}
+        activeOpacity={0.7}
       >
-        <View style={[styles.transactionIcon, { backgroundColor: isIncome ? colors.tagGreenBg : colors.tagEmberBg }]}>
-          <Ionicons
-            name={isIncome ? 'trending-up' : 'receipt-outline'}
-            size={20}
-            color={isIncome ? colors.tagGreenText : colors.ember}
-          />
+        <View style={[styles.transactionIcon, { backgroundColor: isIncome ? colors.tagIncomeBg : colors.tagExpenseBg }]}>
+          <Text style={styles.emojiIcon}>{getCategoryEmoji(isIncome ? 'Income' : (item.category_name || 'Other'))}</Text>
         </View>
 
         <View style={styles.transactionDetails}>
           <Text style={styles.merchantName} numberOfLines={1}>{item.merchant_name}</Text>
           <View style={styles.transactionMeta}>
             <Text style={styles.transactionDate}>{formatDate(item.transaction_date)}</Text>
-            <Text style={styles.categoryName}>{item.category_name || 'Uncategorized'}</Text>
+            <View style={[styles.categoryTag, { backgroundColor: isIncome ? colors.tagIncomeBg : colors.tagExpenseBg }]}>
+              <Text style={[styles.categoryTagText, { color: isIncome ? colors.tagIncomeText : colors.tagExpenseText }]}>
+                {item.category_name || 'Uncategorized'}
+              </Text>
+            </View>
             {item.business_percent < 100 && (
               <Text style={styles.businessPercent}>{item.business_percent}%</Text>
             )}
@@ -107,66 +146,54 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
         </View>
 
         <View style={styles.transactionRight}>
-          <Text style={[styles.transactionAmount, { color: isIncome ? colors.tagGreenText : colors.ember }]}>
+          <Text style={[styles.transactionAmount, { color: isIncome ? colors.positive : colors.negative }]}>
             {formatCurrency(businessAmount)}
           </Text>
+          {!isIncome && taxSaving > 0 && (
+            <Text style={styles.taxSaving}>saves {'\u00A3'}{taxSaving.toFixed(2)}</Text>
+          )}
           {!isIncome && !item.qualified && (
             <View style={styles.needsEvidenceBadge}>
-              <Ionicons name="document-text-outline" size={10} color={colors.ember} />
+              <Ionicons name="document-text-outline" size={10} color={colors.tagExpenseText} />
             </View>
           )}
         </View>
 
-        <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+        <Ionicons name="chevron-forward" size={18} color={colors.muted} />
       </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {/* Gradient Header */}
+      <LinearGradient
+        colors={gradients.primary as unknown as [string, string, ...string[]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientHeader}
+      >
+        {/* Flare overlays */}
+        <View style={styles.flareTopRight} />
+        <View style={styles.flareBottomLeft} />
+
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Categorized Transactions</Text>
-        <View style={{ width: 40 }} />
-      </View>
+        <Text style={styles.screenLabel}>CATEGORIZED</Text>
+        <Text style={styles.headerTitle}>{'categorized\ntransactions.'}</Text>
+      </LinearGradient>
 
       {/* Filter Tabs */}
       <View style={styles.filterTabs}>
-        <TouchableOpacity
-          style={[styles.filterTab, activeFilter === 'all' && styles.filterTabActive]}
-          onPress={() => setActiveFilter('all')}
-        >
-          <Text style={[styles.filterTabText, activeFilter === 'all' && styles.filterTabTextActive]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, activeFilter === 'expense' && styles.filterTabActive]}
-          onPress={() => setActiveFilter('expense')}
-        >
-          <Ionicons
-            name="receipt-outline"
-            size={16}
-            color={activeFilter === 'expense' ? colors.white : colors.midGrey}
-          />
-          <Text style={[styles.filterTabText, activeFilter === 'expense' && styles.filterTabTextActive]}>Expenses</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, activeFilter === 'income' && styles.filterTabActive, activeFilter === 'income' && styles.filterTabIncome]}
-          onPress={() => setActiveFilter('income')}
-        >
-          <Ionicons
-            name="trending-up"
-            size={16}
-            color={activeFilter === 'income' ? colors.white : colors.midGrey}
-          />
-          <Text style={[styles.filterTabText, activeFilter === 'income' && styles.filterTabTextActive]}>Income</Text>
-        </TouchableOpacity>
+        {renderFilterTab('all', 'All')}
+        {renderFilterTab('expense', 'Expenses')}
+        {renderFilterTab('income', 'Income')}
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
           <Text style={styles.loadingText}>Loading transactions...</Text>
         </View>
       ) : transactions.length === 0 ? (
@@ -193,57 +220,94 @@ export default function CategorizedTransactionsScreen({ route, navigation }: any
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  // Gradient Header
+  gradientHeader: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+    overflow: 'hidden',
+  },
+  flareTopRight: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,224,128,0.15)',
+  },
+  flareBottomLeft: {
+    position: 'absolute',
+    bottom: -30,
+    left: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   backButton: {
-    padding: spacing.xs,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  backButtonText: {
+    color: colors.white,
+    fontSize: 18,
+    fontFamily: fonts.body,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.bodyBold,
+    marginBottom: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    fontSize: 28,
+    color: colors.white,
+    lineHeight: 34,
   },
+  // Filter tabs
   filterTabs: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    gap: spacing.xs,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
-  filterTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+  filterTabPill: {
+    paddingHorizontal: 18,
     paddingVertical: 10,
-    paddingHorizontal: spacing.sm,
-    ...shadows.sm,
+    borderRadius: borderRadius.full,
   },
-  filterTabActive: {
-    backgroundColor: colors.ink,
-  },
-  filterTabIncome: {
-    backgroundColor: colors.tagGreenText,
+  filterTabOutlined: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   filterTabText: {
-    fontSize: 14,
-    fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.ink,
   },
   filterTabTextActive: {
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
     color: colors.white,
   },
+  // Loading
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -255,6 +319,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
+  // Empty
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -264,67 +329,71 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    color: colors.ink,
     marginTop: spacing.md,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
+  // Transaction list
   listContent: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xs,
     paddingBottom: 100,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: 14,
-    marginBottom: 10,
-    ...shadows.sm,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
   },
   transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
+  },
+  emojiIcon: {
+    fontSize: 18,
   },
   transactionDetails: {
     flex: 1,
   },
   merchantName: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   transactionMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flexWrap: 'wrap',
   },
   transactionDate: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.muted,
   },
-  categoryName: {
-    fontSize: 11,
-    fontFamily: fonts.body,
-    color: colors.tagEmberText,
-    backgroundColor: colors.tagEmberBg,
+  categoryTag: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.xs,
+  },
+  categoryTagText: {
+    fontSize: 10,
+    fontFamily: fonts.bodyBold,
   },
   businessPercent: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -333,12 +402,18 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   transactionAmount: {
-    fontSize: 16,
-    fontFamily: fonts.display,
+    fontSize: 14,
+    fontFamily: fonts.bodyBold,
+  },
+  taxSaving: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.positive,
+    marginTop: 2,
   },
   needsEvidenceBadge: {
-    backgroundColor: colors.tagEmberBg,
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.xs,
     padding: 2,
     marginTop: 4,
   },

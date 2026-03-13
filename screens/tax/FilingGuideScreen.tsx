@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface StepData {
   id: string;
@@ -110,7 +111,7 @@ export default function FilingGuideScreen({ navigation }: any) {
           status: completed.has('register_hmrc') ? 'done' : 'not_started',
           statusLabel: completed.has('register_hmrc') ? 'Done' : 'Action needed',
           icon: 'shield-checkmark-outline',
-          color: colors.ember,
+          color: colors.negative,
         });
       }
 
@@ -142,7 +143,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: uncategorizedCount === 0 && totalCategorized > 0 ? 'done' : uncategorizedCount > 0 ? 'in_progress' : 'not_started',
         statusLabel: uncategorizedCount === 0 && totalCategorized > 0 ? 'All done' : uncategorizedCount > 0 ? `${uncategorizedCount} to review` : 'Waiting for upload',
         icon: 'pricetag-outline',
-        color: colors.volt,
+        color: colors.positive,
         onPress: () => navigation.navigate('TransactionList'),
       });
 
@@ -156,7 +157,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: unqualifiedCount === 0 && totalCategorized > 0 ? 'done' : unqualifiedCount > 0 ? 'in_progress' : 'not_started',
         statusLabel: unqualifiedCount === 0 && totalCategorized > 0 ? 'All done' : unqualifiedCount > 0 ? `${unqualifiedCount} need receipts` : 'No expenses yet',
         icon: 'receipt-outline',
-        color: colors.ember,
+        color: colors.negative,
         onPress: () => navigation.navigate('QualifyTransactionList'),
       });
 
@@ -214,7 +215,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: completed.has('file_return') ? 'done' : 'not_started',
         statusLabel: completed.has('file_return') ? 'Filed!' : `Due ${filingDeadline.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`,
         icon: 'send-outline',
-        color: colors.ember,
+        color: colors.negative,
       });
 
       // Step 9: Pay tax
@@ -225,7 +226,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: completed.has('pay_tax') ? 'done' : 'not_started',
         statusLabel: completed.has('pay_tax') ? 'Paid!' : `Due ${filingDeadline.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`,
         icon: 'card-outline',
-        color: colors.tagGreenText,
+        color: colors.positive,
       });
 
       setSteps(generatedSteps);
@@ -276,18 +277,21 @@ export default function FilingGuideScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          <Text style={styles.backBtnText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Filing guide</Text>
-        <View style={{ width: 36 }} />
+        <Text style={styles.screenLabel}>FILING GUIDE</Text>
+        <View style={{ width: 32 }} />
       </View>
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.ember} />
+          <ActivityIndicator color={colors.gradientMid} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+          {/* Hero heading */}
+          <Text style={styles.heroHeading}>{'filing\nguide.'}</Text>
 
           {/* Progress header */}
           <View style={styles.progressCard}>
@@ -378,7 +382,7 @@ export default function FilingGuideScreen({ navigation }: any) {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.midGrey} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
             <Text style={styles.footerText}>
               This is a general guide — not tax advice. Speak to a qualified accountant for your specific situation.
             </Text>
@@ -393,30 +397,44 @@ export default function FilingGuideScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontFamily: fonts.display,
-    fontSize: 18,
+  backBtnText: {
+    fontSize: 16,
     color: colors.ink,
+    fontFamily: fonts.bodyBold,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+  },
+  heroHeading: {
+    fontFamily: fonts.display,
+    fontSize: 38,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
   },
   loadingWrap: {
     flex: 1,
@@ -424,38 +442,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
     paddingBottom: 48,
   },
   progressCard: {
-    backgroundColor: colors.dark,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.lg,
+    padding: spacing.xl,
     marginBottom: spacing.md,
   },
   progressLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: 6,
   },
   progressTitle: {
     fontFamily: fonts.display,
     fontSize: 22,
-    color: colors.white,
+    color: colors.ink,
     letterSpacing: -0.5,
     marginBottom: spacing.md,
   },
   progressBarBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: colors.border,
   },
   progressBarFill: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.volt,
+    backgroundColor: colors.positive,
   },
   monthBanner: {
     flexDirection: 'row',
@@ -474,10 +495,9 @@ const styles = StyleSheet.create({
   },
   stepCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     marginBottom: spacing.sm,
-    ...shadows.sm,
   },
   stepCardDone: {
     opacity: 0.7,
@@ -491,15 +511,15 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.mist,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
     marginTop: 2,
   },
   stepCircleDone: {
-    backgroundColor: colors.tagGreenText,
-    borderColor: colors.tagGreenText,
+    backgroundColor: colors.positive,
+    borderColor: colors.positive,
   },
   stepNumber: {
     fontFamily: fonts.bodyBold,
@@ -517,7 +537,7 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.ink,
     flex: 1,
     marginRight: 8,
@@ -529,25 +549,25 @@ const styles = StyleSheet.create({
   statusPill: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
-    backgroundColor: colors.mist,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.border,
   },
   statusPillDone: {
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
   },
   statusPillProgress: {
-    backgroundColor: colors.tagVoltBg,
+    backgroundColor: colors.tagExpenseBg,
   },
   statusPillText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
+    fontSize: 13,
     color: colors.midGrey,
   },
   statusPillTextDone: {
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   statusPillTextProgress: {
-    color: colors.ink,
+    color: colors.gradientMid,
   },
   stepDesc: {
     fontFamily: fonts.body,
@@ -557,7 +577,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   stepDescDone: {
-    color: colors.mist,
+    color: colors.muted,
   },
   stepAction: {
     marginTop: 2,
@@ -565,12 +585,12 @@ const styles = StyleSheet.create({
   stepActionText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.ember,
+    color: colors.gradientMid,
   },
   stepToggleHint: {
     fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.mist,
+    fontSize: 13,
+    color: colors.muted,
     marginTop: 2,
   },
   footer: {
@@ -584,7 +604,7 @@ const styles = StyleSheet.create({
   footerText: {
     flex: 1,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.tagBlueText,
     lineHeight: 18,
   },

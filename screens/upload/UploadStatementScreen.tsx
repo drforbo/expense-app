@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 import { apiPost } from '../../lib/api';
 
 interface Statement {
@@ -108,59 +109,79 @@ export default function UploadStatementScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bank Statements</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      {/* Gradient Header Block */}
+      <LinearGradient
+        colors={gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        {/* Flare overlays */}
+        <View style={styles.flareTopRight} />
+        <View style={styles.flareBottomLeft} />
+
+        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
+          <View style={styles.headerInner}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backArrow}>{'<'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.screenLabel}>UPLOAD</Text>
+            <Text style={styles.heading}>{'upload your\nstatement.'}</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Upload Button */}
-        <TouchableOpacity
-          style={[styles.uploadButton, isUploading && styles.uploadButtonDisabled]}
-          onPress={handleUpload}
-          disabled={isUploading}
-          activeOpacity={0.8}
-        >
-          {isUploading ? (
+        {/* Upload Drop Zone */}
+        {isUploading ? (
+          <View style={styles.uploadZone}>
             <View style={styles.uploadingContent}>
-              <ActivityIndicator color={colors.white} size="large" />
+              <ActivityIndicator color={colors.gradientMid} size="large" />
               <Text style={styles.uploadingText}>{getUploadStatusText()}</Text>
               <Text style={styles.uploadingSubtext}>{uploadState.filename}</Text>
               <Text style={styles.uploadingHint}>You can navigate away</Text>
             </View>
-          ) : (
-            <>
-              <View style={styles.uploadIconContainer}>
-                <Ionicons name="cloud-upload" size={40} color={colors.white} />
-              </View>
-              <Text style={styles.uploadText}>Upload PDF Statement</Text>
-              <Text style={styles.uploadSubtext}>Supports most UK bank formats</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.uploadZone}>
+            <Text style={styles.uploadEmoji}>📄</Text>
+            <Text style={styles.uploadZoneTitle}>Drop your PDF here</Text>
+            <Text style={styles.uploadZoneSubtext}>Supports most UK bank formats</Text>
 
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.tagBlueText} />
-          <Text style={styles.infoText}>
-            Download your bank statement as PDF from your banking app or website, then upload it here.
-          </Text>
-        </View>
+            <TouchableOpacity
+              onPress={handleUpload}
+              activeOpacity={0.8}
+              style={{ marginTop: spacing.lg, width: '100%' }}
+            >
+              <LinearGradient
+                colors={gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.uploadButton}
+              >
+                <Ionicons name="cloud-upload" size={20} color={colors.white} style={{ marginRight: spacing.sm }} />
+                <Text style={styles.uploadButtonText}>Choose PDF File</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Support text */}
+        <Text style={styles.supportText}>
+          Download your bank statement as PDF from your banking app or website, then upload it here.
+        </Text>
 
         {/* Previous Uploads */}
         <Text style={styles.sectionTitle}>Previous Uploads</Text>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.gradientMid} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color={colors.midGrey} />
+            <Ionicons name="document-outline" size={48} color={colors.muted} />
             <Text style={styles.emptyText}>No statements uploaded yet</Text>
             <Text style={styles.emptySubtext}>Upload your first bank statement to get started</Text>
           </View>
@@ -168,7 +189,7 @@ export default function UploadStatementScreen({ navigation }: any) {
           statements.map((stmt) => (
             <View key={stmt.id} style={styles.statementCard}>
               <View style={styles.statementIcon}>
-                <Ionicons name="document-text" size={24} color={colors.ember} />
+                <Text style={{ fontSize: 20 }}>📄</Text>
               </View>
               <View style={styles.statementInfo}>
                 <Text style={styles.statementName} numberOfLines={1}>{stmt.filename}</Text>
@@ -178,15 +199,25 @@ export default function UploadStatementScreen({ navigation }: any) {
               </View>
               <View style={[
                 styles.statusBadge,
-                { backgroundColor: stmt.status === 'completed' ? colors.tagGreenText : colors.ember }
+                {
+                  backgroundColor: stmt.status === 'completed' ? colors.tagIncomeBg : colors.tagExpenseBg,
+                }
               ]}>
-                <Text style={styles.statusText}>
+                <Text style={[
+                  styles.statusText,
+                  {
+                    color: stmt.status === 'completed' ? colors.tagIncomeText : colors.tagExpenseText,
+                  }
+                ]}>
                   {stmt.status === 'completed' ? 'Done' : 'Processing'}
                 </Text>
               </View>
             </View>
           ))
         )}
+
+        {/* Bottom spacer */}
+        <View style={{ height: spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -195,111 +226,147 @@ export default function UploadStatementScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
+  headerGradient: {
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    overflow: 'hidden',
+  },
+  flareTopRight: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  flareBottomLeft: {
+    position: 'absolute',
+    bottom: -30,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  headerInner: {
+    paddingTop: spacing.sm,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
-  headerTitle: {
+  backArrow: {
     fontFamily: fonts.display,
     fontSize: 18,
-    color: colors.ink,
+    color: colors.white,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.xs,
+  },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.white,
+    letterSpacing: -1.5,
+    lineHeight: 34,
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
-  uploadButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
+  uploadZone: {
+    borderWidth: 2,
+    borderColor: 'rgba(255,69,0,0.27)',
+    borderStyle: 'dashed',
+    borderRadius: 18,
+    backgroundColor: '#FFF8F5',
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.lg,
-    ...shadows.md,
   },
-  uploadButtonDisabled: {
-    backgroundColor: colors.mist,
-  },
-  uploadIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.lg,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  uploadEmoji: {
+    fontSize: 48,
     marginBottom: spacing.md,
   },
-  uploadText: {
+  uploadZoneTitle: {
     fontFamily: fonts.display,
     fontSize: 20,
-    color: colors.white,
+    color: colors.ink,
+    letterSpacing: -0.3,
     marginBottom: 4,
   },
-  uploadSubtext: {
+  uploadZoneSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.midGrey,
+  },
+  uploadButton: {
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadButtonText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.white,
   },
   uploadingContent: {
     alignItems: 'center',
     paddingVertical: spacing.lg,
   },
   uploadingText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 18,
-    color: colors.white,
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.ink,
+    letterSpacing: -0.2,
     marginTop: spacing.md,
   },
   uploadingSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.midGrey,
     marginTop: 4,
   },
   uploadingHint: {
     fontFamily: fonts.body,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    color: colors.muted,
     marginTop: spacing.sm,
     fontStyle: 'italic',
   },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: colors.tagBlueBg,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  infoText: {
-    flex: 1,
+  supportText: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.tagBlueText,
+    color: colors.midGrey,
     lineHeight: 20,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
+    fontSize: 13,
+    color: colors.midGrey,
     marginBottom: spacing.md,
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     textTransform: 'uppercase',
   },
   loadingContainer: {
@@ -310,8 +377,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    ...shadows.sm,
+    borderRadius: borderRadius.lg,
   },
   emptyText: {
     fontFamily: fonts.bodyBold,
@@ -321,8 +387,8 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontFamily: fonts.body,
-    color: colors.mist,
-    fontSize: 14,
+    color: colors.muted,
+    fontSize: 16,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -331,42 +397,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   statementIcon: {
     width: 44,
     height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.tagEmberBg,
+    borderRadius: 22,
+    backgroundColor: colors.tagExpenseBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statementInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   statementName: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     marginBottom: 4,
   },
   statementMeta: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
   },
   statusBadge: {
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.xs,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   statusText: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
-    color: colors.white,
     textTransform: 'uppercase',
+    letterSpacing: 0.2,
   },
 });

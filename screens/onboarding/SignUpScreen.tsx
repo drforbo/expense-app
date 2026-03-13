@@ -11,8 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface SignUpScreenProps {
   onComplete: (userId: string, email: string) => void;
@@ -88,9 +89,12 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
 
+        {/* Screen label */}
+        <Text style={styles.screenLabel}>SIGN UP</Text>
+
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>{'create your\naccount.'}</Text>
           <Text style={styles.subtitle}>
             Get started for just £2.99
           </Text>
@@ -106,7 +110,7 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
               <TextInput
                 style={styles.input}
                 placeholder="you@example.com"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -127,7 +131,7 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
               <TextInput
                 style={styles.input}
                 placeholder="At least 8 characters"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -157,7 +161,7 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
               <TextInput
                 style={styles.input}
                 placeholder="Re-enter password"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
@@ -171,19 +175,27 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
           </View>
         </View>
 
-        {/* Continue Button */}
+        {/* Continue Button — gradient pill */}
         <TouchableOpacity
-          style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
+          style={styles.continueButtonWrap}
           onPress={handleSignUp}
           disabled={isLoading}
+          activeOpacity={0.85}
         >
           {isLoading ? (
-            <ActivityIndicator color={colors.white} />
+            <View style={styles.continueButtonLoading}>
+              <ActivityIndicator color={colors.white} />
+            </View>
           ) : (
-            <>
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueGradient}
+            >
               <Text style={styles.continueButtonText}>Continue</Text>
               <Ionicons name="arrow-forward" size={20} color={colors.white} />
-            </>
+            </LinearGradient>
           )}
         </TouchableOpacity>
 
@@ -199,37 +211,49 @@ export default function SignUpScreen({ onComplete, onBack }: SignUpScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingTop: 60,
     paddingBottom: 40,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.full,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.xl,
-    ...shadows.sm,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.tagExpenseText,
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.sm,
   },
   header: {
     marginBottom: 40,
   },
   title: {
-    fontSize: 32,
+    fontSize: 38,
     fontFamily: fonts.display,
     color: colors.ink,
-    marginBottom: spacing.xs,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 16,
     color: colors.midGrey,
     fontFamily: fonts.body,
+    marginTop: spacing.sm,
   },
   form: {
     marginBottom: spacing.xl,
@@ -248,15 +272,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.mist,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
   },
   inputIcon: {
     marginLeft: spacing.md,
   },
   input: {
     flex: 1,
-    height: 56,
+    height: 52,
     fontSize: 16,
     color: colors.ink,
     paddingHorizontal: spacing.sm,
@@ -265,17 +290,24 @@ const styles = StyleSheet.create({
   eyeIcon: {
     paddingHorizontal: spacing.md,
   },
-  continueButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
+  continueButtonWrap: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  continueGradient: {
+    paddingVertical: 18,
+    borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
   },
-  continueButtonDisabled: {
-    opacity: 0.5,
+  continueButtonLoading: {
+    backgroundColor: colors.gradientMid,
+    paddingVertical: 18,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   continueButtonText: {
     fontSize: 18,

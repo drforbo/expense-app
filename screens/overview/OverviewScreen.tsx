@@ -9,14 +9,16 @@ import {
   Alert,
   Modal,
   TextInput,
-  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { API_URL } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface CategoryBreakdown {
   category_name: string;
@@ -328,8 +330,8 @@ export default function OverviewScreen({ navigation }: any) {
         .eq('user_id', user.id)
         .single();
 
-      console.log('📊 Profile data:', JSON.stringify(profile, null, 2));
-      console.log('📊 profile_completed value:', profile?.profile_completed);
+      console.log('Profile data:', JSON.stringify(profile, null, 2));
+      console.log('profile_completed value:', profile?.profile_completed);
       setUserProfile(profile);
 
       // Calculate months of data based on transaction dates
@@ -485,24 +487,44 @@ export default function OverviewScreen({ navigation }: any) {
         return;
       }
 
-      const params = new URLSearchParams({
-        user_id: user.id,
-        ...(selectedStartDate && { start_date: selectedStartDate }),
-        ...(selectedEndDate && { end_date: selectedEndDate }),
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Not authenticated');
 
-      const downloadUrl = `${API_URL}/api/download_transactions?${params.toString()}`;
-      const canOpen = await Linking.canOpenURL(downloadUrl);
+      const fileUri = `${FileSystem.cacheDirectory}bopp_export.zip`;
+      const body: Record<string, string> = { user_id: user.id };
+      if (selectedStartDate) body.start_date = selectedStartDate;
+      if (selectedEndDate) body.end_date = selectedEndDate;
 
-      if (canOpen) {
-        await Linking.openURL(downloadUrl);
-        Alert.alert(
-          'Export Started',
-          'The file will download in your browser. You can then save it to Files or share it.',
-          [{ text: 'OK' }]
-        );
+      const result = await FileSystem.downloadAsync(
+        `${API_URL}/api/export_bundle`,
+        fileUri,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          httpMethod: 'POST',
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (result.status === 404) {
+        Alert.alert('Nothing to export', 'Upload some bank statements first, then you can export your transactions.');
+        return;
+      }
+      if (result.status !== 200) {
+        throw new Error('Export failed');
+      }
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(result.uri, {
+          mimeType: 'application/zip',
+          dialogTitle: 'Export transactions & receipts',
+          UTI: 'public.zip-archive',
+        });
       } else {
-        throw new Error('Cannot open browser');
+        Alert.alert('Export ready', 'File saved but sharing is not available on this device.');
       }
 
       fetchLastExportDate();
@@ -583,7 +605,7 @@ export default function OverviewScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ink} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
           <Text style={styles.loadingText}>Loading summary...</Text>
         </View>
       </SafeAreaView>
@@ -596,7 +618,7 @@ export default function OverviewScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Overview</Text>
+            <Text style={styles.screenLabel}>OVERVIEW</Text>
             <Text style={styles.subtitle}>Tax Year {summary.taxYear}</Text>
           </View>
           <TouchableOpacity
@@ -607,11 +629,14 @@ export default function OverviewScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* Hero heading */}
+        <Text style={styles.heroHeading}>{'your\noverview.'}</Text>
+
         {/* Tax Estimate Card - Different for Limited Company */}
         {userProfile?.tracking_goal === 'limited_company' ? (
           <View style={styles.limitedCompanyCard}>
             <View style={styles.taxHeader}>
-              <View style={[styles.taxIconContainer, { backgroundColor: colors.parchment }]}>
+              <View style={[styles.taxIconContainer, { backgroundColor: colors.surface }]}>
                 <Ionicons name="business" size={24} color={colors.ink} />
               </View>
               <Text style={styles.taxLabel}>Limited Company</Text>
@@ -621,7 +646,7 @@ export default function OverviewScreen({ navigation }: any) {
               We're working on bringing corporation tax and director salary calculations to bopp. In the meantime, you can still track and categorize all your business expenses.
             </Text>
             <View style={styles.comingSoonBadge}>
-              <Ionicons name="rocket" size={14} color={colors.ink} />
+              <Ionicons name="rocket" size={14} color={colors.white} />
               <Text style={styles.comingSoonText}>Coming soon to bopp</Text>
             </View>
           </View>
@@ -634,7 +659,7 @@ export default function OverviewScreen({ navigation }: any) {
               <View style={styles.taxCard}>
                 <View style={styles.taxHeader}>
                   <View style={styles.taxIconContainer}>
-                    <Ionicons name="calculator" size={24} color={colors.ember} />
+                    <Ionicons name="calculator" size={24} color={colors.gradientMid} />
                   </View>
                   <Text style={styles.taxLabel}>
                     {userProfile?.has_other_employment && userProfile?.employment_is_paye
@@ -655,7 +680,7 @@ export default function OverviewScreen({ navigation }: any) {
                 {userProfile?.has_other_employment && userProfile?.employment_is_paye && (
                   <View style={styles.payeInfoContainer}>
                     <View style={styles.payeInfoRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.tagGreenText} />
+                      <Ionicons name="checkmark-circle" size={16} color={colors.positive} />
                       <Text style={styles.payeInfoText}>
                         Your PAYE job already handles tax on your £{((userProfile.employment_income || 0) / 1000).toFixed(0)}k salary
                       </Text>
@@ -667,7 +692,7 @@ export default function OverviewScreen({ navigation }: any) {
                 )}
                 {userProfile?.has_other_employment && !userProfile?.employment_is_paye && (
                   <View style={styles.taxInfoRow}>
-                    <Ionicons name="alert-circle-outline" size={14} color={colors.ember} />
+                    <Ionicons name="alert-circle-outline" size={14} color={colors.gradientMid} />
                     <Text style={styles.taxInfoText}>
                       Includes tax on contractor income (£{((userProfile.employment_income || 0) / 1000).toFixed(0)}k/yr) + side hustle
                     </Text>
@@ -678,8 +703,8 @@ export default function OverviewScreen({ navigation }: any) {
               {/* Running Total Tax Card - Based on Actual Transactions */}
               <View style={styles.runningTaxCard}>
                 <View style={styles.taxHeader}>
-                  <View style={[styles.taxIconContainer, { backgroundColor: colors.tagGreenBg }]}>
-                    <Ionicons name="trending-up" size={24} color={colors.tagGreenText} />
+                  <View style={[styles.taxIconContainer, { backgroundColor: colors.tagIncomeBg }]}>
+                    <Ionicons name="trending-up" size={24} color={colors.positive} />
                   </View>
                   <View style={styles.runningTaxLabelContainer}>
                     <Text style={styles.taxLabel}>Tax on Tracked Income</Text>
@@ -688,7 +713,7 @@ export default function OverviewScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.taxAmount, { color: colors.tagGreenText }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
+                <Text style={[styles.taxAmount, { color: colors.positive }]}>{formatCurrency(summary.runningTaxOwed)}</Text>
                 <Text style={styles.taxNote}>
                   Tax Year {summary.taxYear} • Based on {formatCurrency(Math.max(0, (summary.businessIncome + summary.giftedItemsTotal) - summary.businessExpenses))} taxable profit
                 </Text>
@@ -726,7 +751,7 @@ export default function OverviewScreen({ navigation }: any) {
             >
               <View style={styles.profileIncompleteHeader}>
                 <View style={styles.profileIncompleteIconContainer}>
-                  <Ionicons name="calculator-outline" size={28} color={colors.ink} />
+                  <Ionicons name="calculator-outline" size={28} color={colors.gradientMid} />
                 </View>
                 <View style={styles.profileIncompleteHeaderText}>
                   <Text style={styles.profileIncompleteTitle}>Complete your profile</Text>
@@ -761,16 +786,23 @@ export default function OverviewScreen({ navigation }: any) {
                 ))}
               </View>
 
-              <View style={styles.profileIncompleteButton}>
-                <Text style={styles.profileIncompleteButtonText}>Complete Profile</Text>
-                <Ionicons name="arrow-forward" size={18} color={colors.white} />
-              </View>
+              <TouchableOpacity style={styles.profileIncompleteButton} activeOpacity={0.8}>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.profileIncompleteBtnGradient}
+                >
+                  <Text style={styles.profileIncompleteButtonText}>Complete Profile</Text>
+                  <Ionicons name="arrow-forward" size={18} color={colors.white} />
+                </LinearGradient>
+              </TouchableOpacity>
             </TouchableOpacity>
           );
         })()}
 
         {/* Income Section - Always shown */}
-        <Text style={styles.sectionTitle}>Income</Text>
+        <Text style={styles.sectionTitle}>INCOME</Text>
 
         {/* Business Income Card */}
         <TouchableOpacity
@@ -790,7 +822,7 @@ export default function OverviewScreen({ navigation }: any) {
         >
           <View style={styles.incomeHeader}>
             <View style={styles.incomeIconContainer}>
-              <Ionicons name="cash-outline" size={24} color={colors.tagGreenText} />
+              <Ionicons name="cash-outline" size={24} color={colors.positive} />
             </View>
             <View style={styles.incomeInfo}>
               <Text style={styles.incomeLabel}>Business Income</Text>
@@ -824,12 +856,12 @@ export default function OverviewScreen({ navigation }: any) {
           }}
         >
           <View style={styles.incomeHeader}>
-            <View style={[styles.incomeIconContainer, { backgroundColor: colors.tagEmberBg }]}>
-              <Ionicons name="gift-outline" size={24} color={colors.ember} />
+            <View style={[styles.incomeIconContainer, { backgroundColor: colors.tagExpenseBg }]}>
+              <Ionicons name="gift-outline" size={24} color={colors.gradientMid} />
             </View>
             <View style={styles.incomeInfo}>
               <Text style={styles.incomeLabel}>Gifted Items</Text>
-              <Text style={[styles.incomeAmount, { color: colors.ember }]}>{formatCurrency(summary.giftedItemsTotal)}</Text>
+              <Text style={[styles.incomeAmount, { color: colors.gradientMid }]}>{formatCurrency(summary.giftedItemsTotal)}</Text>
               {summary.giftedItemsCount > 0 && (
                 <Text style={styles.giftedItemsCount}>{summary.giftedItemsCount} item{summary.giftedItemsCount !== 1 ? 's' : ''} tracked</Text>
               )}
@@ -870,15 +902,15 @@ export default function OverviewScreen({ navigation }: any) {
                     setShowBreakdownModal(true);
                   }}
                 >
-                  <View style={styles.categoryHeader}>
+                  <View style={styles.categoryHeaderRow}>
                     <Text style={styles.categoryName}>{category.category_name}</Text>
                     <View style={styles.categoryHeaderRight}>
-                      <Text style={[styles.categoryAmount, { color: colors.tagGreenText }]}>{formatCurrency(category.total_amount)}</Text>
+                      <Text style={[styles.categoryAmount, { color: colors.positive }]}>{formatCurrency(category.total_amount)}</Text>
                       <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
                     </View>
                   </View>
-                  <View style={[styles.categoryBarContainer, { backgroundColor: colors.tagGreenBg }]}>
-                    <View style={[styles.categoryBar, { width: `${barWidth}%`, backgroundColor: colors.tagGreenText }]} />
+                  <View style={[styles.categoryBarContainer, { backgroundColor: colors.tagIncomeBg }]}>
+                    <View style={[styles.categoryBar, { width: `${barWidth}%`, backgroundColor: colors.positive }]} />
                   </View>
                   <Text style={styles.categoryCount}>
                     {category.transaction_count} transaction{category.transaction_count !== 1 ? 's' : ''}
@@ -890,7 +922,7 @@ export default function OverviewScreen({ navigation }: any) {
         )}
 
         {/* Expenses Split */}
-        <Text style={styles.sectionTitle}>Expenses</Text>
+        <Text style={styles.sectionTitle}>EXPENSES</Text>
         <View style={styles.expensesRow}>
           <View style={[styles.expenseCard, styles.businessCard]}>
             <View style={styles.expenseIconContainer}>
@@ -919,7 +951,7 @@ export default function OverviewScreen({ navigation }: any) {
           >
             <View style={styles.unqualifiedHeader}>
               <View style={styles.unqualifiedIconContainer}>
-                <Ionicons name="document-text-outline" size={24} color={colors.ember} />
+                <Ionicons name="document-text-outline" size={24} color={colors.gradientMid} />
               </View>
               <View style={styles.unqualifiedInfo}>
                 <Text style={styles.unqualifiedLabel}>Needs Evidence</Text>
@@ -939,7 +971,7 @@ export default function OverviewScreen({ navigation }: any) {
         {/* Category Breakdown */}
         {summary.categoryBreakdown.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Business Expenses by Category</Text>
+            <Text style={styles.sectionTitle}>BUSINESS EXPENSES BY CATEGORY</Text>
             <View style={styles.categoryList}>
               {summary.categoryBreakdown.map((category, index) => {
                 const maxAmount = summary.categoryBreakdown[0]?.total_amount || 1;
@@ -958,7 +990,7 @@ export default function OverviewScreen({ navigation }: any) {
                       setShowBreakdownModal(true);
                     }}
                   >
-                    <View style={styles.categoryHeader}>
+                    <View style={styles.categoryHeaderRow}>
                       <Text style={styles.categoryName}>{category.category_name}</Text>
                       <View style={styles.categoryHeaderRight}>
                         <Text style={styles.categoryAmount}>{formatCurrency(category.total_amount)}</Text>
@@ -985,11 +1017,11 @@ export default function OverviewScreen({ navigation }: any) {
           disabled={exporting}
         >
           <View style={styles.exportButtonContent}>
-            <View style={[styles.actionIcon, { backgroundColor: colors.tagEmberBg }]}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.tagExpenseBg }]}>
               {exporting ? (
-                <ActivityIndicator size={24} color={colors.ember} />
+                <ActivityIndicator size={24} color={colors.gradientMid} />
               ) : (
-                <Ionicons name="download" size={24} color={colors.ember} />
+                <Ionicons name="download" size={24} color={colors.gradientMid} />
               )}
             </View>
             <View style={styles.exportButtonText}>
@@ -1021,7 +1053,7 @@ export default function OverviewScreen({ navigation }: any) {
                 value={startDate}
                 onChangeText={setStartDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
               />
             </View>
 
@@ -1032,7 +1064,7 @@ export default function OverviewScreen({ navigation }: any) {
                 value={endDate}
                 onChangeText={setEndDate}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
               />
             </View>
 
@@ -1045,10 +1077,17 @@ export default function OverviewScreen({ navigation }: any) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                style={styles.modalButton}
                 onPress={confirmExport}
               >
-                <Text style={styles.confirmButtonText}>Export</Text>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}
+                >
+                  <Text style={styles.confirmButtonText}>Export</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -1065,7 +1104,7 @@ export default function OverviewScreen({ navigation }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.disclaimerHeader}>
-              <Ionicons name="alert-circle" size={32} color={colors.ember} />
+              <Ionicons name="alert-circle" size={32} color={colors.gradientMid} />
             </View>
             <Text style={styles.modalTitle}>Important Disclaimer</Text>
             <Text style={styles.disclaimerBody}>
@@ -1090,10 +1129,17 @@ export default function OverviewScreen({ navigation }: any) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                style={styles.modalButton}
                 onPress={acceptDisclaimerAndExport}
               >
-                <Text style={styles.confirmButtonText}>I Understand</Text>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}
+                >
+                  <Text style={styles.confirmButtonText}>I Understand</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -1129,7 +1175,7 @@ export default function OverviewScreen({ navigation }: any) {
                     }}
                   >
                     <View style={styles.breakdownItemIcon}>
-                      <Ionicons name="gift" size={20} color={colors.ember} />
+                      <Ionicons name="gift" size={20} color={colors.gradientMid} />
                     </View>
                     <View style={styles.breakdownItemDetails}>
                       <Text style={styles.breakdownItemName}>{item.item_name}</Text>
@@ -1137,7 +1183,7 @@ export default function OverviewScreen({ navigation }: any) {
                         {item.received_from ? `From ${item.received_from} • ` : ''}{new Date(item.received_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </Text>
                     </View>
-                    <Text style={[styles.breakdownItemAmount, { color: colors.ember }]}>
+                    <Text style={[styles.breakdownItemAmount, { color: colors.gradientMid }]}>
                       {formatCurrency(item.rrp)}
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color={colors.midGrey} style={{ marginLeft: 4 }} />
@@ -1159,12 +1205,12 @@ export default function OverviewScreen({ navigation }: any) {
                     }}
                   >
                     <View style={[styles.breakdownItemIcon, {
-                      backgroundColor: selectedBreakdown.type === 'income' ? colors.tagGreenBg : colors.parchment
+                      backgroundColor: selectedBreakdown.type === 'income' ? colors.tagIncomeBg : colors.surface
                     }]}>
                       <Ionicons
                         name={selectedBreakdown.type === 'income' ? 'trending-up' : 'receipt-outline'}
                         size={20}
-                        color={selectedBreakdown.type === 'income' ? colors.tagGreenText : colors.ink}
+                        color={selectedBreakdown.type === 'income' ? colors.positive : colors.ink}
                       />
                     </View>
                     <View style={styles.breakdownItemDetails}>
@@ -1184,7 +1230,7 @@ export default function OverviewScreen({ navigation }: any) {
                       </View>
                     </View>
                     <Text style={[styles.breakdownItemAmount, {
-                      color: selectedBreakdown.type === 'income' ? colors.tagGreenText : colors.ink
+                      color: selectedBreakdown.type === 'income' ? colors.positive : colors.negative
                     }]}>
                       {formatCurrency(Math.abs(txn.amount) * (txn.business_percent / 100))}
                     </Text>
@@ -1215,8 +1261,15 @@ export default function OverviewScreen({ navigation }: any) {
                   }
                 }}
               >
-                <Ionicons name="pencil" size={18} color={colors.white} />
-                <Text style={styles.breakdownEditButtonText}>Edit All</Text>
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.breakdownEditBtnGradient}
+                >
+                  <Ionicons name="pencil" size={18} color={colors.white} />
+                  <Text style={styles.breakdownEditButtonText}>Edit All</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
@@ -1234,7 +1287,7 @@ export default function OverviewScreen({ navigation }: any) {
           <View style={styles.modalContent}>
             <View style={styles.infoModalHeader}>
               <View style={[styles.taxIconContainer, { marginRight: 0 }]}>
-                <Ionicons name="information-circle" size={28} color={colors.ember} />
+                <Ionicons name="information-circle" size={28} color={colors.gradientMid} />
               </View>
             </View>
             <Text style={styles.modalTitle}>About Estimated Tax</Text>
@@ -1245,7 +1298,7 @@ export default function OverviewScreen({ navigation }: any) {
               It projects your annual tax liability based on this figure, giving you a year-end target to plan for.
             </Text>
             <View style={styles.infoModalHighlight}>
-              <Ionicons name="shield-checkmark" size={18} color={colors.tagGreenText} />
+              <Ionicons name="shield-checkmark" size={18} color={colors.positive} />
               <Text style={styles.infoModalHighlightText}>
                 This estimate is intentionally conservative - we'd rather you save a bit too much than be caught short at tax time. Your actual bill may be lower.
               </Text>
@@ -1254,10 +1307,17 @@ export default function OverviewScreen({ navigation }: any) {
               You can update your expected monthly income and tax settings in your Profile.
             </Text>
             <TouchableOpacity
-              style={[styles.modalButton, styles.confirmButton, { marginTop: 16 }]}
+              style={{ marginTop: 16 }}
               onPress={() => setShowEstimateInfo(false)}
             >
-              <Text style={styles.confirmButtonText}>Got it</Text>
+              <LinearGradient
+                colors={gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.confirmButtonText}>Got it</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -1269,7 +1329,7 @@ export default function OverviewScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -1280,29 +1340,42 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    paddingHorizontal: spacing.xl,
     paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.sm,
+    paddingTop: spacing.lg,
   },
-  title: {
-    fontSize: 28,
-    fontFamily: fonts.display,
-    color: colors.ink,
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
     marginBottom: 4,
   },
+  heroHeading: {
+    fontFamily: fonts.display,
+    fontSize: 38,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
+  },
   subtitle: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   refreshButton: {
     width: 44,
@@ -1313,20 +1386,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profilePromptCard: {
-    backgroundColor: colors.parchment,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   profilePromptIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1335,7 +1406,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profilePromptTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
     marginBottom: 2,
@@ -1347,11 +1418,9 @@ const styles = StyleSheet.create({
   // Profile Incomplete Card Styles
   profileIncompleteCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   profileIncompleteHeader: {
     flexDirection: 'row',
@@ -1362,7 +1431,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -1392,6 +1461,7 @@ const styles = StyleSheet.create({
   profileProgressLabel: {
     fontSize: 13,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   profileProgressPercentage: {
     fontSize: 15,
@@ -1400,17 +1470,17 @@ const styles = StyleSheet.create({
   },
   profileProgressBarBg: {
     height: 8,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
   },
   profileProgressBarFill: {
     height: '100%',
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
     borderRadius: 4,
   },
   missingFieldsContainer: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
     borderRadius: 10,
     padding: 14,
     marginBottom: 16,
@@ -1432,28 +1502,30 @@ const styles = StyleSheet.create({
   missingFieldText: {
     fontSize: 14,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   profileIncompleteButton: {
-    backgroundColor: colors.ink,
-    borderRadius: 12,
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
+  },
+  profileIncompleteBtnGradient: {
     paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    borderRadius: borderRadius.full,
   },
   profileIncompleteButtonText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.white,
   },
   limitedCompanyCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   limitedCompanyTitle: {
     fontSize: 18,
@@ -1466,12 +1538,13 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   comingSoonBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.gradientMid,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -1481,15 +1554,13 @@ const styles = StyleSheet.create({
   comingSoonText: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.white,
   },
   taxCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   taxHeader: {
     flexDirection: 'row',
@@ -1500,7 +1571,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1508,22 +1579,24 @@ const styles = StyleSheet.create({
   taxLabel: {
     fontSize: 14,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   taxAmount: {
     fontSize: 36,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.negative,
     marginBottom: 4,
   },
   taxNote: {
     fontSize: 12,
     color: colors.midGrey,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   disclaimerContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     padding: 10,
     gap: 8,
@@ -1533,13 +1606,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.midGrey,
     lineHeight: 16,
+    fontFamily: fonts.body,
   },
   taxInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginBottom: 12,
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     padding: 8,
     borderRadius: 8,
   },
@@ -1547,14 +1621,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.midGrey,
     flex: 1,
+    fontFamily: fonts.body,
   },
   payeInfoContainer: {
-    backgroundColor: colors.tagGreenBg,
-    borderRadius: 8,
+    backgroundColor: colors.tagIncomeBg,
+    borderRadius: borderRadius.sm,
     padding: 12,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   payeInfoRow: {
     flexDirection: 'row',
@@ -1564,7 +1637,7 @@ const styles = StyleSheet.create({
   },
   payeInfoText: {
     fontSize: 13,
-    color: colors.tagGreenText,
+    color: colors.positive,
     fontFamily: fonts.bodyBold,
     flex: 1,
   },
@@ -1572,14 +1645,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.midGrey,
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
   incomeCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   incomeHeader: {
     flexDirection: 'row',
@@ -1589,7 +1661,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1601,11 +1673,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.midGrey,
     marginBottom: 4,
+    fontFamily: fonts.body,
   },
   incomeAmount: {
     fontSize: 28,
     fontFamily: fonts.display,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   incomeBreakdown: {
     flexDirection: 'row',
@@ -1616,7 +1689,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12,
   },
@@ -1624,6 +1697,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   incomeBreakdownAmount: {
     fontSize: 14,
@@ -1631,10 +1705,14 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontFamily: fonts.display,
-    color: colors.ink,
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: 16,
+    marginTop: 8,
   },
   expensesRow: {
     flexDirection: 'row',
@@ -1644,54 +1722,50 @@ const styles = StyleSheet.create({
   expenseCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: 16,
   },
-  businessCard: {
-    borderWidth: 1,
-    borderColor: colors.mist,
-  },
-  personalCard: {
-    borderWidth: 1,
-    borderColor: colors.mist,
-  },
+  businessCard: {},
+  personalCard: {},
   expenseIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   personalIcon: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
   },
   expenseLabel: {
     fontSize: 12,
     color: colors.midGrey,
     marginBottom: 4,
+    fontFamily: fonts.body,
   },
   expenseAmount: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.negative,
     marginBottom: 4,
   },
   expensePercent: {
     fontSize: 12,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   categoryList: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: 16,
     marginBottom: 24,
   },
   categoryItem: {
     marginBottom: 16,
   },
-  categoryHeader: {
+  categoryHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1710,19 +1784,20 @@ const styles = StyleSheet.create({
   },
   categoryBarContainer: {
     height: 8,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
   categoryBar: {
     height: '100%',
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
     borderRadius: 4,
   },
   categoryCount: {
     fontSize: 11,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -1731,7 +1806,7 @@ const styles = StyleSheet.create({
   actionCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: 16,
     minHeight: 120,
   },
@@ -1744,7 +1819,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   actionTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
     marginBottom: 4,
@@ -1752,17 +1827,18 @@ const styles = StyleSheet.create({
   actionSubtitle: {
     fontSize: 12,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     padding: 24,
     width: '100%',
     maxWidth: 400,
@@ -1777,6 +1853,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.midGrey,
     marginBottom: 24,
+    fontFamily: fonts.body,
   },
   dateInputContainer: {
     marginBottom: 16,
@@ -1788,13 +1865,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateInput: {
-    backgroundColor: colors.parchment,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     padding: 16,
     fontSize: 16,
     color: colors.ink,
-    borderWidth: 1,
-    borderColor: colors.mist,
+    fontFamily: fonts.body,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1803,20 +1879,25 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    borderRadius: borderRadius.full,
     padding: 16,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: colors.parchment,
-  },
-  confirmButton: {
-    backgroundColor: colors.ink,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
+    padding: 16,
+    alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.midGrey,
+    color: colors.ink,
   },
   confirmButtonText: {
     fontSize: 16,
@@ -1832,21 +1913,20 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   disclaimerEmphasis: {
     fontSize: 14,
-    color: colors.ember,
+    color: colors.gradientMid,
     fontFamily: fonts.bodyBold,
     marginTop: 8,
     marginBottom: 8,
   },
   unqualifiedCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   unqualifiedHeader: {
     flexDirection: 'row',
@@ -1857,7 +1937,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1867,23 +1947,24 @@ const styles = StyleSheet.create({
   },
   unqualifiedLabel: {
     fontSize: 12,
-    color: colors.ember,
+    color: colors.gradientMid,
     fontFamily: fonts.bodyBold,
     marginBottom: 2,
   },
   unqualifiedAmount: {
     fontSize: 24,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.negative,
   },
   unqualifiedDescription: {
     fontSize: 14,
     color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   unqualifiedAction: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     borderRadius: 8,
     padding: 10,
     alignItems: 'center',
@@ -1891,7 +1972,7 @@ const styles = StyleSheet.create({
   unqualifiedActionText: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.gradientMid,
   },
   // Income source styles
   incomeSourceList: {
@@ -1901,7 +1982,7 @@ const styles = StyleSheet.create({
   incomeSourceItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
     borderRadius: 10,
     padding: 12,
   },
@@ -1909,7 +1990,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1918,11 +1999,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   incomeSourceAmount: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.tagGreenText,
+    color: colors.positive,
     marginRight: 4,
   },
   // Empty income message
@@ -1940,6 +2022,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.midGrey,
     textAlign: 'center',
+    fontFamily: fonts.body,
   },
   // Category list title
   categoryListTitle: {
@@ -1956,14 +2039,14 @@ const styles = StyleSheet.create({
   // Breakdown Modal styles
   breakdownModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
   },
   breakdownModalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    padding: spacing.xl,
     maxHeight: '80%',
   },
   breakdownModalHeader: {
@@ -1973,7 +2056,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    borderBottomColor: colors.border,
   },
   breakdownModalTitle: {
     fontSize: 20,
@@ -1988,13 +2071,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
+    borderBottomColor: colors.border,
   },
   breakdownItemIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -2011,6 +2094,7 @@ const styles = StyleSheet.create({
   breakdownItemMeta: {
     fontSize: 13,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   breakdownItemMetaRow: {
     flexDirection: 'row',
@@ -2021,10 +2105,11 @@ const styles = StyleSheet.create({
   breakdownItemPercent: {
     fontSize: 11,
     color: colors.midGrey,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    fontFamily: fonts.body,
   },
   breakdownItemAmount: {
     fontSize: 16,
@@ -2032,7 +2117,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   needsEvidenceBadge: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -2040,7 +2125,7 @@ const styles = StyleSheet.create({
   needsEvidenceText: {
     fontSize: 10,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.gradientMid,
   },
   breakdownModalButtons: {
     flexDirection: 'row',
@@ -2049,20 +2134,24 @@ const styles = StyleSheet.create({
   },
   breakdownCloseButton: {
     flex: 1,
-    backgroundColor: colors.parchment,
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
     padding: 16,
     alignItems: 'center',
   },
   breakdownCloseButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.midGrey,
+    color: colors.ink,
   },
   breakdownEditButton: {
     flex: 1,
-    backgroundColor: colors.ink,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  breakdownEditBtnGradient: {
+    borderRadius: borderRadius.full,
     padding: 16,
     alignItems: 'center',
     flexDirection: 'row',
@@ -2072,16 +2161,14 @@ const styles = StyleSheet.create({
   breakdownEditButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
   },
   // Running tax card styles
   runningTaxCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   runningTaxLabelContainer: {
     flex: 1,
@@ -2090,6 +2177,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.midGrey,
     marginTop: 2,
+    fontFamily: fonts.body,
   },
   // Info button styles
   infoButton: {
@@ -2100,7 +2188,7 @@ const styles = StyleSheet.create({
   noDataHint: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 10,
     gap: 8,
@@ -2111,6 +2199,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.midGrey,
     lineHeight: 16,
+    fontFamily: fonts.body,
   },
   // Info modal styles
   infoModalHeader: {
@@ -2122,29 +2211,30 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     lineHeight: 20,
     marginBottom: 12,
+    fontFamily: fonts.body,
   },
   infoModalHighlight: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.tagGreenBg,
-    borderRadius: 8,
+    backgroundColor: colors.tagIncomeBg,
+    borderRadius: borderRadius.sm,
     padding: 12,
     gap: 10,
     marginVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   infoModalHighlightText: {
     flex: 1,
     fontSize: 13,
-    color: colors.tagGreenText,
+    color: colors.positive,
     lineHeight: 18,
+    fontFamily: fonts.body,
   },
   infoModalNote: {
     fontSize: 13,
     color: colors.midGrey,
     fontStyle: 'italic',
     marginTop: 8,
+    fontFamily: fonts.body,
   },
   // Tax breakdown row styles
   taxBreakdownRow: {
@@ -2153,52 +2243,50 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.mist,
+    borderTopColor: colors.border,
   },
   taxBreakdownItem: {
     fontSize: 12,
     color: colors.midGrey,
+    fontFamily: fonts.body,
   },
   // Gifted items card styles
   giftedItemsCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   giftedItemsCount: {
     fontSize: 12,
     color: colors.midGrey,
     marginTop: 2,
+    fontFamily: fonts.body,
   },
   // Total income row styles
   totalIncomeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.tagGreenBg,
-    borderRadius: 12,
+    backgroundColor: colors.tagIncomeBg,
+    borderRadius: borderRadius.lg,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   totalIncomeLabel: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   totalIncomeAmount: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   // Export button styles
   exportButton: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',

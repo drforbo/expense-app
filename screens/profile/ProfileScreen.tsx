@@ -17,7 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { supabase } from '../../lib/supabase';
 import { API_URL } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 
@@ -85,10 +86,10 @@ interface TrackingStats {
 }
 
 const CATEGORY_COLORS = {
-  registration: colors.ink,
+  registration: colors.gradientMid,
   tracking: colors.tagBlueText,
-  deadline: colors.ember,
-  preparation: colors.tagGreenText,
+  deadline: colors.negative,
+  preparation: colors.positive,
 };
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -1227,7 +1228,7 @@ export default function ProfileScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ink} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
         </View>
       </SafeAreaView>
     );
@@ -1275,9 +1276,9 @@ export default function ProfileScreen({ navigation }: any) {
               step={100}
               value={monthlyIncome}
               onValueChange={setMonthlyIncome}
-              minimumTrackTintColor={colors.ink}
-              maximumTrackTintColor={colors.mist}
-              thumbTintColor={colors.ember}
+              minimumTrackTintColor={colors.gradientMid}
+              maximumTrackTintColor={colors.border}
+              thumbTintColor={colors.gradientMid}
             />
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabelText}>£0</Text>
@@ -1299,7 +1300,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={[styles.optionText, !hasOtherEmployment && styles.optionTextActive]}>
                   No, just my side hustle
                 </Text>
-                {!hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                {!hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.optionItem, hasOtherEmployment && styles.optionItemActive]}
@@ -1308,7 +1309,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={[styles.optionText, hasOtherEmployment && styles.optionTextActive]}>
                   Yes, I have a day job
                 </Text>
-                {hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                {hasOtherEmployment && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
               </TouchableOpacity>
             </View>
             {hasOtherEmployment && (
@@ -1321,7 +1322,7 @@ export default function ProfileScreen({ navigation }: any) {
                       onPress={() => setEmploymentIsPaye(true)}
                     >
                       <View style={styles.optionWithIcon}>
-                        <Ionicons name="card-outline" size={20} color={employmentIsPaye ? colors.ink : colors.midGrey} />
+                        <Ionicons name="card-outline" size={20} color={employmentIsPaye ? colors.gradientMid : colors.textSecondary} />
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.optionText, employmentIsPaye && styles.optionTextActive]}>
                             PAYE (employee)
@@ -1329,14 +1330,14 @@ export default function ProfileScreen({ navigation }: any) {
                           <Text style={styles.optionHint}>Tax deducted from salary automatically</Text>
                         </View>
                       </View>
-                      {employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                      {employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.optionItem, !employmentIsPaye && styles.optionItemActive]}
                       onPress={() => setEmploymentIsPaye(false)}
                     >
                       <View style={styles.optionWithIcon}>
-                        <Ionicons name="document-text-outline" size={20} color={!employmentIsPaye ? colors.ink : colors.midGrey} />
+                        <Ionicons name="document-text-outline" size={20} color={!employmentIsPaye ? colors.gradientMid : colors.textSecondary} />
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.optionText, !employmentIsPaye && styles.optionTextActive]}>
                             Contractor/Freelance
@@ -1344,7 +1345,7 @@ export default function ProfileScreen({ navigation }: any) {
                           <Text style={styles.optionHint}>I invoice and pay my own tax</Text>
                         </View>
                       </View>
-                      {!employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                      {!employmentIsPaye && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1358,9 +1359,9 @@ export default function ProfileScreen({ navigation }: any) {
                     step={5000}
                     value={employmentIncome}
                     onValueChange={setEmploymentIncome}
-                    minimumTrackTintColor={colors.ink}
-                    maximumTrackTintColor={colors.mist}
-                    thumbTintColor={colors.ember}
+                    minimumTrackTintColor={colors.gradientMid}
+                    maximumTrackTintColor={colors.border}
+                    thumbTintColor={colors.gradientMid}
                   />
                   <View style={styles.sliderLabels}>
                     <Text style={styles.sliderLabelText}>£10k</Text>
@@ -1394,7 +1395,7 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, studentLoanPlan === option.value && styles.optionTextActive]}>
                     {option.label}
                   </Text>
-                  {studentLoanPlan === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {studentLoanPlan === option.value && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1421,12 +1422,12 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, taxRegion === option.value && styles.optionTextActive]}>
                     {option.label}
                   </Text>
-                  {taxRegion === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {taxRegion === option.value && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
             <View style={styles.taxDisclaimerBox}>
-              <Ionicons name="information-circle-outline" size={18} color={colors.midGrey} />
+              <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
               <Text style={styles.taxDisclaimerText}>
                 Tax estimates are intentionally conservative based on student loan and tax region only. Other factors (pension contributions, marriage allowance, etc.) could reduce your actual liability - you may owe less than shown.
               </Text>
@@ -1451,12 +1452,12 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setTrackingGoal(option.value)}
                 >
                   <View style={styles.optionWithIcon}>
-                    <Ionicons name={option.icon as any} size={20} color={trackingGoal === option.value ? colors.ink : colors.midGrey} />
+                    <Ionicons name={option.icon as any} size={20} color={trackingGoal === option.value ? colors.gradientMid : colors.textSecondary} />
                     <Text style={[styles.optionText, trackingGoal === option.value && styles.optionTextActive]}>
                       {option.label}
                     </Text>
                   </View>
-                  {trackingGoal === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {trackingGoal === option.value && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1481,12 +1482,12 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setWorkType(option.value)}
                 >
                   <View style={styles.optionWithIcon}>
-                    <Ionicons name={option.icon as any} size={20} color={workType === option.value ? colors.ink : colors.midGrey} />
+                    <Ionicons name={option.icon as any} size={20} color={workType === option.value ? colors.gradientMid : colors.textSecondary} />
                     <Text style={[styles.optionText, workType === option.value && styles.optionTextActive]}>
                       {option.label}
                     </Text>
                   </View>
-                  {workType === option.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {workType === option.value && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1499,7 +1500,7 @@ export default function ProfileScreen({ navigation }: any) {
                     value={customWorkType}
                     onChangeText={setCustomWorkType}
                     placeholder="e.g., dog walking, consulting"
-                    placeholderTextColor={colors.midGrey}
+                    placeholderTextColor={colors.textMuted}
                   />
                 </View>
               </View>
@@ -1557,7 +1558,7 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, bankAccountCount === n && styles.optionTextActive]}>
                     {n === 5 ? '5 or more' : `${n}`}
                   </Text>
-                  {bankAccountCount === n && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {bankAccountCount === n && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1574,7 +1575,7 @@ export default function ProfileScreen({ navigation }: any) {
               value={jobRole}
               onChangeText={setJobRole}
               placeholder="e.g., freelance photographer, UGC creator"
-              placeholderTextColor={colors.midGrey}
+              placeholderTextColor={colors.textMuted}
               autoFocus
             />
           </>
@@ -1596,7 +1597,7 @@ export default function ProfileScreen({ navigation }: any) {
                   setMainClients(updated);
                 }}
                 placeholder={index === 0 ? 'Client 1' : index === 1 ? 'Client 2' : 'Client 3'}
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.textMuted}
                 autoFocus={index === 0}
               />
             ))}
@@ -1625,7 +1626,7 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.optionText, workLocationVal === opt.value && styles.optionTextActive]}>
                     {opt.label}
                   </Text>
-                  {workLocationVal === opt.value && <Ionicons name="checkmark" size={20} color={colors.ink} />}
+                  {workLocationVal === opt.value && <Ionicons name="checkmark" size={20} color={colors.gradientMid} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -1649,7 +1650,7 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={styles.achievementCard}>
         <View style={styles.achievementHeader}>
           <View style={styles.achievementIconContainer}>
-            <Ionicons name="rocket" size={24} color={colors.background} />
+            <Ionicons name="rocket" size={24} color={colors.gradientMid} />
           </View>
           <View style={styles.achievementHeaderText}>
             <Text style={styles.achievementTitle}>In Progress with bopp</Text>
@@ -1663,8 +1664,8 @@ export default function ProfileScreen({ navigation }: any) {
           onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'income' })}
         >
           <View style={styles.trackingHeader}>
-            <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagGreenBg }]}>
-              <Ionicons name="trending-up" size={20} color={colors.tagGreenText} />
+            <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagIncomeBg }]}>
+              <Ionicons name="trending-up" size={20} color={colors.tagIncomeText} />
             </View>
             <View style={styles.trackingInfo}>
               <Text style={styles.trackingLabel}>Track all income sources</Text>
@@ -1674,15 +1675,15 @@ export default function ProfileScreen({ navigation }: any) {
                   : 'Start tracking your income'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </View>
           {trackingStats.categorizedIncomeCount > 0 && (
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagGreenBg }]}>
-                <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.tagGreenText }]} />
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagIncomeBg }]}>
+                <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.tagIncomeText }]} />
               </View>
               <View style={styles.trackingBadge}>
-                <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
+                <Ionicons name="checkmark-circle" size={14} color={colors.tagIncomeText} />
                 <Text style={styles.trackingBadgeText}>Active</Text>
               </View>
             </View>
@@ -1701,8 +1702,8 @@ export default function ProfileScreen({ navigation }: any) {
           }}
         >
           <View style={styles.trackingHeader}>
-            <View style={[styles.trackingIconContainer, { backgroundColor: colors.parchment }]}>
-              <Ionicons name="receipt-outline" size={20} color={colors.ink} />
+            <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagExpenseBg }]}>
+              <Ionicons name="receipt-outline" size={20} color={colors.gradientMid} />
             </View>
             <View style={styles.trackingInfo}>
               <Text style={styles.trackingLabel}>Categorize business expenses</Text>
@@ -1714,11 +1715,11 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'Upload transactions to get started'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </View>
           {(trackingStats.uncategorizedCount > 0 || trackingStats.categorizedExpenseCount > 0) && (
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: colors.mist }]}>
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.border }]}>
                 <View
                   style={[
                     styles.trackingProgressFill,
@@ -1726,21 +1727,21 @@ export default function ProfileScreen({ navigation }: any) {
                       width: trackingStats.totalTransactions > 0
                         ? `${Math.round((trackingStats.categorizedExpenseCount / (trackingStats.categorizedExpenseCount + trackingStats.uncategorizedCount)) * 100)}%`
                         : '0%',
-                      backgroundColor: colors.ink
+                      backgroundColor: colors.gradientMid
                     }
                   ]}
                 />
               </View>
               {trackingStats.uncategorizedCount > 0 ? (
-                <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
-                  <Ionicons name="time" size={14} color={colors.ember} />
-                  <Text style={[styles.trackingBadgeText, { color: colors.tagEmberText }]}>
+                <View style={[styles.trackingBadge, { backgroundColor: colors.tagExpenseBg }]}>
+                  <Ionicons name="time" size={14} color={colors.negative} />
+                  <Text style={[styles.trackingBadgeText, { color: colors.tagExpenseText }]}>
                     {trackingStats.uncategorizedCount} pending
                   </Text>
                 </View>
               ) : (
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagIncomeText} />
                   <Text style={styles.trackingBadgeText}>All done</Text>
                 </View>
               )}
@@ -1755,8 +1756,8 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => navigation.navigate('QualifyTransactionList')}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
-                <Ionicons name="document-text-outline" size={20} color={colors.ember} />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagExpenseBg }]}>
+                <Ionicons name="document-text-outline" size={20} color={colors.negative} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Add receipts & evidence</Text>
@@ -1766,28 +1767,28 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'All expenses qualified'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
             </View>
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagExpenseBg }]}>
                 <View
                   style={[
                     styles.trackingProgressFill,
                     {
                       width: `${expenseProgress}%`,
-                      backgroundColor: expenseProgress === 100 ? colors.tagGreenText : colors.ember
+                      backgroundColor: expenseProgress === 100 ? colors.tagIncomeText : colors.negative
                     }
                   ]}
                 />
               </View>
               {trackingStats.unqualifiedExpenseCount === 0 ? (
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagIncomeText} />
                   <Text style={styles.trackingBadgeText}>HMRC ready</Text>
                 </View>
               ) : (
-                <View style={[styles.trackingBadge, { backgroundColor: colors.tagEmberBg }]}>
-                  <Text style={[styles.trackingBadgeText, { color: colors.tagEmberText }]}>
+                <View style={[styles.trackingBadge, { backgroundColor: colors.tagExpenseBg }]}>
+                  <Text style={[styles.trackingBadgeText, { color: colors.tagExpenseText }]}>
                     {expenseProgress}% qualified
                   </Text>
                 </View>
@@ -1803,8 +1804,8 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => navigation.navigate('GiftedTracker')}
           >
             <View style={styles.trackingHeader}>
-              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagEmberBg }]}>
-                <Ionicons name="gift-outline" size={20} color={colors.ember} />
+              <View style={[styles.trackingIconContainer, { backgroundColor: colors.tagExpenseBg }]}>
+                <Ionicons name="gift-outline" size={20} color={colors.negative} />
               </View>
               <View style={styles.trackingInfo}>
                 <Text style={styles.trackingLabel}>Track gifted items</Text>
@@ -1814,15 +1815,15 @@ export default function ProfileScreen({ navigation }: any) {
                     : 'Log PR packages & gifts'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
             </View>
             {trackingStats.giftedItemsCount > 0 && (
               <View style={styles.trackingProgressContainer}>
-                <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagEmberBg }]}>
-                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.ember }]} />
+                <View style={[styles.trackingProgressBar, { backgroundColor: colors.tagExpenseBg }]}>
+                  <View style={[styles.trackingProgressFill, { width: '100%', backgroundColor: colors.negative }]} />
                 </View>
                 <View style={styles.trackingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={colors.tagGreenText} />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.tagIncomeText} />
                   <Text style={styles.trackingBadgeText}>Active</Text>
                 </View>
               </View>
@@ -1889,7 +1890,7 @@ export default function ProfileScreen({ navigation }: any) {
                     </Text>
                     {item.dueDate && !isCompleted && (
                       <View style={styles.dueDateContainer}>
-                        <Ionicons name="calendar-outline" size={12} color={colors.ember} />
+                        <Ionicons name="calendar-outline" size={12} color={colors.negative} />
                         <Text style={styles.dueDateText}>
                           Due: {new Date(item.dueDate).toLocaleDateString('en-GB', {
                             day: 'numeric', month: 'short', year: 'numeric'
@@ -1965,18 +1966,21 @@ export default function ProfileScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
+          <Text style={styles.backArrow}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 32 }} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Screen label + heading */}
+        <Text style={styles.screenLabel}>YOUR PROFILE</Text>
+        <Text style={styles.heroHeading}>{'edit your\nprofile.'}</Text>
+
         {/* Profile Completion */}
         {!isProfileComplete && (
           <View style={styles.completionCard}>
             <View style={styles.completionHeader}>
-              <Ionicons name="person-circle" size={24} color={colors.ink} />
+              <Ionicons name="person-circle" size={24} color={colors.gradientMid} />
               <Text style={styles.completionTitle}>Complete Your Profile</Text>
             </View>
             <Text style={styles.completionSubtitle}>
@@ -2000,7 +2004,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Side Hustle</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getWorkTypeLabel(workType, customWorkType)}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2013,7 +2017,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Monthly Income</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{formatCurrency(monthlyIncome)}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2026,7 +2030,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Registration</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getRegistrationLabel(trackingGoal)}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2043,7 +2047,7 @@ export default function ProfileScreen({ navigation }: any) {
                   ? `${employmentIsPaye ? 'PAYE' : 'Contractor'} (${formatCurrency(employmentIncome)}/yr)`
                   : 'No'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2056,7 +2060,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Student Loan</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getStudentLoanLabel(studentLoanPlan)}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2069,7 +2073,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Tax Region</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{getTaxRegionLabel(taxRegion)}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2089,7 +2093,7 @@ export default function ProfileScreen({ navigation }: any) {
                     ].filter(Boolean).join(', ')
                   : 'None'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2102,7 +2106,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Bank Accounts</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue}>{bankAccountCount}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2115,7 +2119,7 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.infoLabel}>Job Role</Text>
             <View style={styles.infoValueRow}>
               <Text style={styles.infoValue} numberOfLines={1}>{jobRole || 'Not set'}</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2130,7 +2134,7 @@ export default function ProfileScreen({ navigation }: any) {
               <Text style={styles.infoValue} numberOfLines={1}>
                 {mainClients.filter(c => c.trim()).join(', ') || 'Not set'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -2151,7 +2155,7 @@ export default function ProfileScreen({ navigation }: any) {
                   : workLocationVal === 'mixed' ? 'Mixed / varies'
                   : 'Not set'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.midGrey} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
         </View>
@@ -2281,7 +2285,7 @@ export default function ProfileScreen({ navigation }: any) {
                     ? `${foreignIncomeCountries.length} ${foreignIncomeCountries.length === 1 ? 'country' : 'countries'} selected`
                     : 'Select countries'}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color={colors.midGrey} />
+                <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
 
               {foreignIncomeCountries.length > 0 && (
@@ -2296,7 +2300,7 @@ export default function ProfileScreen({ navigation }: any) {
                           onPress={() => setForeignIncomeCountries(prev => prev.filter(c => c !== code))}
                           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
-                          <Ionicons name="close-circle" size={18} color={colors.midGrey} />
+                          <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                       </View>
                     ) : null;
@@ -2337,7 +2341,7 @@ export default function ProfileScreen({ navigation }: any) {
                 value={travelDetails}
                 onChangeText={setTravelDetails}
                 placeholder="e.g., I travel to London monthly for client meetings, attend 2-3 conferences per year..."
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -2348,18 +2352,26 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* Save Button */}
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.buttonDisabled]}
           onPress={saveProfile}
           disabled={saving}
+          activeOpacity={0.8}
+          style={saving ? styles.buttonDisabled : undefined}
         >
-          {saving ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <>
-              <Text style={styles.saveButtonText}>Save Profile</Text>
-              <Ionicons name="checkmark" size={20} color={colors.white} />
-            </>
-          )}
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.saveButton}
+          >
+            {saving ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Text style={styles.saveButtonText}>Save Profile</Text>
+                <Ionicons name="checkmark" size={20} color={colors.white} />
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* Connected Services - Hidden until Gmail OAuth is verified */}
@@ -2376,14 +2388,14 @@ export default function ProfileScreen({ navigation }: any) {
                 disabled={connectingGmail}
               >
                 <View style={styles.accountRowLeft}>
-                  <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? colors.tagGreenBg : colors.tagEmberBg }]}>
+                  <View style={[styles.accountIcon, { backgroundColor: gmailConnection ? colors.tagIncomeBg : colors.tagExpenseBg }]}>
                     {connectingGmail ? (
-                      <ActivityIndicator size="small" color={colors.ember} />
+                      <ActivityIndicator size="small" color={colors.negative} />
                     ) : (
                       <Ionicons
                         name={gmailConnection ? 'checkmark-circle' : 'logo-google'}
                         size={20}
-                        color={gmailConnection ? colors.tagGreenText : colors.ember}
+                        color={gmailConnection ? colors.tagIncomeText : colors.negative}
                       />
                     )}
                   </View>
@@ -2398,14 +2410,14 @@ export default function ProfileScreen({ navigation }: any) {
                 </View>
                 <View style={styles.connectionStatus}>
                   {gmailConnection ? (
-                    <Text style={[styles.connectionStatusText, { color: colors.tagGreenText }]}>Connected</Text>
+                    <Text style={[styles.connectionStatusText, { color: colors.tagIncomeText }]}>Connected</Text>
                   ) : (
-                    <Text style={[styles.connectionStatusText, { color: colors.midGrey }]}>Connect</Text>
+                    <Text style={[styles.connectionStatusText, { color: colors.textSecondary }]}>Connect</Text>
                   )}
                   <Ionicons
                     name={gmailConnection ? 'close-circle-outline' : 'chevron-forward'}
                     size={18}
-                    color={gmailConnection ? colors.ember : colors.midGrey}
+                    color={gmailConnection ? colors.negative : colors.textSecondary}
                   />
                 </View>
               </TouchableOpacity>
@@ -2415,8 +2427,8 @@ export default function ProfileScreen({ navigation }: any) {
               {/* Outlook - Coming Soon */}
               <View style={[styles.accountRow, { opacity: 0.5 }]}>
                 <View style={styles.accountRowLeft}>
-                  <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
-                    <Ionicons name="mail" size={20} color={colors.ink} />
+                  <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+                    <Ionicons name="mail" size={20} color={colors.midGrey} />
                   </View>
                   <View>
                     <Text style={styles.accountRowText}>Outlook</Text>
@@ -2438,7 +2450,7 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Email display */}
         {userEmail && (
           <View style={styles.emailCard}>
-            <Ionicons name="mail-outline" size={18} color={colors.midGrey} />
+            <Ionicons name="mail-outline" size={18} color={colors.textSecondary} />
             <Text style={styles.emailText}>{userEmail}</Text>
           </View>
         )}
@@ -2449,12 +2461,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => setShowChangeEmailModal(true)}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagBlueBg }]}>
                 <Ionicons name="at-outline" size={20} color={colors.tagBlueText} />
               </View>
               <Text style={styles.accountRowText}>Change Email</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2464,12 +2476,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleResetPassword}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.parchment }]}>
-                <Ionicons name="key-outline" size={20} color={colors.ink} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagBlueBg }]}>
+                <Ionicons name="key-outline" size={20} color={colors.tagBlueText} />
               </View>
               <Text style={styles.accountRowText}>Reset Password</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2479,15 +2491,15 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleManageSubscription}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.tagGreenBg }]}>
-                <Ionicons name="card-outline" size={20} color={colors.tagGreenText} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagIncomeBg }]}>
+                <Ionicons name="card-outline" size={20} color={colors.tagIncomeText} />
               </View>
               <View>
                 <Text style={styles.accountRowText}>Subscription</Text>
                 <Text style={styles.accountRowSubtext}>Free Beta</Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -2500,12 +2512,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleContactSupport}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.tagEmberBg }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ember} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagExpenseBg }]}>
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.negative} />
               </View>
               <Text style={styles.accountRowText}>Contact Support</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
+            <Ionicons name="open-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2515,12 +2527,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handlePrivacyPolicy}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={colors.midGrey} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Privacy Policy</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
+            <Ionicons name="open-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2530,12 +2542,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleTermsOfService}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
-                <Ionicons name="document-text-outline" size={20} color={colors.midGrey} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+                <Ionicons name="document-text-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Terms of Service</Text>
             </View>
-            <Ionicons name="open-outline" size={18} color={colors.midGrey} />
+            <Ionicons name="open-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -2548,12 +2560,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleSignOut}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.mist }]}>
-                <Ionicons name="log-out-outline" size={20} color={colors.midGrey} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+                <Ionicons name="log-out-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Sign Out</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.midGrey} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -2563,12 +2575,12 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleDeleteAccount}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.tagEmberBg }]}>
-                <Ionicons name="trash-outline" size={20} color={colors.ember} />
+              <View style={[styles.accountIcon, { backgroundColor: colors.tagExpenseBg }]}>
+                <Ionicons name="trash-outline" size={20} color={colors.negative} />
               </View>
-              <Text style={[styles.accountRowText, { color: colors.ember }]}>Delete Account</Text>
+              <Text style={[styles.accountRowText, { color: colors.negative }]}>Delete Account</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.ember} />
+            <Ionicons name="chevron-forward" size={18} color={colors.negative} />
           </TouchableOpacity>
         </View>
 
@@ -2629,7 +2641,7 @@ export default function ProfileScreen({ navigation }: any) {
                 value={newEmail}
                 onChangeText={setNewEmail}
                 placeholder="new@email.com"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -2696,7 +2708,7 @@ export default function ProfileScreen({ navigation }: any) {
                       </Text>
                     </View>
                     {isSelected && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.ink} />
+                      <Ionicons name="checkmark-circle" size={24} color={colors.gradientMid} />
                     )}
                   </TouchableOpacity>
                 );
@@ -2718,7 +2730,7 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -2729,35 +2741,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: '#141414',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 28,
+  backArrow: {
+    fontSize: 16,
+    color: colors.ink,
+    fontWeight: '700',
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.xs,
+  },
+  heroHeading: {
+    fontSize: 38,
     fontFamily: fonts.display,
     color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 42,
+    marginBottom: spacing.xxl,
   },
   tabBar: {
     flexDirection: 'row',
-    marginHorizontal: 20,
+    marginHorizontal: spacing.xl,
     marginTop: 16,
     marginBottom: 16,
-    backgroundColor: '#141414',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     padding: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   tab: {
     flex: 1,
@@ -2766,13 +2792,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: borderRadius.lg,
   },
   tabActive: {
-    backgroundColor: colors.mist,
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.midGrey,
   },
@@ -2780,15 +2808,15 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   tabBadge: {
-    backgroundColor: colors.tagGreenText,
+    backgroundColor: colors.tagIncomeText,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: borderRadius.sm,
     minWidth: 20,
     alignItems: 'center',
   },
   tabBadgeText: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: fonts.display,
     color: colors.white,
   },
@@ -2796,12 +2824,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
   },
   completionCard: {
-    backgroundColor: colors.tagEmberBg,
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     marginBottom: 24,
   },
   completionHeader: {
@@ -2816,7 +2846,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   completionSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
   },
   sectionHeader: {
@@ -2826,13 +2856,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontFamily: fonts.display,
-    color: colors.ink,
+    fontSize: 10,
+    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: spacing.sm,
   },
   sectionHint: {
-    fontSize: 12,
-    color: colors.ink,
+    fontSize: 13,
+    color: colors.midGrey,
   },
   sectionSubtitle: {
     fontSize: 13,
@@ -2841,8 +2875,8 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   infoCard: {
-    backgroundColor: '#141414',
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     marginBottom: 24,
     overflow: 'hidden',
   },
@@ -2850,12 +2884,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#141414',
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
   },
   infoLabel: {
-    fontSize: 14,
+    fontSize: 16,
+    fontFamily: fonts.body,
     color: colors.midGrey,
   },
   infoValueRow: {
@@ -2864,30 +2899,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginHorizontal: 16,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.lg,
   },
   // Account management styles
   accountCard: {
-    backgroundColor: '#141414',
-    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     marginBottom: 12,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   accountRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
   accountRowLeft: {
     flexDirection: 'row',
@@ -2902,18 +2935,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   accountRowText: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
   },
   accountHint: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     lineHeight: 18,
     paddingHorizontal: 4,
   },
   accountRowSubtext: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     marginTop: 2,
   },
@@ -2927,31 +2960,27 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   emailCard: {
-    backgroundColor: '#141414',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     padding: 14,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   emailText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     flex: 1,
   },
   questionCard: {
-    backgroundColor: '#141414',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   questionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
     marginBottom: 4,
@@ -2969,36 +2998,35 @@ const styles = StyleSheet.create({
   optionButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#141414',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     minWidth: '30%',
     alignItems: 'center',
   },
   optionButtonActive: {
-    backgroundColor: colors.ink,
-    borderColor: colors.ink,
+    backgroundColor: colors.tagExpenseBg,
+    borderColor: colors.gradientMid,
   },
   optionButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.midGrey,
   },
   optionButtonTextActive: {
-    color: colors.white,
+    color: colors.gradientMid,
   },
   optionButtonSubtext: {
-    fontSize: 11,
+    fontSize: 13,
     color: colors.midGrey,
     marginTop: 2,
   },
   optionButtonSubtextActive: {
-    color: colors.mist,
+    color: colors.gradientMid,
   },
   saveButton: {
-    backgroundColor: colors.ink,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -3016,13 +3044,13 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#141414',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
     padding: 24,
     paddingBottom: 40,
     maxHeight: '80%',
@@ -3034,18 +3062,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     marginBottom: 24,
   },
   modalInput: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: 16,
-    color: colors.white,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: spacing.md,
+    height: 52,
+    fontSize: 16,
+    color: colors.ink,
     fontFamily: fonts.body,
     marginBottom: spacing.md,
   },
@@ -3065,7 +3095,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sliderLabelText: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
   },
   optionsList: {
@@ -3077,14 +3107,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#141414',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   optionItemActive: {
-    borderColor: colors.ink,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.tagExpenseBg,
+    borderColor: colors.gradientMid,
   },
   optionWithIcon: {
     flexDirection: 'row',
@@ -3092,15 +3122,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   optionText: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.midGrey,
   },
   optionTextActive: {
-    color: colors.ink,
+    color: colors.gradientMid,
     fontFamily: fonts.bodyBold,
   },
   optionHint: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     marginTop: 2,
   },
@@ -3108,10 +3138,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: colors.border,
   },
   subSectionLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     marginBottom: 8,
   },
@@ -3122,20 +3152,22 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: borderRadius.full,
     padding: 16,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: colors.mist,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   confirmButton: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
   },
   cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.midGrey,
+    color: colors.ink,
   },
   confirmButtonText: {
     fontSize: 16,
@@ -3146,13 +3178,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   customInput: {
-    backgroundColor: '#141414',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: 14,
     fontSize: 16,
     color: colors.ink,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   checkboxList: {
     gap: 12,
@@ -3163,29 +3195,27 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#141414',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.gradientMid,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
   },
   checkboxChecked: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
   },
   checkboxContent: {
     flex: 1,
   },
   checkboxLabel: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
     marginBottom: 2,
@@ -3196,12 +3226,10 @@ const styles = StyleSheet.create({
   },
   // Checklist tab styles - Achievement Card
   achievementCard: {
-    backgroundColor: '#141414',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   achievementHeader: {
     flexDirection: 'row',
@@ -3209,13 +3237,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: colors.border,
   },
   achievementIconContainer: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.volt,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -3235,12 +3263,12 @@ const styles = StyleSheet.create({
   },
   // Tracking cards within achievement section
   trackingCard: {
-    backgroundColor: '#141414',
-    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   trackingHeader: {
     flexDirection: 'row',
@@ -3258,13 +3286,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trackingLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
     marginBottom: 2,
   },
   trackingStatus: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
   },
   trackingProgressContainer: {
@@ -3286,25 +3314,23 @@ const styles = StyleSheet.create({
   trackingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
     gap: 4,
   },
   trackingBadgeText: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.tagIncomeText,
   },
   // Overall progress card
   progressCard: {
-    backgroundColor: '#141414',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -3324,14 +3350,14 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: colors.tagGreenText,
+    backgroundColor: colors.tagIncomeText,
     borderRadius: 4,
   },
   progressText: {
@@ -3349,24 +3375,22 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   categoryTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
   },
   clItem: {
     flexDirection: 'row',
-    backgroundColor: '#141414',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     padding: 16,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   clItemCompleted: {
     opacity: 0.6,
@@ -3383,8 +3407,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   clCheckboxChecked: {
-    backgroundColor: colors.tagGreenText,
-    borderColor: colors.tagGreenText,
+    backgroundColor: colors.tagIncomeText,
+    borderColor: colors.tagIncomeText,
   },
   clItemContent: {
     flex: 1,
@@ -3396,7 +3420,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   clItemTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.ink,
     flex: 1,
@@ -3411,18 +3435,18 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   clItemDescriptionCompleted: {
-    color: colors.midGrey,
+    color: colors.muted,
   },
   priorityBadge: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
   },
   priorityText: {
-    fontSize: 10,
+    fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.negative,
   },
   dueDateContainer: {
     flexDirection: 'row',
@@ -3431,8 +3455,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dueDateText: {
-    fontSize: 12,
-    color: colors.ember,
+    fontSize: 13,
+    color: colors.negative,
     fontFamily: fonts.body,
   },
   // Toggle styles
@@ -3449,18 +3473,18 @@ const styles = StyleSheet.create({
     width: 51,
     height: 31,
     borderRadius: 16,
-    backgroundColor: colors.mist,
+    backgroundColor: colors.borderStrong,
     padding: 2,
     justifyContent: 'center',
   },
   toggleActive: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.gradientMid,
   },
   toggleThumb: {
     width: 27,
     height: 27,
     borderRadius: 14,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: colors.white,
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
@@ -3470,14 +3494,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#141414',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: 14,
   },
   countrySelectLabel: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.midGrey,
   },
   selectedCountriesContainer: {
@@ -3489,13 +3513,11 @@ const styles = StyleSheet.create({
   selectedCountryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141414',
-    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
     paddingVertical: 6,
     paddingHorizontal: 12,
     gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   selectedCountryFlag: {
     fontSize: 16,
@@ -3506,19 +3528,19 @@ const styles = StyleSheet.create({
   },
   // Text area input
   inputLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.midGrey,
     marginBottom: 8,
   },
   textAreaInput: {
-    backgroundColor: '#141414',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 15,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: 14,
+    fontSize: 16,
     color: colors.ink,
     minHeight: 100,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   // Country picker modal
   countryPickerHeader: {
@@ -3536,11 +3558,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: borderRadius.md,
     marginVertical: 2,
   },
   countryPickerItemSelected: {
-    backgroundColor: '#141414',
+    backgroundColor: colors.tagExpenseBg,
   },
   countryPickerItemLeft: {
     flexDirection: 'row',
@@ -3551,27 +3573,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   countryPickerName: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.ink,
   },
   countryPickerNameSelected: {
-    color: colors.ink,
+    color: colors.gradientMid,
     fontFamily: fonts.bodyBold,
   },
   taxDisclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: '#141414',
+    backgroundColor: colors.surface,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     marginTop: 16,
     gap: 10,
     alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   taxDisclaimerText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     lineHeight: 18,
   },
@@ -3591,7 +3611,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   infoCardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
     flex: 1,
@@ -3609,14 +3629,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0A0A0A',
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   infoLinkText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.ink,
     fontFamily: fonts.bodyBold,
   },

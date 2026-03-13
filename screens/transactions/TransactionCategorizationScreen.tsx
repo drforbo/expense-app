@@ -16,9 +16,20 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  'Office Supplies': '🖊️', 'Travel': '✈️', 'Meals': '🍽️', 'Software': '💻',
+  'Marketing': '📣', 'Insurance': '🛡️', 'Utilities': '⚡', 'Rent': '🏠',
+  'Professional Services': '👔', 'Training': '📚', 'Equipment': '🔧',
+  'Phone': '📱', 'Internet': '🌐', 'Subscriptions': '🔄', 'Bank Fees': '🏦',
+  'Transport': '🚗', 'Clothing': '👕', 'Entertainment': '🎭', 'Health': '💊',
+  'Gifts': '🎁', 'Income': '💰', 'Other': '📋',
+};
+const getCategoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] || '📋';
 
 interface Transaction {
   transaction_id: string;
@@ -545,7 +556,6 @@ export default function TransactionCategorizationScreen({
     setCustomAnswer('');
     setShowCustomInput(false);
 
-    // Check if this was a text input question (options array is empty)
     const currentQuestion = questions[questionIndex];
     const isTextInputQuestion = currentQuestion.options.length === 0;
 
@@ -807,7 +817,7 @@ export default function TransactionCategorizationScreen({
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.ember} />
+        <ActivityIndicator size="large" color={colors.gradientMid} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -817,13 +827,20 @@ export default function TransactionCategorizationScreen({
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <Ionicons name="receipt-outline" size={64} color={colors.midGrey} />
+          <Ionicons name="receipt-outline" size={64} color={colors.muted} />
           <Text style={styles.emptyText}>No transactions to categorize</Text>
           <TouchableOpacity
-            style={styles.button}
+            style={styles.goBackButtonWrap}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.buttonText}>Go Back</Text>
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.gradientButtonText}>Go Back</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -865,10 +882,11 @@ export default function TransactionCategorizationScreen({
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color={colors.ink} />
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.backArrow}>←</Text>
             </TouchableOpacity>
             <View style={styles.progressContainer}>
+              <Text style={styles.screenLabel}>CATEGORIZE</Text>
               {batchMode && batchMerchant && (
                 <Text style={styles.batchLabel}>{batchMerchant}</Text>
               )}
@@ -882,14 +900,12 @@ export default function TransactionCategorizationScreen({
             {/* Transaction Card */}
             <View style={[
               styles.transactionCard,
-              { backgroundColor: isIncome ? colors.tagEmberBg : colors.card }
+              isIncome && { borderColor: colors.positive, borderWidth: 1.5 }
             ]}>
               <View style={styles.transactionHeader}>
-                <Ionicons
-                  name={isIncome ? "trending-up" : "receipt"}
-                  size={32}
-                  color={isIncome ? colors.ember : colors.ember}
-                />
+                <View style={[styles.transactionIconWrap, { backgroundColor: isIncome ? colors.tagIncomeBg : colors.tagExpenseBg }]}>
+                  <Text style={{ fontSize: 24 }}>{getCategoryEmoji(currentTransaction?.category?.[0] || '')}</Text>
+                </View>
                 <View style={styles.transactionInfo}>
                   <Text style={styles.merchantName}>
                     {currentTransaction?.merchant_name || currentTransaction?.name}
@@ -899,7 +915,7 @@ export default function TransactionCategorizationScreen({
               </View>
               <Text style={[
                 styles.amount,
-                { color: isIncome ? colors.ember : colors.ember }
+                { color: isIncome ? colors.positive : colors.negative }
               ]}>
                 {isIncome ? '+' : ''}£{Math.abs(currentTransaction?.amount || 0).toFixed(2)}
               </Text>
@@ -910,7 +926,7 @@ export default function TransactionCategorizationScreen({
               <View style={styles.sameAsAboveCard}>
                 <View style={styles.sameAsAboveContent}>
                   <View style={styles.sameAsAboveIcon}>
-                    <Ionicons name="copy-outline" size={20} color={colors.tagGreenText} />
+                    <Ionicons name="copy-outline" size={20} color={colors.positive} />
                   </View>
                   <View style={styles.sameAsAboveText}>
                     <Text style={styles.sameAsAboveTitle}>Same as above?</Text>
@@ -927,10 +943,15 @@ export default function TransactionCategorizationScreen({
                   {processing ? (
                     <ActivityIndicator size="small" color={colors.white} />
                   ) : (
-                    <>
+                    <LinearGradient
+                      colors={gradients.primary}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.sameAsAboveGradient}
+                    >
                       <Ionicons name="checkmark" size={18} color={colors.white} />
                       <Text style={styles.sameAsAboveButtonText}>Apply</Text>
-                    </>
+                    </LinearGradient>
                   )}
                 </TouchableOpacity>
               </View>
@@ -941,7 +962,7 @@ export default function TransactionCategorizationScreen({
               <View style={styles.suggestionCard}>
                 <View style={styles.suggestionHeader}>
                   <View style={styles.suggestionIconContainer}>
-                    <Ionicons name="sparkles" size={20} color={colors.ember} />
+                    <Ionicons name="sparkles" size={20} color={colors.gradientMid} />
                   </View>
                   <Text style={styles.suggestionTitle}>We remember this</Text>
                 </View>
@@ -952,7 +973,7 @@ export default function TransactionCategorizationScreen({
 
                 {suggestion.isVariable && (
                   <View style={styles.suggestionWarning}>
-                    <Ionicons name="information-circle" size={14} color={colors.ember} />
+                    <Ionicons name="information-circle" size={14} color={colors.gradientMid} />
                     <Text style={styles.suggestionWarningText}>
                       You've categorized this merchant differently before
                     </Text>
@@ -968,10 +989,15 @@ export default function TransactionCategorizationScreen({
                     {usingSuggestion ? (
                       <ActivityIndicator size="small" color={colors.white} />
                     ) : (
-                      <>
+                      <LinearGradient
+                        colors={gradients.primary}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.gradientButton}
+                      >
                         <Ionicons name="checkmark-circle" size={18} color={colors.white} />
-                        <Text style={styles.suggestionAcceptText}>Use Same Category</Text>
-                      </>
+                        <Text style={styles.gradientButtonText}>Use Same Category</Text>
+                      </LinearGradient>
                     )}
                   </TouchableOpacity>
 
@@ -993,7 +1019,7 @@ export default function TransactionCategorizationScreen({
                 onPress={() => setShowMemoryJogger(!showMemoryJogger)}
               >
                 <View style={styles.memoryJoggerTitleRow}>
-                  <Ionicons name="bulb" size={20} color={colors.ember} />
+                  <Ionicons name="bulb" size={20} color={colors.gradientMid} />
                   <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
                 </View>
                 <Ionicons
@@ -1018,7 +1044,7 @@ export default function TransactionCategorizationScreen({
                       onPress={() => copyToClipboard(currentTransaction.merchant_name || currentTransaction.name)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? colors.tagGreenText : colors.ember} />
+                      <Ionicons name={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === (currentTransaction.merchant_name || currentTransaction.name) ? colors.positive : colors.gradientMid} />
                       <Text style={styles.searchTermText}>{currentTransaction.merchant_name || currentTransaction.name}</Text>
                       {copiedText === (currentTransaction.merchant_name || currentTransaction.name) && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -1032,7 +1058,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(amountOnly)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.tagGreenText : colors.ember} />
+                          <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.positive : colors.gradientMid} />
                           <Text style={styles.searchTermText}>{amountOnly}</Text>
                           {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1048,7 +1074,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(merchantAmount)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.tagGreenText : colors.ember} />
+                          <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.positive : colors.gradientMid} />
                           <Text style={styles.searchTermText}>{merchantAmount}</Text>
                           {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1064,7 +1090,7 @@ export default function TransactionCategorizationScreen({
                           onPress={() => copyToClipboard(receiptSearch)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.tagGreenText : colors.ember} />
+                          <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.positive : colors.gradientMid} />
                           <Text style={styles.searchTermText} numberOfLines={1}>{currentTransaction.merchant_name || currentTransaction.name} receipt OR order</Text>
                           {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
                         </TouchableOpacity>
@@ -1096,7 +1122,7 @@ export default function TransactionCategorizationScreen({
           <>
             {processing ? (
               <View style={styles.processingContainer}>
-                <ActivityIndicator size="large" color={isIncome ? colors.ember : colors.ember} />
+                <ActivityIndicator size="large" color={colors.gradientMid} />
                 <Text style={styles.processingText}>
                   {currentQuestionIndex === 0 ? 'Analyzing...' : 'Processing...'}
                 </Text>
@@ -1115,7 +1141,7 @@ export default function TransactionCategorizationScreen({
                       value={customAnswer}
                       onChangeText={setCustomAnswer}
                       placeholder="Type your answer here..."
-                      placeholderTextColor={colors.midGrey}
+                      placeholderTextColor={colors.muted}
                       multiline
                       autoFocus
                       returnKeyType="done"
@@ -1127,15 +1153,21 @@ export default function TransactionCategorizationScreen({
                     />
                     <TouchableOpacity
                       style={[
-                        styles.submitButton,
-                        { backgroundColor: isIncome ? colors.ember : colors.ember },
+                        styles.submitButtonWrap,
                         !customAnswer.trim() && styles.submitButtonDisabled
                       ]}
                       onPress={() => handleCustomAnswer(currentQuestionIndex)}
                       disabled={!customAnswer.trim()}
                     >
-                      <Text style={styles.submitButtonText}>Submit</Text>
-                      <Ionicons name="arrow-forward" size={16} color={colors.background} />
+                      <LinearGradient
+                        colors={gradients.primary}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.gradientButton}
+                      >
+                        <Text style={styles.gradientButtonText}>Submit</Text>
+                        <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                      </LinearGradient>
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -1162,7 +1194,7 @@ export default function TransactionCategorizationScreen({
                         <Ionicons
                           name="create-outline"
                           size={18}
-                          color={isIncome ? colors.ember : colors.ember}
+                          color={colors.gradientMid}
                         />
                         <Text style={styles.customAnswerToggleText}>or type your own answer</Text>
                       </TouchableOpacity>
@@ -1175,7 +1207,7 @@ export default function TransactionCategorizationScreen({
                       value={customAnswer}
                       onChangeText={setCustomAnswer}
                       placeholder="Type your answer here..."
-                      placeholderTextColor={colors.midGrey}
+                      placeholderTextColor={colors.muted}
                       multiline
                       autoFocus
                       returnKeyType="done"
@@ -1198,15 +1230,21 @@ export default function TransactionCategorizationScreen({
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[
-                          styles.submitButton,
-                          { backgroundColor: isIncome ? colors.ember : colors.ember },
+                          styles.submitButtonWrap,
                           !customAnswer.trim() && styles.submitButtonDisabled
                         ]}
                         onPress={() => handleCustomAnswer(currentQuestionIndex)}
                         disabled={!customAnswer.trim()}
                       >
-                        <Text style={styles.submitButtonText}>Submit</Text>
-                        <Ionicons name="arrow-forward" size={16} color={colors.background} />
+                        <LinearGradient
+                          colors={gradients.primary}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.gradientButton}
+                        >
+                          <Text style={styles.gradientButtonText}>Submit</Text>
+                          <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                        </LinearGradient>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1219,7 +1257,7 @@ export default function TransactionCategorizationScreen({
             {/* Previous Answers */}
             {Object.keys(answers).length > 0 && (
               <View style={styles.answersContainer}>
-                <Text style={styles.answersTitle}>Your answers:</Text>
+                <Text style={styles.answersTitle}>YOUR ANSWERS</Text>
                 {Object.entries(answers).map(([question, answer], idx) => (
                   <View key={idx} style={styles.answerRow}>
                     <Text style={styles.answerQuestion}>{question}</Text>
@@ -1234,7 +1272,7 @@ export default function TransactionCategorizationScreen({
             {/* Success Banner */}
             {showSuccessBanner && (
               <View style={styles.successBanner}>
-                <Ionicons name="checkmark-circle" size={20} color={colors.tagGreenText} />
+                <Ionicons name="checkmark-circle" size={20} color={colors.positive} />
                 <Text style={styles.successBannerText}>Updated successfully</Text>
               </View>
             )}
@@ -1246,11 +1284,11 @@ export default function TransactionCategorizationScreen({
                   <Ionicons
                     name="git-branch-outline"
                     size={24}
-                    color={isIncome ? colors.ember : colors.ember}
+                    color={colors.gradientMid}
                   />
                   <Text style={[
                     styles.splitHeaderText,
-                    { color: isIncome ? colors.ember : colors.ember }
+                    { color: colors.gradientMid }
                   ]}>
                     Split Transaction
                   </Text>
@@ -1262,7 +1300,7 @@ export default function TransactionCategorizationScreen({
 
                 {((categorization as any).splits || []).map((split: any, idx: number) => {
                   const isBusiness = split.businessPercent > 0;
-                  const businessColor = isIncome ? colors.ember : colors.tagGreenText;
+                  const businessColor = isIncome ? colors.positive : colors.positive;
                   const personalColor = colors.midGrey;
                   const color = isBusiness ? businessColor : personalColor;
 
@@ -1285,10 +1323,7 @@ export default function TransactionCategorizationScreen({
                             {split.categoryName}
                           </Text>
                         </View>
-                        <Text style={[
-                          styles.splitAmount,
-                          { color: isIncome ? colors.ember : colors.ember }
-                        ]}>
+                        <Text style={styles.splitAmount}>
                           £{split.amount.toFixed(2)}
                         </Text>
                       </View>
@@ -1305,8 +1340,8 @@ export default function TransactionCategorizationScreen({
                   styles.resultBadge,
                   {
                     backgroundColor: isIncome
-                      ? (categorization.taxDeductible ? colors.tagEmberBg : colors.parchment)
-                      : (categorization.taxDeductible ? colors.tagGreenBg : colors.parchment)
+                      ? (categorization.taxDeductible ? colors.tagExpenseBg : colors.surface)
+                      : (categorization.taxDeductible ? colors.tagIncomeBg : colors.surface)
                   }
                 ]}>
                   <Ionicons
@@ -1318,16 +1353,16 @@ export default function TransactionCategorizationScreen({
                     size={32}
                     color={
                       isIncome
-                        ? (categorization.taxDeductible ? colors.ember : colors.midGrey)  // Coral for income
-                        : (categorization.taxDeductible ? colors.tagGreenText : colors.midGrey)  // Green for business expenses
+                        ? (categorization.taxDeductible ? colors.gradientMid : colors.midGrey)
+                        : (categorization.taxDeductible ? colors.positive : colors.midGrey)
                     }
                   />
                   <Text style={[
                     styles.resultTitle,
                     {
                       color: isIncome
-                        ? (categorization.taxDeductible ? colors.ember : colors.midGrey)  // Coral for income
-                        : (categorization.taxDeductible ? colors.tagGreenText : colors.midGrey)  // Green for business expenses
+                        ? (categorization.taxDeductible ? colors.gradientMid : colors.midGrey)
+                        : (categorization.taxDeductible ? colors.positive : colors.midGrey)
                     }
                   ]}>
                     {categorization.taxDeductible
@@ -1337,7 +1372,9 @@ export default function TransactionCategorizationScreen({
                   </Text>
                 </View>
 
-                <Text style={styles.categoryName}>{categorization.categoryName}</Text>
+                <Text style={styles.categoryName}>
+                  {getCategoryEmoji(categorization.categoryName)} {categorization.categoryName}
+                </Text>
                 <Text style={styles.explanation}>{categorization.explanation}</Text>
 
                 {categorization.businessPercent < 100 && categorization.businessPercent > 0 && (
@@ -1352,16 +1389,23 @@ export default function TransactionCategorizationScreen({
 
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={[styles.button, styles.nextButton]}
+                style={styles.nextButtonWrap}
                 onPress={handleNext}
                 disabled={recategorizing}
               >
-                <Text style={styles.buttonText}>Looks good</Text>
-                <Ionicons name="checkmark" size={20} color={colors.background} />
+                <LinearGradient
+                  colors={gradients.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}
+                >
+                  <Text style={styles.gradientButtonText}>Looks good</Text>
+                  <Ionicons name="checkmark" size={20} color={colors.white} />
+                </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.button, styles.skipButton]}
+                style={styles.skipButton}
                 onPress={handleSkip}
                 disabled={recategorizing}
               >
@@ -1387,7 +1431,7 @@ export default function TransactionCategorizationScreen({
                   value={feedback}
                   onChangeText={setFeedback}
                   placeholder="e.g., This should be 100% business, not personal..."
-                  placeholderTextColor={colors.midGrey}
+                  placeholderTextColor={colors.muted}
                   multiline
                   autoFocus
                 />
@@ -1405,19 +1449,26 @@ export default function TransactionCategorizationScreen({
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
-                      styles.submitButton,
+                      styles.submitButtonWrap,
                       (!feedback.trim() || recategorizing) && styles.submitButtonDisabled
                     ]}
                     onPress={handleFeedbackSubmit}
                     disabled={!feedback.trim() || recategorizing}
                   >
                     {recategorizing ? (
-                      <ActivityIndicator size="small" color={colors.background} />
+                      <View style={styles.gradientButton}>
+                        <ActivityIndicator size="small" color={colors.white} />
+                      </View>
                     ) : (
-                      <>
-                        <Text style={styles.submitButtonText}>Update</Text>
-                        <Ionicons name="refresh" size={16} color={colors.background} />
-                      </>
+                      <LinearGradient
+                        colors={gradients.primary}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.gradientButton}
+                      >
+                        <Text style={styles.gradientButtonText}>Update</Text>
+                        <Ionicons name="refresh" size={16} color={colors.white} />
+                      </LinearGradient>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -1434,16 +1485,18 @@ export default function TransactionCategorizationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
+    backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: 20,
+    paddingTop: spacing.lg,
     paddingBottom: 300,
   },
   header: {
@@ -1452,31 +1505,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  backArrow: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.ink,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: colors.gradientMid,
+    fontFamily: fonts.displaySemi,
+  },
   progress: {
     fontSize: 16,
-    fontFamily: fonts.displaySemi,
+    fontFamily: fonts.body,
     color: colors.midGrey,
   },
   progressContainer: {
     alignItems: 'center',
   },
   batchLabel: {
-    fontSize: 12,
-    fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    fontSize: 13,
+    fontFamily: fonts.body,
+    color: colors.gradientMid,
     marginBottom: 2,
   },
   // Same as Above styles
   sameAsAboveCard: {
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     borderRadius: borderRadius.lg,
     padding: 14,
     marginBottom: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.tagGreenText,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   sameAsAboveContent: {
     flexDirection: 'row',
@@ -1487,7 +1563,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.tagGreenBg,
+    backgroundColor: colors.tagIncomeBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -1498,7 +1574,7 @@ const styles = StyleSheet.create({
   sameAsAboveTitle: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.positive,
     marginBottom: 2,
   },
   sameAsAboveDesc: {
@@ -1507,8 +1583,11 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
   },
   sameAsAboveButton: {
-    backgroundColor: colors.tagGreenText,
-    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
+  },
+  sameAsAboveGradient: {
+    borderRadius: borderRadius.full,
     paddingHorizontal: 14,
     paddingVertical: spacing.xs,
     flexDirection: 'row',
@@ -1521,16 +1600,24 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   transactionCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.xl,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   transactionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  transactionIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   transactionInfo: {
     marginLeft: spacing.sm,
@@ -1550,7 +1637,7 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 32,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.negative,
     textAlign: 'center',
   },
   loadingText: {
@@ -1566,6 +1653,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     color: colors.midGrey,
     textAlign: 'center',
+  },
+  goBackButtonWrap: {
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
   },
   processingContainer: {
     alignItems: 'center',
@@ -1590,34 +1681,36 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   optionButton: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     padding: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   optionText: {
-    fontSize: 16,
-    fontFamily: fonts.displayMed,
+    fontSize: 15,
+    fontFamily: fonts.body,
     color: colors.ink,
     flex: 1,
     marginRight: spacing.sm,
   },
   answersContainer: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginTop: spacing.lg,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   answersTitle: {
-    fontSize: 14,
-    fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   answerRow: {
@@ -1630,8 +1723,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   answerValue: {
-    fontSize: 15,
-    fontFamily: fonts.displayMed,
+    fontSize: 16,
+    fontFamily: fonts.bodyBold,
     color: colors.ink,
   },
   resultContainer: {
@@ -1664,7 +1757,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   percentageContainer: {
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.full,
@@ -1673,37 +1766,40 @@ const styles = StyleSheet.create({
   percentageText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.tagExpenseText,
   },
   actionButtons: {
     width: '100%',
     gap: spacing.sm,
   },
-  button: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.lg,
+  nextButtonWrap: {
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
+  },
+  gradientButton: {
+    borderRadius: borderRadius.full,
     padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.xs,
   },
-  nextButton: {
-    backgroundColor: colors.ember,
+  gradientButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.white,
   },
   skipButton: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.mist,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontFamily: fonts.display,
-    color: colors.background,
+    borderRadius: borderRadius.full,
+    padding: spacing.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   skipButtonText: {
     fontSize: 16,
-    fontFamily: fonts.displaySemi,
+    fontFamily: fonts.body,
     color: colors.midGrey,
   },
   customAnswerToggle: {
@@ -1715,38 +1811,39 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   customAnswerToggleText: {
-    fontSize: 15,
-    fontFamily: fonts.displayMed,
-    color: colors.ember,
+    fontSize: 16,
+    fontFamily: fonts.body,
+    color: colors.gradientMid,
   },
   customAnswerContainer: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.ember,
-    ...shadows.sm,
+    padding: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   customAnswerLabel: {
-    fontSize: 15,
-    fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   customInput: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    fontSize: 16,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 100,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     fontFamily: fonts.body,
     color: colors.ink,
-    minHeight: 100,
-    maxHeight: 200,
     textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   customAnswerButtons: {
     flexDirection: 'row',
@@ -1756,34 +1853,24 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.mist,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: spacing.sm,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 15,
-    fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    fontFamily: fonts.body,
+    color: colors.ink,
   },
-  submitButton: {
+  submitButtonWrap: {
     flex: 1,
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
   },
   submitButtonDisabled: {
     opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 15,
-    fontFamily: fonts.bodyBold,
-    color: colors.background,
   },
   splitHeaderBadge: {
     flexDirection: 'row',
@@ -1804,12 +1891,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   splitItem: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.sm,
     borderLeftWidth: 4,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   splitHeader: {
     flexDirection: 'row',
@@ -1824,12 +1912,12 @@ const styles = StyleSheet.create({
   },
   splitCategory: {
     fontSize: 16,
-    fontFamily: fonts.display,
+    fontFamily: fonts.bodyBold,
   },
   splitAmount: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.negative,
   },
   splitDescription: {
     fontSize: 14,
@@ -1852,39 +1940,41 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   feedbackToggleText: {
-    fontSize: 14,
-    fontFamily: fonts.displayMed,
+    fontSize: 13,
+    fontFamily: fonts.body,
     color: colors.midGrey,
   },
   feedbackContainer: {
     marginTop: spacing.md,
     width: '100%',
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.mist,
-    ...shadows.sm,
+    padding: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   feedbackLabel: {
-    fontSize: 14,
-    fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   feedbackInput: {
     width: '100%',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 15,
     fontFamily: fonts.body,
     color: colors.ink,
     minHeight: 80,
     maxHeight: 150,
     textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   feedbackButtons: {
     flexDirection: 'row',
@@ -1892,30 +1982,27 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   successBanner: {
-    backgroundColor: colors.tagGreenBg,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
+    backgroundColor: colors.tagIncomeBg,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.tagGreenText,
   },
   successBannerText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   // Smart Suggestion Card Styles
   suggestionCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.mist,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   suggestionHeader: {
     flexDirection: 'row',
@@ -1926,78 +2013,65 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   suggestionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.display,
     color: colors.ink,
   },
   suggestionMessage: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.body,
     color: colors.midGrey,
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: spacing.sm,
   },
   suggestionWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.tagEmberBg,
+    backgroundColor: colors.tagExpenseBg,
     borderRadius: borderRadius.md,
-    padding: 10,
+    padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
   suggestionWarningText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.ember,
+    color: colors.tagExpenseText,
     flex: 1,
   },
   suggestionButtons: {
     gap: 10,
   },
   suggestionAcceptButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.ink,
-    borderRadius: borderRadius.lg,
-    paddingVertical: 14,
-    gap: spacing.xs,
-  },
-  suggestionAcceptText: {
-    fontSize: 15,
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
+    overflow: 'hidden',
+    borderRadius: borderRadius.full,
   },
   suggestionRejectButton: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   suggestionRejectText: {
-    fontSize: 14,
-    fontFamily: fonts.displayMed,
+    fontSize: 16,
+    fontFamily: fonts.body,
     color: colors.midGrey,
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.mist,
-    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   memoryJoggerHeader: {
     flexDirection: 'row',
@@ -2011,9 +2085,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   memoryJoggerTitle: {
-    fontSize: 16,
-    fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    fontSize: 18,
+    fontFamily: fonts.display,
+    color: colors.ink,
   },
   memoryJoggerContent: {
     paddingHorizontal: spacing.md,
@@ -2030,25 +2104,25 @@ const styles = StyleSheet.create({
   },
   searchSuggestionLabel: {
     fontSize: 13,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
     marginBottom: 10,
   },
   searchTermChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
     borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.xs,
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   searchTermChipCopied: {
-    backgroundColor: colors.tagGreenBg,
-    borderColor: colors.tagGreenText,
+    backgroundColor: colors.tagIncomeBg,
+    borderColor: colors.positive,
   },
   searchTermText: {
     fontSize: 14,
@@ -2059,16 +2133,18 @@ const styles = StyleSheet.create({
   copiedBadge: {
     fontSize: 12,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   searchTips: {
-    backgroundColor: colors.parchment,
-    borderRadius: borderRadius.lg,
-    padding: 14,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   searchTipTitle: {
     fontSize: 13,
-    fontFamily: fonts.displaySemi,
+    fontFamily: fonts.bodyBold,
     color: colors.ink,
     marginBottom: 10,
   },

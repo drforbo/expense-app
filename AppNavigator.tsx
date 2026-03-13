@@ -61,9 +61,9 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.coralBlaze,
-        tabBarInactiveTintColor: 'rgba(250,250,250,0.4)',
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarActiveTintColor: colors.gradientMid,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarShowLabel: false,
       }}
     >
       <Tab.Screen
@@ -182,21 +182,13 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: 8,
     paddingBottom: 28,
-    height: 90,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 2,
+    height: 64 + 28,
+    elevation: 0,
+    shadowOpacity: 0,
   },
 });

@@ -12,11 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface AddEvidenceScreenProps {
   route: any;
@@ -237,18 +238,27 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backArrow}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Evidence</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ flex: 1 }} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Screen Label */}
+        <Text style={styles.screenLabel}>EVIDENCE</Text>
+
+        {/* Hero Heading */}
+        <Text style={styles.heroHeading}>{'add\nevidence.'}</Text>
+
         {/* Transaction Info */}
         <View style={styles.transactionCard}>
           <Text style={styles.merchantName}>{transaction.merchant_name}</Text>
-          <Text style={styles.amount}>£{Math.abs(transaction.amount).toFixed(2)}</Text>
+          <Text style={styles.amount}>
+            {transaction.amount < 0
+              ? `-\u00A3${Math.abs(transaction.amount).toFixed(2)}`
+              : `\u00A3${Math.abs(transaction.amount).toFixed(2)}`}
+          </Text>
           <Text style={styles.category}>{transaction.category_name}</Text>
         </View>
 
@@ -261,7 +271,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color={colors.ember} />
+                  <Ionicons name="document-text" size={48} color={colors.gradientMid} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -286,13 +296,18 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             </View>
           ) : (
             <View>
+              <View style={styles.uploadArea}>
+                <Ionicons name="cloud-upload-outline" size={32} color={colors.muted} />
+                <Text style={styles.uploadAreaText}>Upload receipt</Text>
+              </View>
+
               <View style={styles.uploadButtons}>
                 <TouchableOpacity
                   style={styles.uploadButton}
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={24} color={colors.ember} />
+                  <Ionicons name="camera" size={20} color={colors.gradientMid} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -301,17 +316,17 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={24} color={colors.ember} />
+                  <Ionicons name="images" size={20} color={colors.gradientMid} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
 
               <TouchableOpacity
-                style={styles.pdfUploadButton}
+                style={styles.uploadButton}
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={24} color={colors.ember} />
+                <Ionicons name="document-text" size={20} color={colors.gradientMid} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
             </View>
@@ -319,7 +334,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color={colors.ember} />
+              <ActivityIndicator color={colors.gradientMid} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -334,7 +349,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           <TextInput
             style={styles.textInput}
             placeholder="e.g., Camera lens for filming YouTube videos"
-            placeholderTextColor={colors.midGrey}
+            placeholderTextColor={colors.muted}
             value={businessUseExplanation}
             onChangeText={setBusinessUseExplanation}
             multiline
@@ -352,7 +367,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           <TextInput
             style={styles.input}
             placeholder="https://youtube.com/watch?v=..."
-            placeholderTextColor={colors.midGrey}
+            placeholderTextColor={colors.muted}
             value={contentLink}
             onChangeText={setContentLink}
             autoCapitalize="none"
@@ -362,15 +377,23 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 
         {/* Save Button */}
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
           onPress={saveEvidence}
           disabled={saving || uploading}
+          activeOpacity={0.8}
+          style={{ marginBottom: 40 }}
         >
-          {saving ? (
-            <ActivityIndicator color={colors.background} />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Evidence</Text>
-          )}
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.saveButton, (saving || uploading) && styles.saveButtonDisabled]}
+          >
+            {saving ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.saveButtonText}>save evidence {'\u2192'}</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -380,30 +403,57 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: fonts.display,
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: 16,
     color: colors.ink,
+    fontFamily: fonts.display,
+    marginTop: -1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.xl,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: '#FF4500',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  heroHeading: {
+    fontSize: 38,
+    fontFamily: fonts.display,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: spacing.xxl,
   },
   transactionCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.xl,
     marginBottom: spacing.lg,
-    ...shadows.sm,
   },
   merchantName: {
     fontSize: 18,
@@ -414,11 +464,11 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 24,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.negative,
     marginBottom: spacing.xs,
   },
   category: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
   },
@@ -427,56 +477,53 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemi,
     color: colors.ink,
     marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.body,
     color: colors.midGrey,
     marginBottom: spacing.sm,
   },
+  uploadArea: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.xxxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  uploadAreaText: {
+    fontSize: 14,
+    fontFamily: fonts.body,
+    color: colors.muted,
+  },
   uploadButtons: {
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  uploadButtonsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   uploadButton: {
     flex: 1,
-    minWidth: '45%',
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderWidth: 2,
-    borderColor: colors.mist,
-  },
-  uploadButtonFullWidth: {
-    flex: 0,
-    width: '100%',
-  },
-  uploadButtonText: {
-    fontSize: 14,
-    fontFamily: fonts.displaySemi,
-    color: colors.ember,
-  },
-  pdfUploadButton: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.xs,
-    marginTop: spacing.sm,
-    borderWidth: 2,
-    borderColor: colors.mist,
+  },
+  uploadButtonText: {
+    fontSize: 14,
+    fontFamily: fonts.displaySemi,
+    color: colors.gradientMid,
   },
   imageContainer: {
     position: 'relative',
@@ -485,18 +532,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 2,
-    borderColor: colors.mist,
   },
   pdfFileName: {
     fontSize: 14,
@@ -508,21 +555,21 @@ const styles = StyleSheet.create({
   pdfUploaded: {
     fontSize: 12,
     fontFamily: fonts.bodyBold,
-    color: colors.tagGreenText,
+    color: colors.positive,
   },
   changeImageButton: {
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: colors.ember,
+    backgroundColor: colors.ink,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
   },
   changeImageText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.background,
+    color: colors.white,
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -536,32 +583,33 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
   },
   input: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    height: 52,
+    paddingHorizontal: 14,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
-    borderWidth: 1,
-    borderColor: colors.mist,
   },
   textInput: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     fontSize: 16,
     fontFamily: fonts.body,
     color: colors.ink,
-    borderWidth: 1,
-    borderColor: colors.mist,
     minHeight: 120,
   },
   saveButton: {
-    backgroundColor: colors.ember,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.full,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 40,
+    justifyContent: 'center',
   },
   saveButtonDisabled: {
     opacity: 0.5,
@@ -569,6 +617,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.background,
+    color: colors.white,
   },
 });

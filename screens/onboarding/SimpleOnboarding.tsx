@@ -12,9 +12,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface SimpleOnboardingProps {
   onComplete: () => void;
@@ -250,30 +251,100 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     return ((index + 1) / steps.length) * 100;
   };
 
+  // Determine how many progress segments to fill (out of 3) based on step
+  const getProgressSegments = () => {
+    const steps: Step[] = ['signup', 'workType', 'jobRole', 'mainClients', 'workLocation', 'income', 'giftedItems', 'bankAccounts', 'registration', 'employment', 'studentLoan'];
+    const index = steps.indexOf(currentStep);
+    // Map 11 steps into 3 segments
+    if (index <= 3) return 1;
+    if (index <= 7) return 2;
+    return 3;
+  };
+
+  const getStepLabel = () => {
+    const segments = getProgressSegments();
+    return `${segments} OF 3`;
+  };
+
+  // Step-specific hero headings and subtitles
+  const getStepHeading = (): string => {
+    switch (currentStep) {
+      case 'workType': return `what's your\nside\nhustle? 💅`;
+      case 'jobRole': return `what do\nyou\nactually do? 💼`;
+      case 'mainClients': return `who pays\nyou? 💰`;
+      case 'workLocation': return `where do\nyou\nwork? 🏠`;
+      case 'income': return `how much\ndo you\nearn? 💷`;
+      case 'giftedItems': return `do you get\nfree\nstuff? 🎁`;
+      case 'bankAccounts': return `how many\nbank\naccounts? 🏦`;
+      case 'registration': return `are you\nregistered? 📝`;
+      case 'employment': return `is this your\nonly\nincome? 👀`;
+      case 'studentLoan': return `student\nloan? 🎓`;
+      default: return '';
+    }
+  };
+
+  const getStepSubtitle = (): string => {
+    switch (currentStep) {
+      case 'workType': return 'pick everything that applies';
+      case 'jobRole': return 'helps us categorize your expenses';
+      case 'mainClients': return 'helps us spot your income automatically';
+      case 'workLocation': return 'affects which expenses are deductible';
+      case 'income': return 'from your side hustle, before tax';
+      case 'giftedItems': return 'PR packages count as taxable income';
+      case 'bankAccounts': return 'where you receive income or pay expenses';
+      case 'registration': return 'your HMRC status';
+      case 'employment': return 'helps us calculate your tax accurately';
+      case 'studentLoan': return 'affects your take-home pay';
+      default: return '';
+    }
+  };
+
   const renderSignUp = () => (
     <View style={styles.stepContainer}>
       <View style={styles.logoContainer}>
         <Text style={styles.logo}>bopp.</Text>
-        <Text style={styles.tagline}>Taxes hit different when they actually make sense.</Text>
+        <Text style={styles.tagline}>Taxes hit different when{'\n'}they actually make sense.</Text>
       </View>
 
       {/* Auth mode toggle */}
       <View style={styles.authToggle}>
         <TouchableOpacity
-          style={[styles.authToggleButton, authMode === 'signup' && styles.authToggleButtonActive]}
+          style={styles.authToggleButton}
           onPress={() => setAuthMode('signup')}
         >
-          <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>
-            Sign up
-          </Text>
+          {authMode === 'signup' ? (
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.authTogglePill}
+            >
+              <Text style={styles.authToggleTextActive}>Sign up</Text>
+            </LinearGradient>
+          ) : (
+            <View style={styles.authTogglePill}>
+              <Text style={styles.authToggleText}>Sign up</Text>
+            </View>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.authToggleButton, authMode === 'login' && styles.authToggleButtonActive]}
+          style={styles.authToggleButton}
           onPress={() => setAuthMode('login')}
         >
-          <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>
-            Log in
-          </Text>
+          {authMode === 'login' ? (
+            <LinearGradient
+              colors={gradients.primary as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.authTogglePill}
+            >
+              <Text style={styles.authToggleTextActive}>Log in</Text>
+            </LinearGradient>
+          ) : (
+            <View style={styles.authTogglePill}>
+              <Text style={styles.authToggleText}>Log in</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -281,49 +352,55 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         {authMode === 'signup' && (
           <>
             <Text style={styles.inputLabel}>First name</Text>
-            <TextInput
-              style={styles.input}
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="First name"
-              placeholderTextColor={colors.midGrey}
-              autoCapitalize="words"
-              autoComplete="given-name"
-            />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="First name"
+                placeholderTextColor={colors.muted}
+                autoCapitalize="words"
+                autoComplete="given-name"
+              />
+            </View>
 
             <Text style={styles.inputLabel}>Last name</Text>
-            <TextInput
-              style={styles.input}
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Last name"
-              placeholderTextColor={colors.midGrey}
-              autoCapitalize="words"
-              autoComplete="family-name"
-            />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Last name"
+                placeholderTextColor={colors.muted}
+                autoCapitalize="words"
+                autoComplete="family-name"
+              />
+            </View>
           </>
         )}
 
         <Text style={styles.inputLabel}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="your@email.com"
-          placeholderTextColor={colors.midGrey}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="your@email.com"
+            placeholderTextColor={colors.muted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+          />
+        </View>
 
         <Text style={styles.inputLabel}>Password</Text>
-        <View style={styles.passwordContainer}>
+        <View style={[styles.inputWrapper, styles.passwordContainer]}>
           <TextInput
             style={[styles.input, styles.passwordInput]}
             value={password}
             onChangeText={setPassword}
             placeholder={authMode === 'signup' ? 'At least 6 characters' : 'Your password'}
-            placeholderTextColor={colors.midGrey}
+            placeholderTextColor={colors.muted}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoComplete="password"
@@ -335,81 +412,94 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
-              color={colors.midGrey}
+              color={colors.muted}
             />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={[styles.primaryButton, loading && styles.buttonDisabled]}
-          onPress={authMode === 'signup' ? handleSignUp : handleLogin}
-          disabled={loading}
+        <LinearGradient
+          colors={gradients.primary as unknown as string[]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.gradientButton, loading && styles.buttonDisabled]}
         >
-          {loading ? (
-            <ActivityIndicator color={colors.background} />
-          ) : (
-            <>
-              <Text style={styles.primaryButtonText}>
-                {authMode === 'signup' ? 'Create account' : 'Log in'}
+          <TouchableOpacity
+            style={styles.gradientButtonInner}
+            onPress={authMode === 'signup' ? handleSignUp : handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.gradientButtonText}>
+                {authMode === 'signup' ? "let's go \u2192" : "log in \u2192"}
               </Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.background} />
-            </>
-          )}
-        </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
     </View>
   );
 
   const renderWorkType = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>What's your side hustle?</Text>
-
       {workType !== 'other' ? (
         <>
-          <OptionButton
+          <OptionCard
+            emoji="🎥"
             text="Content creation"
-            icon="videocam"
+            selected={workType === 'content_creation'}
             onPress={() => handleWorkTypeSelect('content_creation')}
           />
-          <OptionButton
+          <OptionCard
+            emoji="💼"
             text="Freelancing"
-            icon="briefcase"
+            selected={workType === 'freelancing'}
             onPress={() => handleWorkTypeSelect('freelancing')}
           />
-          <OptionButton
+          <OptionCard
+            emoji="🛒"
             text="(Re)selling products"
-            icon="cart"
+            selected={workType === 'side_hustle'}
             onPress={() => handleWorkTypeSelect('side_hustle')}
           />
-          <OptionButton
+          <OptionCard
+            emoji="✨"
             text="Other"
-            icon="ellipsis-horizontal"
+            selected={workType === 'other'}
             onPress={() => handleWorkTypeSelect('other')}
           />
         </>
       ) : (
         <View style={styles.otherInputContainer}>
           <Text style={styles.otherLabel}>What do you do?</Text>
-          <TextInput
-            style={styles.input}
-            value={customWorkType}
-            onChangeText={setCustomWorkType}
-            placeholder="e.g., dog walking, consulting"
-            placeholderTextColor={colors.midGrey}
-            autoFocus
-            onSubmitEditing={handleOtherSubmit}
-          />
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-              !customWorkType.trim() && styles.buttonDisabled,
-            ]}
-            onPress={handleOtherSubmit}
-            disabled={!customWorkType.trim()}
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              value={customWorkType}
+              onChangeText={setCustomWorkType}
+              placeholder="e.g., dog walking, consulting"
+              placeholderTextColor={colors.muted}
+              autoFocus
+              onSubmitEditing={handleOtherSubmit}
+            />
+          </View>
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.gradientButton, !customWorkType.trim() && styles.buttonDisabled]}
           >
-            <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.background} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.gradientButtonInner}
+              onPress={handleOtherSubmit}
+              disabled={!customWorkType.trim()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       )}
     </View>
@@ -417,55 +507,69 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderJobRole = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>What exactly do you do?</Text>
-      <Text style={styles.questionSubtitle}>This helps us categorize your expenses more accurately</Text>
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          value={jobRole}
+          onChangeText={setJobRole}
+          placeholder="e.g., freelance photographer, UGC creator"
+          placeholderTextColor={colors.muted}
+          autoFocus
+          onSubmitEditing={handleJobRoleNext}
+        />
+      </View>
 
-      <TextInput
-        style={styles.input}
-        value={jobRole}
-        onChangeText={setJobRole}
-        placeholder="e.g., freelance photographer, UGC creator, social media manager"
-        placeholderTextColor={colors.midGrey}
-        autoFocus
-        onSubmitEditing={handleJobRoleNext}
-      />
-
-      <TouchableOpacity
-        style={[styles.primaryButton, !jobRole.trim() && styles.buttonDisabled]}
-        onPress={handleJobRoleNext}
-        disabled={!jobRole.trim()}
+      <LinearGradient
+        colors={gradients.primary as unknown as string[]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.gradientButton, !jobRole.trim() && styles.buttonDisabled]}
       >
-        <Text style={styles.primaryButtonText}>Continue</Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.background} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.gradientButtonInner}
+          onPress={handleJobRoleNext}
+          disabled={!jobRole.trim()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 
   const renderMainClients = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Who are your main clients?</Text>
-      <Text style={styles.questionSubtitle}>Helps us spot your income automatically</Text>
-
       {mainClients.map((client, index) => (
-        <TextInput
-          key={index}
-          style={[styles.input, { marginBottom: spacing.sm }]}
-          value={client}
-          onChangeText={(text) => {
-            const updated = [...mainClients];
-            updated[index] = text;
-            setMainClients(updated);
-          }}
-          placeholder={index === 0 ? 'e.g., Nike' : index === 1 ? 'e.g., Gymshark' : 'e.g., Agency name'}
-          placeholderTextColor={colors.midGrey}
-          autoFocus={index === 0}
-        />
+        <View key={index} style={[styles.inputWrapper, { marginBottom: spacing.sm }]}>
+          <TextInput
+            style={styles.input}
+            value={client}
+            onChangeText={(text) => {
+              const updated = [...mainClients];
+              updated[index] = text;
+              setMainClients(updated);
+            }}
+            placeholder={index === 0 ? 'e.g., Nike' : index === 1 ? 'e.g., Gymshark' : 'e.g., Agency name'}
+            placeholderTextColor={colors.muted}
+            autoFocus={index === 0}
+          />
+        </View>
       ))}
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleMainClientsNext}>
-        <Text style={styles.primaryButtonText}>Continue</Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.background} />
-      </TouchableOpacity>
+      <LinearGradient
+        colors={gradients.primary as unknown as string[]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientButton}
+      >
+        <TouchableOpacity
+          style={styles.gradientButtonInner}
+          onPress={handleMainClientsNext}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
+        </TouchableOpacity>
+      </LinearGradient>
 
       <TouchableOpacity
         style={styles.skipButton}
@@ -478,23 +582,17 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderWorkLocation = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Where do you mainly work?</Text>
-      <Text style={styles.questionSubtitle}>Affects which expenses are deductible</Text>
-
-      <OptionButton text="From home" icon="home" onPress={() => handleWorkLocationSelect('home')} />
-      <OptionButton text="Rented office" icon="business" onPress={() => handleWorkLocationSelect('office')} />
-      <OptionButton text="Co-working space" icon="people" onPress={() => handleWorkLocationSelect('coworking')} />
-      <OptionButton text="Client sites" icon="location" onPress={() => handleWorkLocationSelect('client_sites')} />
-      <OptionButton text="On the road" icon="car" onPress={() => handleWorkLocationSelect('on_the_road')} />
-      <OptionButton text="Mixed / varies" icon="shuffle" onPress={() => handleWorkLocationSelect('mixed')} />
+      <OptionCard emoji="🏠" text="From home" selected={workLocation === 'home'} onPress={() => handleWorkLocationSelect('home')} />
+      <OptionCard emoji="🏢" text="Rented office" selected={workLocation === 'office'} onPress={() => handleWorkLocationSelect('office')} />
+      <OptionCard emoji="👥" text="Co-working space" selected={workLocation === 'coworking'} onPress={() => handleWorkLocationSelect('coworking')} />
+      <OptionCard emoji="📍" text="Client sites" selected={workLocation === 'client_sites'} onPress={() => handleWorkLocationSelect('client_sites')} />
+      <OptionCard emoji="🚗" text="On the road" selected={workLocation === 'on_the_road'} onPress={() => handleWorkLocationSelect('on_the_road')} />
+      <OptionCard emoji="🔀" text="Mixed / varies" selected={workLocation === 'mixed'} onPress={() => handleWorkLocationSelect('mixed')} />
     </View>
   );
 
   const renderIncome = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>What's your monthly income?</Text>
-      <Text style={styles.questionSubtitle}>From your side hustle, before tax</Text>
-
       <View style={styles.currencyInputSection}>
         <TouchableOpacity
           style={styles.incrementButton}
@@ -513,7 +611,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             onChangeText={(text) => handleCurrencyInput(text, setMonthlyIncome)}
             keyboardType="number-pad"
             placeholder="0"
-            placeholderTextColor={colors.midGrey}
+            placeholderTextColor={colors.muted}
           />
         </View>
 
@@ -529,31 +627,38 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       <Text style={styles.incrementHint}>Tap or hold to adjust by £100</Text>
 
-      <TouchableOpacity style={styles.primaryButton} onPress={handleIncomeNext}>
-        <Text style={styles.primaryButtonText}>Continue</Text>
-        <Ionicons name="arrow-forward" size={20} color={colors.background} />
-      </TouchableOpacity>
+      <LinearGradient
+        colors={gradients.primary as unknown as string[]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientButton}
+      >
+        <TouchableOpacity
+          style={styles.gradientButtonInner}
+          onPress={handleIncomeNext}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 
   const renderGiftedItems = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Do you receive gifted items?</Text>
-      <Text style={styles.questionSubtitle}>
-        Gifted items such as PR packages count as income. This helps us track your tax accurately.
-      </Text>
-
-      <OptionButton
+      <OptionCard
+        emoji="🎁"
         text="Yes, I receive gifted items"
-        icon="gift"
+        selected={receivesGiftedItems === true}
         onPress={() => {
           setReceivesGiftedItems(true);
           setTimeout(() => setCurrentStep('bankAccounts'), 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="❌"
         text="No"
-        icon="close-circle-outline"
+        selected={receivesGiftedItems === false && currentStep === 'giftedItems'}
         onPress={() => {
           setReceivesGiftedItems(false);
           setTimeout(() => setCurrentStep('bankAccounts'), 300);
@@ -564,16 +669,12 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderBankAccounts = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>How many bank accounts?</Text>
-      <Text style={styles.questionSubtitle}>
-        Count every account where you receive side hustle income or pay side hustle expenses
-      </Text>
-
       {[1, 2, 3, 4, 5].map(n => (
-        <OptionButton
+        <OptionCard
           key={n}
+          emoji={n === 1 ? '💳' : '💰'}
           text={n === 5 ? '5 or more' : `${n}`}
-          icon={n === 1 ? 'card' : 'wallet'}
+          selected={bankAccountCount === n}
           onPress={() => {
             setBankAccountCount(n);
             setTimeout(() => setCurrentStep('registration'), 300);
@@ -585,27 +686,28 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderRegistration = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Are you registered with HMRC?</Text>
-
-      <OptionButton
+      <OptionCard
+        emoji="👤"
         text="Yes - Sole trader"
-        icon="person"
+        selected={trackingGoal === 'sole_trader'}
         onPress={() => {
           setTrackingGoal('sole_trader');
           setTimeout(() => setCurrentStep('employment'), 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="🏢"
         text="Yes - Limited company"
-        icon="briefcase"
+        selected={trackingGoal === 'limited_company'}
         onPress={() => {
           setTrackingGoal('limited_company');
           setTimeout(() => setCurrentStep('employment'), 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="❓"
         text="Not yet"
-        icon="help-circle"
+        selected={trackingGoal === 'not_registered'}
         onPress={() => {
           setTrackingGoal('not_registered');
           setTimeout(() => setCurrentStep('employment'), 300);
@@ -614,7 +716,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
         </View>
       )}
     </View>
@@ -622,20 +724,19 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderEmployment = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Is this your only income?</Text>
-      <Text style={styles.questionSubtitle}>This helps us calculate your tax more accurately</Text>
-
-      <OptionButton
+      <OptionCard
+        emoji="💸"
         text="Yes, just my side hustle"
-        icon="cash"
+        selected={hasOtherEmployment === false}
         onPress={() => {
           setHasOtherEmployment(false);
           setTimeout(() => setCurrentStep('studentLoan'), 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="🏢"
         text="No, I also have a day job"
-        icon="business"
+        selected={hasOtherEmployment === true}
         onPress={() => {
           setHasOtherEmployment(true);
         }}
@@ -663,7 +764,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 onChangeText={(text) => handleCurrencyInput(text, setEmploymentIncome)}
                 keyboardType="number-pad"
                 placeholder="0"
-                placeholderTextColor={colors.midGrey}
+                placeholderTextColor={colors.muted}
               />
             </View>
 
@@ -679,13 +780,20 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
           <Text style={styles.incrementHint}>Tap or hold to adjust by £1,000</Text>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => setCurrentStep('studentLoan')}
+          <LinearGradient
+            colors={gradients.primary as unknown as string[]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientButton}
           >
-            <Text style={styles.primaryButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color={colors.background} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.gradientButtonInner}
+              onPress={() => setCurrentStep('studentLoan')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
       )}
     </View>
@@ -693,44 +801,46 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderStudentLoan = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.question}>Do you have a student loan?</Text>
-      <Text style={styles.questionSubtitle}>This affects your take-home pay calculations</Text>
-
-      <OptionButton
+      <OptionCard
+        emoji="❌"
         text="No student loan"
-        icon="school-outline"
+        selected={studentLoanPlan === 'none' && currentStep === 'studentLoan'}
         onPress={() => {
           setStudentLoanPlan('none');
           setTimeout(handleComplete, 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="🎓"
         text="Plan 1 (started before 2012)"
-        icon="school"
+        selected={studentLoanPlan === 'plan1'}
         onPress={() => {
           setStudentLoanPlan('plan1');
           setTimeout(handleComplete, 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="🎓"
         text="Plan 2 (started 2012 or later)"
-        icon="school"
+        selected={studentLoanPlan === 'plan2'}
         onPress={() => {
           setStudentLoanPlan('plan2');
           setTimeout(handleComplete, 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="🏴󠁧󠁢󠁳󠁣󠁴󠁿"
         text="Plan 4 (Scotland)"
-        icon="school"
+        selected={studentLoanPlan === 'plan4'}
         onPress={() => {
           setStudentLoanPlan('plan4');
           setTimeout(handleComplete, 300);
         }}
       />
-      <OptionButton
+      <OptionCard
+        emoji="📚"
         text="Postgraduate loan"
-        icon="library"
+        selected={studentLoanPlan === 'postgrad'}
         onPress={() => {
           setStudentLoanPlan('postgrad');
           setTimeout(handleComplete, 300);
@@ -739,11 +849,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.gradientMid} />
         </View>
       )}
     </View>
   );
+
+  const activeSegments = getProgressSegments();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -753,11 +865,26 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       >
         {currentStep !== 'signup' && (
           <View style={styles.header}>
+            {/* Back button */}
             <TouchableOpacity onPress={goBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={colors.ink} />
+              <Text style={styles.backButtonText}>{'\u2190'}</Text>
             </TouchableOpacity>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${getProgress()}%` }]} />
+
+            {/* Progress bar - 3 segments */}
+            <View style={styles.progressBarContainer}>
+              {[1, 2, 3].map((seg) => (
+                seg <= activeSegments ? (
+                  <LinearGradient
+                    key={seg}
+                    colors={['#FF8C00', '#FF4500']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.progressSegmentActive}
+                  />
+                ) : (
+                  <View key={seg} style={styles.progressSegmentInactive} />
+                )
+              ))}
             </View>
           </View>
         )}
@@ -767,6 +894,17 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Step header for non-signup steps */}
+          {currentStep !== 'signup' && (
+            <View style={styles.stepHeader}>
+              <Text style={styles.stepLabel}>{getStepLabel()}</Text>
+              <Text style={styles.heroHeading}>{getStepHeading()}</Text>
+              {getStepSubtitle() ? (
+                <Text style={styles.heroSubtitle}>{getStepSubtitle()}</Text>
+              ) : null}
+            </View>
+          )}
+
           {currentStep === 'signup' && renderSignUp()}
           {currentStep === 'workType' && renderWorkType()}
           {currentStep === 'jobRole' && renderJobRole()}
@@ -784,23 +922,45 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   );
 }
 
-interface OptionButtonProps {
+// --- OptionCard component (replaces OptionButton) ---
+
+interface OptionCardProps {
+  emoji: string;
   text: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  selected: boolean;
   onPress: () => void;
 }
 
-const OptionButton: React.FC<OptionButtonProps> = ({ text, icon, onPress }) => (
-  <TouchableOpacity style={styles.optionButton} onPress={onPress} activeOpacity={0.7}>
-    <View style={styles.optionContent}>
-      <View style={styles.optionIcon}>
-        <Ionicons name={icon} size={24} color={colors.ember} />
-      </View>
+const OptionCard: React.FC<OptionCardProps> = ({ emoji, text, selected, onPress }) => {
+  if (selected) {
+    return (
+      <LinearGradient
+        colors={gradients.primary as unknown as string[]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.optionCardGradient}
+      >
+        <TouchableOpacity style={styles.optionCardInner} onPress={onPress} activeOpacity={0.8}>
+          <Text style={styles.optionEmoji}>{emoji}</Text>
+          <Text style={[styles.optionText, styles.optionTextSelected]}>{text}</Text>
+          <View style={styles.optionCheckCircleFilled}>
+            <Text style={styles.optionCheckMark}>{'\u2713'}</Text>
+          </View>
+        </TouchableOpacity>
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <TouchableOpacity style={styles.optionCard} onPress={onPress} activeOpacity={0.7}>
+      <Text style={styles.optionEmoji}>{emoji}</Text>
       <Text style={styles.optionText}>{text}</Text>
-    </View>
-    <Ionicons name="chevron-forward" size={20} color={colors.midGrey} />
-  </TouchableOpacity>
-);
+      <View style={styles.optionCheckCircleEmpty} />
+    </TouchableOpacity>
+  );
+};
+
+// --- Legacy OptionButton interface kept for type compat but unused ---
 
 const styles = StyleSheet.create({
   container: {
@@ -810,101 +970,147 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 20,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
     gap: spacing.md,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  progressBar: {
+  backButtonText: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  progressBarContainer: {
     flex: 1,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: borderRadius.xs,
-    overflow: 'hidden',
+    flexDirection: 'row',
+    gap: 5,
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.xs,
+  progressSegmentActive: {
+    flex: 1,
+    height: 3,
+    borderRadius: 9999,
+  },
+  progressSegmentInactive: {
+    flex: 1,
+    height: 3,
+    borderRadius: 9999,
+    backgroundColor: colors.border,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: spacing.lg,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingVertical: spacing.lg,
+    paddingBottom: 100,
+  },
+  stepHeader: {
+    marginBottom: 24,
+  },
+  stepLabel: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 10,
+    color: '#FF4500',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  heroHeading: {
+    fontFamily: fonts.display,
+    fontSize: 38,
+    color: colors.ink,
+    letterSpacing: -2,
+    lineHeight: 46,
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.midGrey,
+    marginTop: 4,
   },
   stepContainer: {
     flex: 1,
   },
+
+  // --- Sign up screen ---
   logoContainer: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
+    marginTop: 48,
+    marginBottom: 48,
   },
   logo: {
     fontSize: 48,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
     marginBottom: spacing.xs,
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 16,
-    color: colors.white,
-    opacity: 0.7,
+    color: colors.midGrey,
     fontFamily: fonts.body,
+    textAlign: 'center',
   },
+
+  // Auth toggle
   authToggle: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     padding: 4,
-    marginBottom: spacing.lg,
+    marginBottom: 24,
     gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   authToggleButton: {
     flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
+  },
+  authTogglePill: {
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
   },
-  authToggleButtonActive: {
-    backgroundColor: colors.coralBlaze,
-  },
   authToggleText: {
-    fontSize: 15,
-    fontFamily: fonts.displaySemi,
+    fontSize: 14,
+    fontFamily: fonts.bodyBold,
     color: colors.midGrey,
   },
   authToggleTextActive: {
-    color: colors.background,
+    fontSize: 14,
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
   },
+
+  // Form
   formContainer: {
     gap: spacing.md,
   },
   inputLabel: {
-    fontSize: 14,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
-    marginBottom: -8,
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
+    marginBottom: -4,
   },
-  input: {
+  inputWrapper: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: 16,
-    color: colors.white,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
+  },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: colors.ink,
     fontFamily: fonts.body,
   },
   passwordContainer: {
@@ -915,294 +1121,185 @@ const styles = StyleSheet.create({
   },
   passwordToggle: {
     position: 'absolute',
-    right: spacing.md,
-    top: spacing.md,
+    right: 14,
+    top: 14,
     padding: 4,
   },
-  primaryButton: {
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
+
+  // Gradient CTA button
+  gradientButton: {
+    borderRadius: 9999,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  gradientButtonInner: {
+    paddingVertical: 17,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
+  },
+  gradientButtonText: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    color: colors.white,
+    letterSpacing: -0.3,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
-  primaryButtonText: {
-    fontSize: 16,
-    fontFamily: fonts.display,
-    color: colors.background,
-  },
-  question: {
-    fontSize: 28,
-    fontFamily: fonts.display,
-    color: colors.white,
-    marginBottom: spacing.xs,
-  },
-  questionSubtitle: {
-    fontSize: 15,
-    color: colors.midGrey,
-    marginBottom: spacing.lg,
-    fontFamily: fonts.body,
-  },
-  employmentIncomeContainer: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
+
+  // Option cards
+  optionCard: {
+    borderWidth: 2,
     borderColor: colors.border,
-  },
-  optionButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.sm,
+    borderRadius: 16,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
+    gap: 12,
+    marginBottom: 9,
     backgroundColor: colors.background,
-    justifyContent: 'center',
+  },
+  optionCardGradient: {
+    borderRadius: 16,
+    marginBottom: 9,
+  },
+  optionCardInner: {
+    padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  optionEmoji: {
+    fontSize: 20,
   },
   optionText: {
-    fontSize: 18,
-    fontFamily: fonts.displaySemi,
+    flex: 1,
+    fontFamily: fonts.display,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  optionTextSelected: {
     color: colors.white,
   },
+  optionCheckCircleEmpty: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  optionCheckCircleFilled: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionCheckMark: {
+    color: '#FF4500',
+    fontWeight: '900',
+    fontSize: 11,
+  },
+
+  // Other / custom input
   otherInputContainer: {
     gap: spacing.md,
   },
   otherLabel: {
-    fontSize: 16,
-    color: colors.midGrey,
-    fontFamily: fonts.body,
-  },
-  sliderLabel: {
     fontSize: 14,
     color: colors.midGrey,
-    marginBottom: spacing.md,
     fontFamily: fonts.body,
   },
+
+  // Currency input
   currencyInputSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
     marginBottom: spacing.sm,
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   incrementButton: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   currencyFieldContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingHorizontal: 20,
+    paddingVertical: spacing.lg,
     minWidth: 180,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   currencyPrefix: {
-    fontSize: 36,
+    fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
+    letterSpacing: -2,
   },
   currencyInput: {
-    fontSize: 36,
+    fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.ink,
     minWidth: 60,
     textAlign: 'center',
     padding: 0,
+    letterSpacing: -2,
   },
   incrementHint: {
-    fontSize: 13,
-    color: colors.midGrey,
+    fontSize: 11,
+    color: colors.muted,
     fontFamily: fonts.body,
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: 32,
+    letterSpacing: 0.2,
   },
-  checkboxSection: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  checkboxBox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxBoxChecked: {
-    backgroundColor: colors.coralBlaze,
-    borderColor: colors.coralBlaze,
-  },
-  checkboxLabel: {
-    fontSize: 16,
-    color: colors.white,
-    flex: 1,
-    fontFamily: fonts.body,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 10, 10, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Tax residency styles
-  optionButtonSelected: {
-    borderWidth: 2,
-    borderColor: colors.coralBlaze,
-    backgroundColor: colors.surface,
-  },
-  optionSubtext: {
-    fontSize: 13,
-    color: colors.midGrey,
-    marginTop: 2,
-    fontFamily: fonts.body,
-  },
-  foreignCountriesSection: {
-    marginTop: spacing.lg,
+
+  // Employment income inline
+  employmentIncomeContainer: {
+    marginTop: 24,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    padding: 20,
   },
-  foreignCountriesLabel: {
-    fontSize: 16,
-    fontFamily: fonts.displaySemi,
-    color: colors.white,
-    marginBottom: 4,
-  },
-  foreignCountriesHint: {
+  sliderLabel: {
     fontSize: 13,
     color: colors.midGrey,
     marginBottom: spacing.md,
     fontFamily: fonts.body,
   },
-  countryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  countryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    gap: spacing.xs,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  countryChipSelected: {
-    borderColor: colors.coralBlaze,
-    backgroundColor: colors.surface,
-  },
-  countryFlag: {
-    fontSize: 18,
-  },
-  countryName: {
-    fontSize: 14,
-    fontFamily: fonts.displayMed,
-    color: colors.midGrey,
-  },
-  countryNameSelected: {
-    color: colors.white,
-  },
-  skipLink: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  skipLinkText: {
-    fontSize: 15,
-    color: colors.midGrey,
-    fontFamily: fonts.displayMed,
-  },
-  noticeCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.coralBlaze,
-  },
-  noticeTitle: {
-    fontSize: 20,
-    fontFamily: fonts.display,
-    color: colors.white,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  noticeText: {
-    fontSize: 15,
-    color: colors.midGrey,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginTop: spacing.xs,
-    fontFamily: fonts.body,
-  },
-  helpNote: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: spacing.lg,
-    paddingHorizontal: 4,
-    gap: spacing.xs,
-  },
-  helpNoteText: {
-    fontSize: 13,
-    color: colors.midGrey,
-    flex: 1,
-    lineHeight: 18,
-    fontFamily: fonts.body,
-  },
+
+  // Skip button
   skipButton: {
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
     marginTop: spacing.xs,
   },
   skipButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.midGrey,
     fontFamily: fonts.body,
+  },
+
+  // Loading overlay
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

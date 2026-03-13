@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { apiPost } from '../../lib/api';
-import { colors, fonts, spacing, borderRadius, shadows } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 
 interface Statement {
   id: string;
@@ -135,16 +136,16 @@ export default function BankStatementsScreen({ navigation }: any) {
   const isProcessing = processing || processingCount > 0;
   const monthsData = getMonthsData();
 
-  const getStatusIcon = (status: MonthData['status']): { name: string; color: string } => {
+  const getStatusDot = (status: MonthData['status']): string => {
     switch (status) {
       case 'complete':
-        return { name: 'checkmark-circle', color: colors.acidLime };
+        return '#1A7A40';
       case 'processing':
-        return { name: 'sync', color: colors.coralBlaze };
+        return '#FF8C00';
       case 'pending':
-        return { name: 'time', color: colors.warmAmber };
+        return '#FF4500';
       default:
-        return { name: 'ellipse-outline', color: 'rgba(250,250,250,0.2)' };
+        return '#DDD';
     }
   };
 
@@ -156,20 +157,34 @@ export default function BankStatementsScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bank Statements</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      {/* Gradient Header Block */}
+      <LinearGradient
+        colors={gradients.primary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        {/* Flare overlays */}
+        <View style={styles.flareTopRight} />
+        <View style={styles.flareBottomLeft} />
+
+        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
+          <View style={styles.headerInner}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backArrow}>{'<'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.screenLabel}>BANK STATEMENTS</Text>
+            <Text style={styles.heading}>{'your\nstatements.'}</Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Processing banner — shows when statements are being processed */}
         {isProcessing && (
           <View style={styles.processingBanner}>
-            <ActivityIndicator color={colors.acidLime} size="small" />
+            <ActivityIndicator color={colors.gradientMid} size="small" />
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={styles.processingBannerTitle}>Processing your statements...</Text>
               <Text style={styles.processingBannerSub}>
@@ -185,16 +200,23 @@ export default function BankStatementsScreen({ navigation }: any) {
         {/* Process All CTA — only show when there are unprocessed statements and not already processing */}
         {pendingCount > 0 && !isProcessing && (
           <TouchableOpacity
-            style={styles.processButton}
             onPress={handleProcessAll}
             activeOpacity={0.8}
+            style={{ marginBottom: spacing.lg }}
           >
-            <View style={styles.processingContent}>
-              <Ionicons name="flash" size={20} color={colors.background} />
-              <Text style={styles.processButtonText}>
-                Process All Statements ({pendingCount} pending)
-              </Text>
-            </View>
+            <LinearGradient
+              colors={gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.processButton}
+            >
+              <View style={styles.processingContent}>
+                <Ionicons name="flash" size={20} color={colors.white} />
+                <Text style={styles.processButtonText}>
+                  Process All Statements ({pendingCount} pending)
+                </Text>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
@@ -203,11 +225,11 @@ export default function BankStatementsScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.gradientMid} />
           </View>
         ) : (
           monthsData.map((month) => {
-            const statusIcon = getStatusIcon(month.status);
+            const dotColor = getStatusDot(month.status);
             const banks = getUniqueBanks(month.statements);
 
             return (
@@ -222,13 +244,7 @@ export default function BankStatementsScreen({ navigation }: any) {
                 }
                 activeOpacity={0.7}
               >
-                <View style={styles.monthStatusIcon}>
-                  <Ionicons
-                    name={statusIcon.name as any}
-                    size={24}
-                    color={statusIcon.color}
-                  />
-                </View>
+                <View style={[styles.statusDot, { backgroundColor: dotColor }]} />
 
                 <View style={styles.monthInfo}>
                   <Text style={styles.monthLabel}>{month.label}</Text>
@@ -251,7 +267,7 @@ export default function BankStatementsScreen({ navigation }: any) {
                   )}
                 </View>
 
-                <Ionicons name="chevron-forward" size={20} color="rgba(250,250,250,0.3)" />
+                <Ionicons name="chevron-forward" size={20} color={colors.muted} />
               </TouchableOpacity>
             );
           })
@@ -267,63 +283,94 @@ export default function BankStatementsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.mist,
-    backgroundColor: colors.surface,
+  headerGradient: {
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    overflow: 'hidden',
+  },
+  flareTopRight: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  flareBottomLeft: {
+    position: 'absolute',
+    bottom: -30,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  headerInner: {
+    paddingTop: spacing.sm,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.mist,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
-  headerTitle: {
+  backArrow: {
     fontFamily: fonts.display,
     fontSize: 18,
-    color: colors.ink,
+    color: colors.white,
+    marginTop: -1,
+  },
+  screenLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 2.5,
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: fonts.displaySemi,
+    marginBottom: spacing.xs,
+  },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.white,
+    letterSpacing: -1.5,
+    lineHeight: 34,
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(200,255,46,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(200,255,46,0.2)',
+    backgroundColor: colors.tagExpenseBg,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
+    padding: spacing.lg,
     marginBottom: spacing.lg,
   },
   processingBannerTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.acidLime,
+    fontSize: 16,
+    color: colors.gradientMid,
   },
   processingBannerSub: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.midGrey,
     marginTop: 2,
   },
   processButton: {
-    backgroundColor: colors.coralBlaze,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.full,
     paddingVertical: 16,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    ...shadows.md,
+    paddingHorizontal: spacing.xl,
   },
   processingContent: {
     flexDirection: 'row',
@@ -332,17 +379,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   processButtonText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 15,
-    color: colors.background,
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.white,
     textAlign: 'center',
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
+    fontSize: 13,
+    color: colors.midGrey,
     marginBottom: spacing.md,
-    letterSpacing: 0.5,
+    letterSpacing: 0.1,
     textTransform: 'uppercase',
   },
   loadingContainer: {
@@ -355,20 +402,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
+    marginBottom: spacing.md,
   },
-  monthStatusIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: spacing.md,
   },
   monthInfo: {
     flex: 1,
-    marginLeft: 12,
   },
   monthLabel: {
     fontFamily: fonts.bodyBold,
@@ -391,11 +434,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tagBlueBg,
     borderRadius: borderRadius.xs,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   bankTagText: {
     fontFamily: fonts.body,
     fontSize: 11,
     color: colors.tagBlueText,
+    letterSpacing: 0.2,
   },
 });
