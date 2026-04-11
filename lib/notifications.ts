@@ -16,7 +16,7 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device');
+    if (__DEV__) console.log('Push notifications require a physical device');
     return null;
   }
 
@@ -29,13 +29,13 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Push notification permission not granted');
+    if (__DEV__) console.log('Push notification permission not granted');
     return null;
   }
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
   if (!projectId) {
-    console.log('No EAS project ID found');
+    if (__DEV__) console.log('No EAS project ID found');
     return null;
   }
 
@@ -49,7 +49,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
       user_id: userId,
       expo_push_token: token,
     });
-    console.log('📱 Push token registered:', token.substring(0, 20) + '...');
+    if (__DEV__) console.log('Push token registered:', token.substring(0, 20) + '...');
   }
 
   if (Platform.OS === 'android') {

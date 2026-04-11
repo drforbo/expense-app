@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, fonts, spacing, borderRadius, shadows } from './theme';
+import { colors, fonts, spacing, borderRadius } from './theme';
 
 const { width } = Dimensions.get('window');
 
@@ -164,16 +164,15 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.coralBlaze,
+    backgroundColor: colors.gradientMid,
     borderRadius: borderRadius.sm,
   },
   primaryButton: {
-    backgroundColor: colors.coralBlaze,
+    backgroundColor: colors.gradientMid,
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
-    ...shadows.sm,
   },
   primaryButtonText: {
     color: colors.white,
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: colors.coralBlaze,
+    color: colors.gradientMid,
     fontSize: 15,
     fontFamily: fonts.displaySemi,
   },

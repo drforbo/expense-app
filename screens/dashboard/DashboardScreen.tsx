@@ -129,6 +129,11 @@ export default function DashboardScreen({ navigation }: any) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Safe wrapper so one failed API call doesn't break the others
+      const safeApiPost = async <T = any>(path: string, body: any, fallback: T): Promise<T> => {
+        try { return await apiPost(path, body); } catch { return fallback; }
+      };
+
       // Phase 1: Profile (fast) — renders greeting, profile prompt, upload cards immediately
       const profilePromise = supabase.from('user_profiles')
         .select('first_name, profile_completed, receives_gifted_items, bank_account_count')
@@ -170,9 +175,9 @@ export default function DashboardScreen({ navigation }: any) {
           .select('amount, tax_deductible, qualified, business_percent, category_id')
           .eq('user_id', user.id),
         supabase.from('gifted_items').select('rrp').eq('user_id', user.id),
-        apiPost('/api/batch_status', { user_id: user.id }),
-        apiPost('/api/get_statements_by_month', { user_id: user.id }),
-        apiPost('/api/get_uncategorized_transactions', { user_id: user.id }),
+        safeApiPost('/api/batch_status', { user_id: user.id }, {}),
+        safeApiPost('/api/get_statements_by_month', { user_id: user.id }, []),
+        safeApiPost('/api/get_uncategorized_transactions', { user_id: user.id }, { count: 0 }),
       ]);
 
       // Gifted items count
@@ -229,7 +234,7 @@ export default function DashboardScreen({ navigation }: any) {
         setTaxOwed(estimated);
       }
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      if (__DEV__) console.error('Error loading dashboard data:', error);
     } finally {
       setLoadingCounts(false);
     }

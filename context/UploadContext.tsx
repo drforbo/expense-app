@@ -65,7 +65,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           });
         }
       } catch (err) {
-        console.error('Polling error:', err);
+        if (__DEV__) console.error('Polling error:', err);
       }
     }, 5000);
   };
@@ -83,7 +83,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('You must be logged in');
 
-      console.log('Uploading file:', file.name, 'Size:', file.size);
+      if (__DEV__) console.log('Uploading file:', file.name, 'Size:', file.size);
 
       const formData = new FormData();
       formData.append('pdf', {
@@ -102,7 +102,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error || 'Upload failed');
       }
     } catch (error: any) {
-      console.error('Error uploading:', error);
+      if (__DEV__) console.error('Upload error:', error);
       setUploadState({
         isUploading: false,
         filename: file.name,
