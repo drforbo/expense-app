@@ -107,7 +107,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.ember} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -196,7 +196,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
                     {formatDate(transaction.transaction_date)}
                   </Text>
                   <View style={styles.categoryTag}>
-                    <Text style={styles.categoryTagText}>
+                    <Text style={styles.categoryTagText} numberOfLines={1}>
                       {transaction.category_name}
                     </Text>
                   </View>
@@ -224,14 +224,14 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   // Flat Header
   headerFlat: {
@@ -243,13 +243,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonFlatText: {
-    color: colors.ink,
+    color: colors.onSurface,
     fontSize: 16,
     fontFamily: fonts.bodyBold,
     marginTop: -1,
@@ -262,15 +261,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   headerTitleFlat: {
     fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.ink,
+    color: colors.onSurface,
     lineHeight: 34,
   },
   statsRow: {
@@ -282,12 +281,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontFamily: fonts.display,
     fontSize: 36,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   statLabel: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textTransform: 'uppercase',
   },
   // Transaction list
@@ -302,7 +301,7 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -324,13 +323,14 @@ const styles = StyleSheet.create({
   merchantName: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 3,
   },
   transactionMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    flexShrink: 1,
   },
   transactionDate: {
     fontFamily: fonts.body,
@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: borderRadius.xs,
+    flexShrink: 1,
   },
   categoryTagText: {
     fontFamily: fonts.bodyBold,
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginTop: spacing.md,
     fontSize: 16,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   emptyStateIcon: {
     width: 100,
@@ -382,13 +383,13 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontFamily: fonts.display,
     fontSize: 24,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 8,
   },
   emptyStateText: {
     fontFamily: fonts.body,
     fontSize: 16,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
@@ -400,6 +401,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
 });
