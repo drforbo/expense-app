@@ -151,7 +151,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
       {loading ? (
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.ember} />
+          <ActivityIndicator color={colors.primary} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -223,7 +223,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           {/* Disclaimer */}
           <View style={styles.disclaimer}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.ember} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
             <Text style={styles.disclaimerText}>
               This is an estimate based on your transactions and profile. It does not account for all allowances or reliefs. Consult an accountant for your official return.
             </Text>
@@ -264,8 +264,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
             <View style={styles.nextDivider} />
 
             <View style={styles.nextItem}>
-              <View style={[styles.nextIcon, { backgroundColor: colors.blush }]}>
-                <Ionicons name="calendar-outline" size={20} color={colors.ember} />
+              <View style={[styles.nextIcon, { backgroundColor: colors.surfaceContainerLow }]}>
+                <Ionicons name="calendar-outline" size={20} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.nextTitle}>File with HMRC</Text>
@@ -288,12 +288,12 @@ export default function TaxEstimateScreen({ navigation }: any) {
               end={{ x: 1, y: 0 }}
               style={styles.filingGuideCta}
             >
-              <Ionicons name="list-outline" size={20} color={colors.white} />
+              <Ionicons name="list-outline" size={20} color={colors.surfaceLowest} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.filingGuideCtaTitle}>Your filing guide</Text>
                 <Text style={styles.filingGuideCtaSub}>Personalised steps to file your Self Assessment</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.white} />
+              <Ionicons name="chevron-forward" size={18} color={colors.surfaceLowest} />
             </LinearGradient>
           </TouchableOpacity>
 
@@ -319,7 +319,7 @@ function Row({ label, value, bold, color, accent }: {
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: colors.inkFaint, marginVertical: 10 }} />;
+  return <View style={{ height: 1, backgroundColor: colors.surfaceContainerHigh, marginVertical: 10 }} />;
 }
 
 const rowStyles = StyleSheet.create({
@@ -332,18 +332,18 @@ const rowStyles = StyleSheet.create({
   label: {
     fontFamily: fonts.body,
     fontSize: 15,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     flex: 1,
   },
   value: {
     fontFamily: fonts.body,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     textAlign: 'right',
   },
   bold: {
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   accent: {
     fontFamily: fonts.display,
@@ -355,21 +355,21 @@ const rowStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   screenLabel: {
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   heroHeading: {
     fontFamily: fonts.display,
     fontSize: 38,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -2,
     lineHeight: 46,
     marginBottom: spacing.xxl,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   content: {
     paddingHorizontal: spacing.xl,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   totalCard: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.xl,
@@ -396,14 +396,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: 'rgba(255,255,255,0.7)',
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   totalValue: {
     fontFamily: fonts.display,
     fontSize: 52,
-    color: colors.white,
+    color: colors.surfaceLowest,
     letterSpacing: -2,
     marginBottom: 6,
   },
@@ -416,13 +416,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 11,
     fontWeight: '600',
-    color: colors.ember,
-    letterSpacing: 1.5,
+    color: colors.primary,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   breakdownCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: spacing.xl,
     padding: spacing.md,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.lg,
   },
   payeNote: {
@@ -453,17 +453,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.ember,
+    color: colors.primary,
     lineHeight: 18,
   },
   nextCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
   nextDivider: {
     height: 1,
-    backgroundColor: colors.inkFaint,
+    backgroundColor: colors.surfaceContainerHigh,
     marginVertical: 4,
   },
   nextItem: {
@@ -482,13 +482,13 @@ const styles = StyleSheet.create({
   nextTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   nextSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     lineHeight: 18,
   },
   filingGuideCta: {
@@ -502,13 +502,13 @@ const styles = StyleSheet.create({
   filingGuideCtaTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
     marginBottom: 2,
   },
   filingGuideCtaSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.white,
+    color: colors.surfaceLowest,
     opacity: 0.7,
   },
 });

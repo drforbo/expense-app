@@ -1277,7 +1277,7 @@ export default function ProfileScreen({ navigation }: any) {
               value={monthlyIncome}
               onValueChange={setMonthlyIncome}
               minimumTrackTintColor={colors.gradientMid}
-              maximumTrackTintColor={colors.border}
+              maximumTrackTintColor={colors.surfaceContainerHigh}
               thumbTintColor={colors.gradientMid}
             />
             <View style={styles.sliderLabels}>
@@ -1360,7 +1360,7 @@ export default function ProfileScreen({ navigation }: any) {
                     value={employmentIncome}
                     onValueChange={setEmploymentIncome}
                     minimumTrackTintColor={colors.gradientMid}
-                    maximumTrackTintColor={colors.border}
+                    maximumTrackTintColor={colors.surfaceContainerHigh}
                     thumbTintColor={colors.gradientMid}
                   />
                   <View style={styles.sliderLabels}>
@@ -1519,7 +1519,7 @@ export default function ProfileScreen({ navigation }: any) {
                 onPress={() => setReceivesGiftedItems(!receivesGiftedItems)}
               >
                 <View style={[styles.checkbox, receivesGiftedItems && styles.checkboxChecked]}>
-                  {receivesGiftedItems && <Ionicons name="checkmark" size={16} color={colors.white} />}
+                  {receivesGiftedItems && <Ionicons name="checkmark" size={16} color={colors.surfaceLowest} />}
                 </View>
                 <View style={styles.checkboxContent}>
                   <Text style={styles.checkboxLabel}>I receive gifted items/products</Text>
@@ -1532,7 +1532,7 @@ export default function ProfileScreen({ navigation }: any) {
                 onPress={() => setHasInternationalIncome(!hasInternationalIncome)}
               >
                 <View style={[styles.checkbox, hasInternationalIncome && styles.checkboxChecked]}>
-                  {hasInternationalIncome && <Ionicons name="checkmark" size={16} color={colors.white} />}
+                  {hasInternationalIncome && <Ionicons name="checkmark" size={16} color={colors.surfaceLowest} />}
                 </View>
                 <View style={styles.checkboxContent}>
                   <Text style={styles.checkboxLabel}>I have international income</Text>
@@ -1719,7 +1719,7 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
           {(trackingStats.uncategorizedCount > 0 || trackingStats.categorizedExpenseCount > 0) && (
             <View style={styles.trackingProgressContainer}>
-              <View style={[styles.trackingProgressBar, { backgroundColor: colors.border }]}>
+              <View style={[styles.trackingProgressBar, { backgroundColor: colors.surfaceContainerHigh }]}>
                 <View
                   style={[
                     styles.trackingProgressFill,
@@ -1872,7 +1872,7 @@ export default function ProfileScreen({ navigation }: any) {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.clCheckbox, isCompleted && styles.clCheckboxChecked]}>
-                    {isCompleted && <Ionicons name="checkmark" size={16} color={colors.white} />}
+                    {isCompleted && <Ionicons name="checkmark" size={16} color={colors.surfaceLowest} />}
                   </View>
                   <View style={styles.clItemContent}>
                     <View style={styles.clItemHeader}>
@@ -1925,7 +1925,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/repaying-your-student-loan/what-you-pay')}
             >
               <Text style={styles.infoLinkText}>Student loan repayments</Text>
-              <Ionicons name="open-outline" size={14} color={colors.ink} />
+              <Ionicons name="open-outline" size={14} color={colors.onSurface} />
             </TouchableOpacity>
           )}
 
@@ -1935,7 +1935,7 @@ export default function ProfileScreen({ navigation }: any) {
               onPress={() => Linking.openURL('https://www.gov.uk/tax-foreign-income/taxed-twice')}
             >
               <Text style={styles.infoLinkText}>Foreign tax relief</Text>
-              <Ionicons name="open-outline" size={14} color={colors.ink} />
+              <Ionicons name="open-outline" size={14} color={colors.onSurface} />
             </TouchableOpacity>
           )}
 
@@ -1944,7 +1944,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => Linking.openURL('https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2024-to-2025')}
           >
             <Text style={styles.infoLinkText}>National Insurance contributions</Text>
-            <Ionicons name="open-outline" size={14} color={colors.ink} />
+            <Ionicons name="open-outline" size={14} color={colors.onSurface} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1952,7 +1952,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={() => Linking.openURL('https://www.gov.uk/self-assessment-tax-returns')}
           >
             <Text style={styles.infoLinkText}>Self Assessment overview</Text>
-            <Ionicons name="open-outline" size={14} color={colors.ink} />
+            <Ionicons name="open-outline" size={14} color={colors.onSurface} />
           </TouchableOpacity>
         </View>
       </View>
@@ -2364,11 +2364,11 @@ export default function ProfileScreen({ navigation }: any) {
             style={styles.saveButton}
           >
             {saving ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colors.surfaceLowest} />
             ) : (
               <>
                 <Text style={styles.saveButtonText}>Save Profile</Text>
-                <Ionicons name="checkmark" size={20} color={colors.white} />
+                <Ionicons name="checkmark" size={20} color={colors.surfaceLowest} />
               </>
             )}
           </LinearGradient>
@@ -2427,8 +2427,8 @@ export default function ProfileScreen({ navigation }: any) {
               {/* Outlook - Coming Soon */}
               <View style={[styles.accountRow, { opacity: 0.5 }]}>
                 <View style={styles.accountRowLeft}>
-                  <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
-                    <Ionicons name="mail" size={20} color={colors.midGrey} />
+                  <View style={[styles.accountIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
+                    <Ionicons name="mail" size={20} color={colors.onSurfaceMuted} />
                   </View>
                   <View>
                     <Text style={styles.accountRowText}>Outlook</Text>
@@ -2527,7 +2527,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handlePrivacyPolicy}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+              <View style={[styles.accountIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Privacy Policy</Text>
@@ -2542,7 +2542,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleTermsOfService}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+              <View style={[styles.accountIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
                 <Ionicons name="document-text-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Terms of Service</Text>
@@ -2560,7 +2560,7 @@ export default function ProfileScreen({ navigation }: any) {
             onPress={handleSignOut}
           >
             <View style={styles.accountRowLeft}>
-              <View style={[styles.accountIcon, { backgroundColor: colors.border }]}>
+              <View style={[styles.accountIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
                 <Ionicons name="log-out-outline" size={20} color={colors.textSecondary} />
               </View>
               <Text style={styles.accountRowText}>Sign Out</Text>
@@ -2680,7 +2680,7 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.countryPickerHeader}>
               <Text style={styles.modalTitle}>Select Countries</Text>
               <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
-                <Ionicons name="close" size={24} color={colors.ink} />
+                <Ionicons name="close" size={24} color={colors.onSurface} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalSubtitle}>
@@ -2730,7 +2730,7 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   loadingContainer: {
     flex: 1,
@@ -2748,15 +2748,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceLowest,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backArrow: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     fontWeight: '700',
     marginTop: -1,
   },
@@ -2764,15 +2762,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   heroHeading: {
     fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -2,
     lineHeight: 42,
     marginBottom: spacing.xxl,
@@ -2782,7 +2780,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
     marginTop: 16,
     marginBottom: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: 4,
   },
@@ -2796,17 +2794,15 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   tabActive: {
-    backgroundColor: colors.parchment,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceContainerLow,
   },
   tabText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   tabTextActive: {
-    color: colors.ink,
+    color: colors.onSurface,
   },
   tabBadge: {
     backgroundColor: colors.tagIncomeText,
@@ -2819,7 +2815,7 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     fontSize: 13,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   scrollView: {
     flex: 1,
@@ -2844,11 +2840,11 @@ const styles = StyleSheet.create({
   completionTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   completionSubtitle: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -2860,23 +2856,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
-    letterSpacing: 1.5,
+    color: colors.primary,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   sectionHint: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginBottom: 16,
     marginTop: -4,
   },
   infoCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     marginBottom: 24,
     overflow: 'hidden',
@@ -2887,12 +2883,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
   },
   infoLabel: {
     fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   infoValueRow: {
     flexDirection: 'row',
@@ -2902,16 +2898,16 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 15,
     fontFamily: fonts.displayMed,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.inkFaint,
+    backgroundColor: colors.surfaceContainerHigh,
     marginHorizontal: spacing.lg,
   },
   // Account management styles
   accountCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     marginBottom: 12,
     overflow: 'hidden',
@@ -2938,17 +2934,17 @@ const styles = StyleSheet.create({
   accountRowText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   accountHint: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     lineHeight: 18,
     paddingHorizontal: 4,
   },
   accountRowSubtext: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginTop: 2,
   },
   connectionStatus: {
@@ -2961,7 +2957,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   emailCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.md,
     padding: 14,
     marginBottom: 12,
@@ -2971,24 +2967,24 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     flex: 1,
   },
   questionCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: 16,
   },
   questionTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   questionSubtitle: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginBottom: 16,
   },
   optionButtonsGrid: {
@@ -3000,27 +2996,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.parchment,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceContainerLow,
     minWidth: '30%',
     alignItems: 'center',
   },
   optionButtonActive: {
     backgroundColor: colors.tagExpenseBg,
-    borderColor: colors.gradientMid,
   },
   optionButtonText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   optionButtonTextActive: {
     color: colors.gradientMid,
   },
   optionButtonSubtext: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginTop: 2,
   },
   optionButtonSubtextActive: {
@@ -3041,7 +3034,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   modalOverlay: {
     flex: 1,
@@ -3049,7 +3042,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: 24,
@@ -3059,31 +3052,29 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginBottom: 24,
   },
   modalInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: spacing.md,
     height: 52,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     fontFamily: fonts.body,
     marginBottom: spacing.md,
   },
   modalValue: {
     fontSize: 36,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -3097,7 +3088,7 @@ const styles = StyleSheet.create({
   },
   sliderLabelText: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   optionsList: {
     gap: 8,
@@ -3109,13 +3100,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceLowest,
   },
   optionItemActive: {
     backgroundColor: colors.tagExpenseBg,
-    borderColor: colors.gradientMid,
   },
   optionWithIcon: {
     flexDirection: 'row',
@@ -3124,7 +3112,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   optionTextActive: {
     color: colors.gradientMid,
@@ -3132,18 +3120,16 @@ const styles = StyleSheet.create({
   },
   optionHint: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginTop: 2,
   },
   subSection: {
     marginTop: 20,
     paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   subSectionLabel: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginBottom: 8,
   },
   modalButtons: {
@@ -3158,9 +3144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceContainerLow,
   },
   confirmButton: {
     backgroundColor: colors.gradientMid,
@@ -3168,24 +3152,22 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   confirmButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   customInputContainer: {
     marginTop: 8,
   },
   customInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: 14,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   checkboxList: {
     gap: 12,
@@ -3197,7 +3179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
   },
   checkbox: {
     width: 24,
@@ -3218,16 +3200,16 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   checkboxHint: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   // Checklist tab styles - Achievement Card
   achievementCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     marginBottom: 20,
@@ -3237,8 +3219,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   achievementIconContainer: {
     width: 44,
@@ -3255,19 +3235,17 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   achievementSubtitle: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   // Tracking cards within achievement section
   trackingCard: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: 14,
     marginBottom: 10,
   },
@@ -3289,12 +3267,12 @@ const styles = StyleSheet.create({
   trackingLabel: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   trackingStatus: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   trackingProgressContainer: {
     flexDirection: 'row',
@@ -3328,7 +3306,7 @@ const styles = StyleSheet.create({
   },
   // Overall progress card
   progressCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     marginBottom: 20,
@@ -3342,16 +3320,16 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   progressCount: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: colors.border,
+    backgroundColor: colors.surfaceContainerHigh,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 8,
@@ -3363,7 +3341,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   categorySection: {
     marginBottom: 20,
@@ -3384,11 +3362,11 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   clItem: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.md,
     padding: 16,
     marginBottom: 8,
@@ -3401,7 +3379,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.midGrey,
+    borderColor: colors.onSurfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -3423,16 +3401,16 @@ const styles = StyleSheet.create({
   clItemTitle: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     flex: 1,
   },
   clItemTitleCompleted: {
     textDecorationLine: 'line-through',
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   clItemDescription: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     lineHeight: 18,
   },
   clItemDescriptionCompleted: {
@@ -3474,7 +3452,7 @@ const styles = StyleSheet.create({
     width: 51,
     height: 31,
     borderRadius: 16,
-    backgroundColor: colors.borderStrong,
+    backgroundColor: colors.surfaceContainerHigh,
     padding: 2,
     justifyContent: 'center',
   },
@@ -3485,7 +3463,7 @@ const styles = StyleSheet.create({
     width: 27,
     height: 27,
     borderRadius: 14,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
@@ -3495,15 +3473,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: 14,
   },
   countrySelectLabel: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
   },
   selectedCountriesContainer: {
     flexDirection: 'row',
@@ -3514,7 +3490,7 @@ const styles = StyleSheet.create({
   selectedCountryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.full,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -3525,22 +3501,20 @@ const styles = StyleSheet.create({
   },
   selectedCountryName: {
     fontSize: 13,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   // Text area input
   inputLabel: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     marginBottom: 8,
   },
   textAreaInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: 14,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     minHeight: 100,
   },
   // Country picker modal
@@ -3575,7 +3549,7 @@ const styles = StyleSheet.create({
   },
   countryPickerName: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   countryPickerNameSelected: {
     color: colors.gradientMid,
@@ -3583,7 +3557,7 @@ const styles = StyleSheet.create({
   },
   taxDisclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     padding: 12,
     borderRadius: borderRadius.sm,
     marginTop: 16,
@@ -3593,7 +3567,7 @@ const styles = StyleSheet.create({
   taxDisclaimerText: {
     flex: 1,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     lineHeight: 18,
   },
   // Info Card Styles
@@ -3614,12 +3588,12 @@ const styles = StyleSheet.create({
   infoCardTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     flex: 1,
   },
   infoCardDescription: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.onSurfaceMuted,
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -3630,13 +3604,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
     padding: 14,
   },
   infoLinkText: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     fontFamily: fonts.bodyBold,
   },
 });

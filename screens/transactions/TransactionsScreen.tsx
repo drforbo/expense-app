@@ -43,7 +43,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
 const getCategoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] || '\u{1F4CB}';
 
 // ── Types ───────────────────────────────────────────────────────────
-type FilterTab = 'all' | 'uncategorised' | 'business' | 'personal' | 'income';
+type FilterTab = 'all' | 'uncategorised' | 'business_expense' | 'personal_expense' | 'business_income' | 'paye_income';
 
 interface CategorizedTransaction {
   id: string;
@@ -111,9 +111,10 @@ const getAmount = (t: UnifiedTransaction): number => t.amount;
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'uncategorised', label: 'Uncategorised' },
-  { key: 'business', label: 'Business' },
-  { key: 'personal', label: 'Personal' },
-  { key: 'income', label: 'Income' },
+  { key: 'business_expense', label: 'Business Expenses' },
+  { key: 'personal_expense', label: 'Personal Expenses' },
+  { key: 'business_income', label: 'Business Income' },
+  { key: 'paye_income', label: 'PAYE Income' },
 ];
 
 // ── Component ───────────────────────────────────────────────────────
@@ -179,19 +180,24 @@ export default function TransactionsScreen({ navigation }: any) {
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
 
-      case 'business':
+      case 'business_expense':
         return categorized.filter(
           (t) => t.transaction_type === 'expense' && t.tax_deductible
         );
 
-      case 'personal':
+      case 'personal_expense':
         return categorized.filter(
-          (t) => t.transaction_type === 'personal' || t.transaction_type === 'paye_income'
+          (t) => t.transaction_type === 'personal' || (t.transaction_type === 'expense' && !t.tax_deductible)
         );
 
-      case 'income':
+      case 'business_income':
         return categorized.filter(
           (t) => t.transaction_type === 'income' || t.amount < 0
+        );
+
+      case 'paye_income':
+        return categorized.filter(
+          (t) => t.transaction_type === 'paye_income'
         );
 
       case 'all':
@@ -353,9 +359,10 @@ export default function TransactionsScreen({ navigation }: any) {
     const messages: Record<FilterTab, string> = {
       all: 'No transactions yet',
       uncategorised: 'All caught up — nothing to categorise',
-      business: 'No business expenses found',
-      personal: 'No personal transactions found',
-      income: 'No income transactions found',
+      business_expense: 'No business expenses found',
+      personal_expense: 'No personal expenses found',
+      business_income: 'No business income found',
+      paye_income: 'No PAYE income found',
     };
     return (
       <View style={styles.emptyContainer}>
@@ -413,7 +420,7 @@ export default function TransactionsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
 
   // Header
@@ -424,15 +431,15 @@ const styles = StyleSheet.create({
   },
   screenLabel: {
     ...typography.screenLabel,
-    color: colors.ember,
+    color: colors.primary,
     marginBottom: spacing.xs,
   },
   sectionHeading: {
     ...typography.sectionHeading,
-    color: colors.ink,
+    color: colors.onSurface,
   },
 
-  // Filter pills
+  // Filter pills — no borders, use tonal fills
   filterContainer: {
     paddingBottom: spacing.md,
   },
@@ -441,21 +448,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   filterPillActive: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: borderRadius.full,
   },
   filterPillInactive: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.inkFaint,
+    backgroundColor: colors.surfaceLowest,
   },
   filterPillText: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   filterPillTextActive: {
     fontSize: 13,
@@ -467,20 +473,21 @@ const styles = StyleSheet.create({
   ctaCard: {
     marginHorizontal: spacing.xl,
     marginBottom: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     padding: spacing.xl,
   },
   ctaTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: fonts.displayMed,
     color: colors.white,
     marginBottom: spacing.xs,
   },
   ctaSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: fonts.body,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255,255,255,0.75)',
     marginBottom: spacing.lg,
+    lineHeight: 21,
   },
   ctaButton: {
     flexDirection: 'row',
@@ -488,37 +495,38 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: colors.white,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     borderRadius: borderRadius.full,
     gap: spacing.xs,
   },
   ctaButtonText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
 
-  // Transaction list
+  // Transaction list — no dividers, use spacing
   listContent: {
     paddingHorizontal: spacing.xl,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   transactionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.inkFaint,
+    paddingVertical: 14,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: 6,
   },
   transactionRowUncat: {
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
   },
   transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.blush,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -533,13 +541,13 @@ const styles = StyleSheet.create({
   merchantName: {
     fontSize: 15,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
-    marginBottom: 2,
+    color: colors.onSurface,
+    marginBottom: 3,
   },
   transactionMeta: {
     fontSize: 12,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   transactionRight: {
     alignItems: 'flex-end',
@@ -549,30 +557,30 @@ const styles = StyleSheet.create({
     fontFamily: fonts.displayMed,
   },
 
-  // Tags
+  // Tags — pill shape
   tagTaxDeductible: {
-    backgroundColor: colors.blush,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.xs,
+    backgroundColor: colors.surfaceContainerLow,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
     marginTop: 4,
   },
   tagTaxDeductibleText: {
     fontSize: 10,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.primary,
   },
   tagUncategorised: {
-    backgroundColor: colors.inkFaint,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.xs,
+    backgroundColor: colors.surfaceContainerHigh,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
     marginTop: 4,
   },
   tagUncategorisedText: {
     fontSize: 10,
     fontFamily: fonts.bodyBold,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
 
   // Loading
@@ -585,7 +593,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
 
   // Empty
@@ -598,7 +606,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: spacing.md,
     textAlign: 'center',
   },

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
 import { apiPost } from '../../lib/api';
+import { supabase } from '../../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,9 +51,11 @@ type CategorizedItem = {
 };
 
 export default function SwipeCategorizeScreen({ navigation, route }: any) {
-  const transactions: any[] = route.params?.transactions || [];
+  const passedTransactions: any[] = route.params?.transactions || [];
 
   // State
+  const [transactions, setTransactions] = useState<any[]>(passedTransactions);
+  const [initialLoading, setInitialLoading] = useState(passedTransactions.length === 0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [categorized, setCategorized] = useState<CategorizedItem[]>([]);
   const [showInterstitial, setShowInterstitial] = useState(false);
@@ -64,6 +67,35 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
   const slideOutAnim = useRef(new Animated.Value(0)).current;
   const slideInAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+
+  // Auto-fetch uncategorized transactions if none passed
+  useEffect(() => {
+    if (passedTransactions.length === 0) {
+      fetchUncategorized();
+    }
+  }, []);
+
+  const fetchUncategorized = async () => {
+    try {
+      setInitialLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const result = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
+      const mapped = (result.transactions || []).map((t: any) => ({
+        id: t.transaction_id || t.id,
+        merchant_name: t.merchant_name || t.name || 'Unknown',
+        amount: t.amount,
+        transaction_date: t.date || t.transaction_date,
+        category_name: Array.isArray(t.category) ? t.category[0] : t.category_name,
+        auto_category_name: Array.isArray(t.category) ? t.category[0] : t.auto_category_name,
+      }));
+      setTransactions(mapped);
+    } catch (error) {
+      console.error('Error fetching uncategorized:', error);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const currentTransaction = transactions[currentIndex];
   const totalCount = transactions.length;
@@ -189,10 +221,10 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
         setShowInterstitial(false);
         setShowSummary(true);
       } else {
-        Alert.alert('Error', result.error || 'Failed to categorize');
+        Alert.alert('Something went wrong', 'Smart categorise isn\'t available right now. You can keep going manually.');
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to categorize');
+      Alert.alert('Something went wrong', 'Smart categorise isn\'t available right now. You can keep going manually.');
     } finally {
       setLoading(false);
     }
@@ -238,12 +270,30 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
   // Progress
   const progressFraction = totalCount > 0 ? Math.min(currentIndex + 1, totalCount) / totalCount : 0;
 
-  // RENDER: Loading
+  // RENDER: Initial loading (fetching uncategorized)
+  if (initialLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.screenLabel}>CATEGORISE</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading transactions...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // RENDER: Loading (processing categorization)
   if (loading && !showSummary && !showInterstitial) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Processing...</Text>
         </View>
       </SafeAreaView>
@@ -281,7 +331,7 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
             {smartCount > 0 && (
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryNumber}>{smartCount}</Text>
-                <Text style={styles.summaryLabel}>AI sorted</Text>
+                <Text style={styles.summaryLabel}>auto sorted</Text>
               </View>
             )}
             {(unsureCount > 0 || needsReviewCount > 0) && (
@@ -339,14 +389,14 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
               <View style={styles.interstitialLoadingWrap}>
                 <ActivityIndicator size="large" color={colors.ember} />
                 <Text style={styles.interstitialLoadingText}>
-                  AI is categorising your transactions...
+                  Smart categorising your transactions...
                 </Text>
               </View>
             ) : (
               <>
                 <Text style={styles.interstitialHeading}>Nice work!</Text>
                 <Text style={styles.interstitialBody}>
-                  You've categorised {INTERSTITIAL_THRESHOLD} transactions. Want AI to handle the rest?
+                  You've categorised {INTERSTITIAL_THRESHOLD} transactions. Want to smart categorise the rest?
                 </Text>
 
                 <TouchableOpacity
@@ -385,23 +435,18 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
           <Text style={styles.screenLabel}>CATEGORISE</Text>
         </View>
         <View style={styles.completionContainer}>
-          <View style={styles.completionCard}>
-            <Text style={styles.completionEmoji}>🎉</Text>
-            <Text style={styles.completionHeading}>All done!</Text>
-            <TouchableOpacity
-              style={styles.ctaButtonWrap}
-              onPress={() => navigation.goBack()}
-            >
-              <LinearGradient
-                colors={gradients.button as unknown as string[]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.ctaButton}
-              >
-                <Text style={styles.ctaButtonText}>Back to transactions</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.completionEmoji}>🎉</Text>
+          <Text style={styles.completionHeading}>All done!</Text>
+          <Text style={styles.completionSub}>No transactions to categorise right now.</Text>
+        </View>
+        <View style={styles.completionActions}>
+          <TouchableOpacity
+            style={styles.completionButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.completionButtonText}>Back to transactions</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -467,10 +512,10 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
             {formatAmount(currentTransaction.amount)}
           </Text>
 
-          {/* AI suggestion hint */}
+          {/* Category suggestion hint */}
           {categoryName ? (
             <Text style={styles.aiHint}>
-              AI thinks: {categoryName}
+              Suggested: {categoryName}
             </Text>
           ) : null}
         </Animated.View>
@@ -519,7 +564,7 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   loadingContainer: {
     flex: 1,
@@ -528,7 +573,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   loadingText: {
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontFamily: fonts.body,
     fontSize: 16,
   },
@@ -542,27 +587,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   backButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceLowest,
   },
   backArrow: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.ink,
+    color: colors.onSurface,
     marginTop: -1,
   },
   screenLabel: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: colors.ember,
+    color: colors.primary,
   },
 
   // Progress
@@ -571,20 +614,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   progressBar: {
-    height: 4,
-    backgroundColor: colors.inkFaint,
-    borderRadius: 2,
+    height: 5,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
     marginBottom: spacing.xs,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: borderRadius.full,
   },
   progressText: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'right',
   },
 
@@ -596,53 +639,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   transactionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.xl,
-    padding: 24,
+    padding: spacing.xl,
     width: '100%',
     alignItems: 'center',
   },
   emojiCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.blush,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
   emojiText: {
-    fontSize: 20,
+    fontSize: 22,
   },
   merchantName: {
-    fontSize: 22,
-    fontFamily: fonts.displayMed,
-    color: colors.ink,
+    fontSize: 24,
+    fontFamily: fonts.display,
+    color: colors.onSurface,
     textAlign: 'center',
     marginBottom: spacing.xs,
+    letterSpacing: -0.3,
   },
   dateText: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
   },
   amountText: {
-    fontSize: 32,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    fontSize: 36,
+    fontFamily: fonts.display,
+    color: colors.onSurface,
     textAlign: 'center',
     marginTop: spacing.lg,
+    letterSpacing: -1,
   },
   aiHint: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
     marginTop: spacing.md,
   },
 
-  // Buttons
+  // Buttons — pill shapes, no borders
   buttonsContainer: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxl,
@@ -654,7 +699,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     borderRadius: borderRadius.full,
-    paddingVertical: spacing.lg,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -665,14 +710,13 @@ const styles = StyleSheet.create({
   },
   outlinedButton: {
     borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.inkFaint,
-    paddingVertical: spacing.lg,
+    backgroundColor: colors.surfaceLowest,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   outlinedButtonText: {
-    color: colors.ink,
+    color: colors.onSurface,
     fontSize: 17,
     fontFamily: fonts.displayMed,
   },
@@ -682,12 +726,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   notSureText: {
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontSize: 14,
     fontFamily: fonts.body,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 
   // Interstitial
@@ -697,25 +741,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   interstitialCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.xl,
-    padding: 24,
-    alignItems: 'center',
+    padding: spacing.xl,
   },
   interstitialHeading: {
-    fontSize: 24,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    fontSize: 26,
+    fontFamily: fonts.display,
+    color: colors.onSurface,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   interstitialBody: {
     fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
     marginBottom: spacing.xxl,
-    lineHeight: 22,
+    lineHeight: 23,
   },
   interstitialLoadingWrap: {
     alignItems: 'center',
@@ -725,7 +768,7 @@ const styles = StyleSheet.create({
   interstitialLoadingText: {
     fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
   },
 
@@ -733,24 +776,45 @@ const styles = StyleSheet.create({
   completionContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
   },
-  completionCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.xl,
-    padding: 24,
-    alignItems: 'center',
-  },
   completionEmoji: {
-    fontSize: 48,
+    fontSize: 56,
     marginBottom: spacing.lg,
   },
   completionHeading: {
-    fontSize: 24,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    fontSize: 28,
+    fontFamily: fonts.display,
+    color: colors.onSurface,
     textAlign: 'center',
-    marginBottom: spacing.xxl,
+    letterSpacing: -0.5,
+    marginBottom: spacing.sm,
+  },
+  completionSub: {
+    fontSize: 15,
+    fontFamily: fonts.body,
+    color: colors.onSurfaceMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  completionActions: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
+  },
+  completionButton: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+  },
+  completionButtonText: {
+    color: colors.onSurface,
+    fontSize: 17,
+    fontFamily: fonts.displayMed,
   },
 
   // Summary
@@ -760,35 +824,35 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
   },
   summaryHeading: {
-    fontSize: 36,
+    fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
-    letterSpacing: -0.5,
+    color: colors.onSurface,
+    letterSpacing: -1,
     marginBottom: spacing.xxl,
   },
   summaryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: 12,
     marginBottom: spacing.xxxl,
   },
   summaryCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.lg,
     padding: spacing.xl,
     width: '47%',
     alignItems: 'center',
   },
   summaryNumber: {
-    fontSize: 32,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    fontSize: 34,
+    fontFamily: fonts.display,
+    color: colors.onSurface,
     marginBottom: spacing.xs,
   },
   summaryLabel: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   summaryActions: {
     gap: spacing.md,

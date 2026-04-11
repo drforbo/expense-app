@@ -1,129 +1,190 @@
-// Bopp Design System
-// Single source of truth — all values match the component redesign spec exactly.
+// Digital Ethereal Design System — "The Liquid Curator"
+// Single source of truth for all design tokens.
 
 export const colors = {
-  // Light mode (most screens)
-  ember:          '#E8470A',   // primary orange-red
-  emberLight:     '#F5A623',   // amber/gold gradient start
-  emberDeep:      '#C0392B',   // deep red gradient end
-  parchment:      '#FAF7F0',   // off-white background
-  ink:            '#1A1A1A',   // primary text
-  inkMuted:       '#6B6B6B',   // secondary/label text
-  inkFaint:       '#D4CFC8',   // dividers, borders
-  blush:          '#FEF0EB',   // tinted parchment for owed/warning cards
-  white:          '#FFFFFF',
+  // Primary (Sunset)
+  primary:              '#9c3e18',   // deep sunset
+  primaryContainer:     '#fe885c',   // vibrant sunset orange
+  onPrimary:            '#ffffff',   // text on primary
 
-  // Dark mode (Splash, Analytics header, Tax Estimate modal)
-  night:          '#0F0E0D',   // near-black background (warm, not cold)
-  nightMuted:     'rgba(255,255,255,0.6)',   // secondary text on dark
-  nightFaint:     'rgba(255,255,255,0.1)',   // dividers/borders on dark
-  nightGlass:     'rgba(255,255,255,0.12)',  // glass card on dark bg
+  // Secondary (Sea & Twilight)
+  secondary:            '#4855a2',   // calm blue depth
+  secondaryContainer:   '#7b8fd4',   // lighter blue for chips/active
+  secondaryDim:         '#6672c4',   // twilight blue
+  tertiary:             '#3d599c',   // alias
 
-  // Semantic — mapped to spec
-  positive:       '#2E7D32',   // verified, income success
-  negative:       '#E8470A',   // expense amounts, errors — same as ember
+  // Surfaces — cool, not warm
+  surface:              '#f5f6fc',   // main background
+  surfaceContainerLow:  '#eff0f7',   // card/section background
+  surfaceContainer:     '#e8eaf3',   // stat icon bg, tag bg
+  surfaceContainerHigh: '#dfe1ed',   // input fields, deeper layer
+  surfaceLowest:        '#ffffff',   // glass cards, floating elements
+  surfaceTint:          '#9c3e18',   // tinted shadow color
 
-  // Legacy aliases (keep for screens not yet migrated)
-  background:     '#FAF7F0',   // maps to parchment
-  surface:        '#FFFFFF',   // cards are white on parchment
-  gradientStart:  '#F5A623',   // maps to emberLight
-  gradientMid:    '#E8470A',   // maps to ember
-  gradientEnd:    '#C0392B',   // maps to emberDeep
-  midGrey:        '#6B6B6B',   // maps to inkMuted
-  muted:          '#6B6B6B',   // maps to inkMuted
-  border:         '#D4CFC8',   // maps to inkFaint
-  black:          '#1A1A1A',   // maps to ink
+  // Text — never pure black
+  onSurface:            '#2c2f33',   // primary text
+  onSurfaceMuted:       '#6b7080',   // secondary/label text
+  onSurfaceFaint:       '#a0a3aa',   // placeholder, disabled
+  outlineVariant:       'rgba(99,102,128,0.15)', // ghost borders
 
-  // Tags / badges
-  tagExpenseBg:   '#FEF0EB',   // maps to blush
-  tagExpenseText: '#E8470A',   // maps to ember
-  tagIncomeBg:    '#E8F5E9',
-  tagIncomeText:  '#2E7D32',
+  // Semantic
+  positive:             '#2e7d32',   // success, income
+  negative:             '#c0392b',   // error, expense
+  warning:              '#e67e22',   // caution
+
+  // Glass
+  glass:                'rgba(255,255,255,0.55)',  // 40-70% white
+  glassBorder:          'rgba(255,255,255,0.20)',  // glass rim highlight
+  glassLight:           'rgba(255,255,255,0.70)',  // higher opacity glass
+
+  // Dark mode (Onboarding / Splash)
+  night:                '#1a1c2e',   // dark with blue undertone
+  nightSurface:         '#262840',   // card on dark
+  nightMuted:           'rgba(255,255,255,0.6)',
+  nightFaint:           'rgba(255,255,255,0.12)',
+  nightGlass:           'rgba(255,255,255,0.08)',
+
+  // Tags
+  tagExpenseBg:         '#fef0eb',
+  tagExpenseText:       '#9c3e18',
+  tagIncomeBg:          '#e8f5e9',
+  tagIncomeText:        '#2e7d32',
+
+  // Legacy aliases for migration
+  white:                '#ffffff',
+  ember:                '#9c3e18',
+  emberLight:           '#fe885c',
+  parchment:            '#f5f6fc',
+  ink:                  '#2c2f33',
+  inkMuted:             '#6b7080',
+  inkFaint:             '#dfe1ed',
+  blush:                '#fef0eb',
+  background:           '#f5f6fc',
+  gradientStart:        '#fe885c',
+  gradientMid:          '#9c3e18',
+  gradientEnd:          '#4855a2',
+  border:               '#dfe1ed',
+  black:                '#2c2f33',
+  surface_alias:        '#ffffff',
+  midGrey:              '#6b7080',
+  muted:                '#6b7080',
+  textSecondary:        '#6b7080',   // alias for onSurfaceMuted
+  textMuted:            '#a0a3aa',   // alias for onSurfaceFaint
+  tagBlueText:          '#4855a2',   // alias for secondary
+  tagBlueBg:            'rgba(72,85,162,0.10)', // light blue tag bg
 };
 
 export const gradients = {
-  // Primary hero gradient — hero cards and large CTAs
-  hero:     ['#F5A623', '#E8470A', '#C0392B'] as const,
+  // Liquid Gradient — 5-stop hero signature
+  hero:          ['#F5A623', '#fe885c', '#c0452b', '#7b65c8', '#4855a2'] as const,
+  heroLocations: [0, 0.2, 0.5, 0.78, 1] as const,
 
-  // Subtle warm gradient — section headers, small accent elements
-  warm:     ['#F5A623', '#E8470A'] as const,
+  // Warm sunset — section headers, small accent
+  warm:     ['#fe885c', '#9c3e18'] as const,
 
-  // Ember to deep — buttons and active states
-  button:   ['#E8470A', '#C0392B'] as const,
+  // Button — primary to secondary
+  button:   ['#9c3e18', '#4855a2'] as const,
 
   // Income bar
-  income:   ['#F5A623', '#E8470A'] as const,
+  income:   ['#2e7d32', '#4caf50'] as const,
 
   // Expense bar
-  expense:  ['#E8470A', '#C0392B'] as const,
+  expense:  ['#9c3e18', '#c0392b'] as const,
+
+  // Stat card accent bars
+  statEarned: ['#fe885c', '#F5A623'] as const,
+  statOwed:   ['#9c3e18', '#6672c4'] as const,
 
   // Neutral bar
-  neutral:  ['#D4CFC8', '#B8B2AA'] as const,
+  neutral:  ['#e8e9f0', '#d0d2da'] as const,
 
   // Legacy alias
-  primary:  ['#F5A623', '#E8470A', '#C0392B'] as const,
+  primary:  ['#F5A623', '#fe885c', '#c0452b', '#7b65c8', '#4855a2'] as const,
 };
 
 export const fonts = {
-  // Poppins — single family, weight variants
-  display:      'Poppins-Black',        // 900 — hero headings, big numbers
-  displaySemi:  'Poppins-ExtraBold',    // 800 — section headings, hero numbers
-  displayMed:   'Poppins-Bold',         // 700 — amounts, CTA text
-  body:         'Poppins-Regular',      // 400 — body copy, labels, meta
-  bodyBold:     'Poppins-SemiBold',     // 600 — emphasis, list items, tags
+  // Plus Jakarta Sans — display headlines
+  display:      'PlusJakartaSans-ExtraBold',   // 800
+  displaySemi:  'PlusJakartaSans-Bold',        // 700
+  displayMed:   'PlusJakartaSans-SemiBold',    // 600
+
+  // Manrope — body copy, labels
+  body:         'Manrope-Regular',             // 400
+  bodyMed:      'Manrope-Medium',              // 500
+  bodyBold:     'Manrope-SemiBold',            // 600
 };
 
 export const spacing = {
   xs:   4,
   sm:   8,
-  md:   12,
-  lg:   16,
-  xl:   20,    // screen edge padding — ALWAYS 20px horizontal
-  xxl:  28,
-  xxxl: 40,
+  md:   16,    // generous — matches 2rem internal padding rule
+  lg:   24,
+  xl:   32,    // screen edge padding
+  xxl:  40,
+  xxxl: 56,
 };
 
 export const borderRadius = {
-  xs:   6,     // tags, tiny badges
-  sm:   10,    // transaction icons
-  md:   16,    // upload rows, small cards
-  lg:   20,    // most cards, profile cards, checklist cards
-  xl:   24,    // hero cards, feature cards
-  full: 9999,  // ALL buttons — pill shape always
+  xs:   8,     // tags, tiny badges
+  sm:   12,    // input fields, small elements
+  md:   20,    // transaction rows, small cards
+  lg:   32,    // most cards (2rem)
+  xl:   48,    // hero cards, feature cards (3rem)
+  full: 9999,  // pill buttons, chips
 };
 
-// Typography presets matching the spec
+// Typography presets
 export const typography = {
   screenLabel: {
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 2,
+    textTransform: 'uppercase' as const,
+  },
+  heroNumber: {
+    fontSize: 52,
+    fontFamily: fonts.display,
+    letterSpacing: -1,
+  },
+  sectionHeading: {
+    fontSize: 28,
+    fontFamily: fonts.display,
+    letterSpacing: -0.5,
+  },
+  cardLabel: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
     letterSpacing: 1.5,
     textTransform: 'uppercase' as const,
   },
-  heroNumber: {
-    fontSize: 48,
-    fontFamily: fonts.displaySemi,
-  },
-  sectionHeading: {
-    fontSize: 28,
-    fontFamily: fonts.displaySemi,
-  },
-  cardLabel: {
-    fontSize: 11,
-    fontFamily: fonts.bodyBold,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase' as const,
-  },
   bodyText: {
     fontSize: 15,
     fontFamily: fonts.body,
+    lineHeight: 24,
   },
   amountPrimary: {
-    fontSize: 22,
-    fontFamily: fonts.displayMed,
+    fontSize: 24,
+    fontFamily: fonts.displaySemi,
   },
   amountSecondary: {
     fontSize: 15,
     fontFamily: fonts.bodyBold,
   },
+};
+
+// Glassmorphism helper values
+export const glass = {
+  background: 'rgba(255,255,255,0.55)',
+  blur: 40,
+  borderColor: 'rgba(255,255,255,0.20)',
+  borderWidth: 1.5,
+};
+
+// Ambient shadow (for modals / floating elements)
+export const ambientShadow = {
+  shadowColor: '#9c3e18',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.15,
+  shadowRadius: 24,
+  elevation: 12,
 };

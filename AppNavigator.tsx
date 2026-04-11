@@ -4,8 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { supabase } from './lib/supabase';
-import { colors } from './lib/theme';
+import { colors, fonts } from './lib/theme';
 import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import SettingsScreen from './screens/settings/SettingsScreen';
@@ -55,10 +56,17 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.ember,
-        tabBarInactiveTintColor: colors.inkMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.onSurfaceMuted,
         tabBarShowLabel: true,
         tabBarLabelStyle: styles.tabLabel,
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
+        ),
       }}
     >
       <Tab.Screen
@@ -173,7 +181,7 @@ export default function AppNavigator() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: colors.parchment },
+          contentStyle: { backgroundColor: colors.surface },
         }}
         initialRouteName={isOnboarded ? 'MainTabs' : 'Onboarding'}
       >
@@ -198,9 +206,9 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: colors.inkFaint,
+    position: 'absolute',
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
     paddingTop: 8,
     paddingBottom: 28,
     height: 64 + 28,
@@ -208,8 +216,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   tabLabel: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: 'Manrope-SemiBold',
     fontSize: 10,
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
 });

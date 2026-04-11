@@ -209,7 +209,7 @@ export default function MonthDetailScreen({ navigation, route }: any) {
       case 'processing':
         return { label: 'Processing', bg: colors.tagExpenseBg, color: colors.tagExpenseText };
       default:
-        return { label: 'Pending', bg: colors.white, color: colors.inkMuted };
+        return { label: 'Pending', bg: colors.surfaceLowest, color: colors.onSurfaceMuted };
     }
   };
 
@@ -254,12 +254,12 @@ export default function MonthDetailScreen({ navigation, route }: any) {
           >
             {uploading ? (
               <View style={styles.addButtonContent}>
-                <ActivityIndicator color={colors.white} size="small" />
+                <ActivityIndicator color={colors.surfaceLowest} size="small" />
                 <Text style={styles.addButtonText}>Uploading...</Text>
               </View>
             ) : (
               <View style={styles.addButtonContent}>
-                <Ionicons name="add-circle" size={22} color={colors.white} />
+                <Ionicons name="add-circle" size={22} color={colors.surfaceLowest} />
                 <Text style={styles.addButtonText}>Add Statement</Text>
               </View>
             )}
@@ -293,11 +293,11 @@ export default function MonthDetailScreen({ navigation, route }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color={colors.inkMuted} />
+            <Ionicons name="document-outline" size={48} color={colors.onSurfaceMuted} />
             <Text style={styles.emptyText}>No statements for {monthLabel}</Text>
             <Text style={styles.emptySubtext}>
               Tap "Add Statement" to upload a PDF bank statement
@@ -342,9 +342,9 @@ export default function MonthDetailScreen({ navigation, route }: any) {
                   activeOpacity={0.6}
                 >
                   {isDeleting ? (
-                    <ActivityIndicator color={colors.inkMuted} size="small" />
+                    <ActivityIndicator color={colors.onSurfaceMuted} size="small" />
                   ) : (
-                    <Ionicons name="trash-outline" size={20} color={colors.inkMuted} />
+                    <Ionicons name="trash-outline" size={20} color={colors.onSurfaceMuted} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -381,7 +381,7 @@ export default function MonthDetailScreen({ navigation, route }: any) {
               value={bankName}
               onChangeText={handleBankNameChange}
               placeholder="e.g. Barclays, Monzo, HSBC..."
-              placeholderTextColor={colors.inkMuted}
+              placeholderTextColor={colors.onSurfaceMuted}
               autoFocus
               autoCapitalize="words"
               returnKeyType="done"
@@ -479,7 +479,7 @@ export default function MonthDetailScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   headerFlat: {
     paddingHorizontal: spacing.xl,
@@ -490,13 +490,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonFlatText: {
-    color: colors.ink,
+    color: colors.onSurface,
     fontSize: 16,
     fontFamily: fonts.bodyBold,
     marginTop: -1,
@@ -508,15 +507,15 @@ const styles = StyleSheet.create({
   screenLabel: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: colors.ember,
+    color: colors.primary,
     marginBottom: spacing.xs,
   },
   heading: {
     fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.ink,
+    color: colors.onSurface,
     lineHeight: 34,
   },
   content: {
@@ -538,7 +537,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   statsRow: {
     flexDirection: 'row',
@@ -547,7 +546,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     alignItems: 'center',
@@ -555,13 +554,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: fonts.display,
     fontSize: 22,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -0.5,
   },
   statLabel: {
     fontFamily: fonts.body,
     fontSize: 11,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -569,9 +568,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
-    letterSpacing: 1.2,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.md,
   },
   loadingContainer: {
@@ -581,18 +580,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     padding: 40,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
   },
   emptyText: {
     fontFamily: fonts.bodyBold,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontSize: 16,
     marginTop: spacing.md,
   },
   emptySubtext: {
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontSize: 16,
     marginTop: 4,
     textAlign: 'center',
@@ -600,7 +599,7 @@ const styles = StyleSheet.create({
   statementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -609,7 +608,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -620,13 +619,13 @@ const styles = StyleSheet.create({
   bankName: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   filename: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.xs,
   },
   statementMetaRow: {
@@ -648,7 +647,7 @@ const styles = StyleSheet.create({
   txCount: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   deleteButton: {
     width: 40,
@@ -663,7 +662,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: spacing.xl,
@@ -672,51 +671,46 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: fonts.display,
     fontSize: 22,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -0.2,
     marginBottom: spacing.xs,
   },
   modalSubtitle: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.lg,
   },
   bankInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     fontFamily: fonts.body,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.inkFaint,
   },
   suggestionsContainer: {
     marginBottom: spacing.md,
   },
   suggestionChip: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.xs,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: spacing.xs,
     marginBottom: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.inkFaint,
   },
   suggestionText: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   previousBankChip: {
-    backgroundColor: colors.blush,
-    borderColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
   },
   previousBankText: {
-    color: colors.ember,
+    color: colors.primary,
   },
   commonBanksSection: {
     marginBottom: spacing.md,
@@ -724,7 +718,7 @@ const styles = StyleSheet.create({
   commonBanksLabel: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.1,
@@ -741,9 +735,7 @@ const styles = StyleSheet.create({
   },
   modalCancel: {
     flex: 1,
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.inkFaint,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.full,
     paddingVertical: 14,
     alignItems: 'center',
@@ -751,7 +743,7 @@ const styles = StyleSheet.create({
   modalCancelText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   modalConfirmWrap: {
     flex: 1,
@@ -764,6 +756,6 @@ const styles = StyleSheet.create({
   modalConfirmText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
 });

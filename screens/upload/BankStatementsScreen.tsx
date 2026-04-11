@@ -143,9 +143,9 @@ export default function BankStatementsScreen({ navigation }: any) {
       case 'processing':
         return colors.emberLight;
       case 'pending':
-        return colors.ember;
+        return colors.primary;
       default:
-        return colors.inkFaint;
+        return colors.surfaceContainerHigh;
     }
   };
 
@@ -165,7 +165,7 @@ export default function BankStatementsScreen({ navigation }: any) {
         {/* Processing banner — shows when statements are being processed */}
         {isProcessing && (
           <View style={styles.processingBanner}>
-            <ActivityIndicator color={colors.ember} size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={styles.processingBannerTitle}>Processing your statements...</Text>
               <Text style={styles.processingBannerSub}>
@@ -192,7 +192,7 @@ export default function BankStatementsScreen({ navigation }: any) {
               style={styles.processButton}
             >
               <View style={styles.processingContent}>
-                <Ionicons name="flash" size={20} color={colors.white} />
+                <Ionicons name="flash" size={20} color={colors.surfaceLowest} />
                 <Text style={styles.processButtonText}>
                   Process All Statements ({pendingCount} pending)
                 </Text>
@@ -206,7 +206,7 @@ export default function BankStatementsScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : (
           monthsData.map((month) => {
@@ -248,7 +248,7 @@ export default function BankStatementsScreen({ navigation }: any) {
                   )}
                 </View>
 
-                <Ionicons name="chevron-forward" size={20} color={colors.inkMuted} />
+                <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceMuted} />
               </TouchableOpacity>
             );
           })
@@ -265,21 +265,21 @@ export default function BankStatementsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   screenLabel: {
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   heading: {
     fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -1.5,
     lineHeight: 34,
     marginBottom: spacing.xl,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
   processingBannerTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ember,
+    color: colors.primary,
   },
   processingBannerSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: 2,
   },
   processButton: {
@@ -322,16 +322,16 @@ const styles = StyleSheet.create({
   processButtonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
     textAlign: 'center',
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
     fontWeight: '600',
-    color: colors.ember,
+    color: colors.primary,
     marginBottom: spacing.md,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     textTransform: 'uppercase',
   },
   loadingContainer: {
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   monthCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -358,13 +358,13 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 2,
   },
   monthMeta: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   bankTagsRow: {
     flexDirection: 'row',
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   bankTag: {
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.xs,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   bankTagText: {
     fontFamily: fonts.body,
     fontSize: 11,
-    color: colors.ember,
+    color: colors.primary,
     letterSpacing: 0.2,
   },
 });

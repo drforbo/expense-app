@@ -271,7 +271,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color={colors.ember} />
+                  <Ionicons name="document-text" size={48} color={colors.primary} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -307,7 +307,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={20} color={colors.ember} />
+                  <Ionicons name="camera" size={20} color={colors.primary} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -316,7 +316,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={20} color={colors.ember} />
+                  <Ionicons name="images" size={20} color={colors.primary} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
@@ -326,7 +326,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={20} color={colors.ember} />
+                <Ionicons name="document-text" size={20} color={colors.primary} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
             </View>
@@ -334,7 +334,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color={colors.ember} />
+              <ActivityIndicator color={colors.primary} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -389,7 +389,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             style={[styles.saveButton, (saving || uploading) && styles.saveButtonDisabled]}
           >
             {saving ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colors.surfaceLowest} />
             ) : (
               <Text style={styles.saveButtonText}>save evidence {'\u2192'}</Text>
             )}
@@ -403,7 +403,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -415,14 +415,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backArrow: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     fontFamily: fonts.display,
     marginTop: -1,
   },
@@ -434,8 +433,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.sm,
     marginTop: spacing.sm,
@@ -443,13 +442,13 @@ const styles = StyleSheet.create({
   heroHeading: {
     fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -2,
     lineHeight: 46,
     marginBottom: spacing.xxl,
   },
   transactionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.lg,
@@ -457,7 +456,7 @@ const styles = StyleSheet.create({
   merchantName: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   amount: {
@@ -469,7 +468,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   section: {
     marginBottom: spacing.lg,
@@ -477,19 +476,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.sm,
   },
   uploadArea: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.lg,
     paddingVertical: spacing.xxxl,
     alignItems: 'center',
@@ -509,10 +506,8 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
     padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
@@ -522,7 +517,7 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontSize: 14,
     fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    color: colors.primary,
   },
   imageContainer: {
     position: 'relative',
@@ -531,15 +526,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
@@ -547,7 +540,7 @@ const styles = StyleSheet.create({
   pdfFileName: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
   },
@@ -560,7 +553,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.onSurface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -568,7 +561,7 @@ const styles = StyleSheet.create({
   changeImageText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -579,29 +572,25 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   input: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     height: 52,
     paddingHorizontal: 14,
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   textInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
     minHeight: 120,
   },
   saveButton: {
@@ -616,6 +605,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.display,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
 });

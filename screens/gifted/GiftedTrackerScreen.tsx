@@ -352,7 +352,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         style={styles.deleteBtn}
         onPress={() => deleteItem(item.id)}
       >
-        <Ionicons name="trash" size={18} color={colors.ember} />
+        <Ionicons name="trash" size={18} color={colors.primary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -380,7 +380,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             <Text style={styles.summaryLabel}>Total items</Text>
             <Text style={styles.summaryValue}>{items.length}</Text>
           </View>
-          <View style={[styles.summaryRow, { borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: spacing.sm }]}>
+          <View style={[styles.summaryRow, { paddingTop: spacing.sm }]}>
             <Text style={styles.summaryLabel}>Total value</Text>
             <Text style={styles.summaryValueGreen}>{'\u00A3'}{totalValue.toFixed(2)}</Text>
           </View>
@@ -390,12 +390,12 @@ export default function GiftedTrackerScreen({ navigation }: any) {
       {/* List */}
       {loading && items.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.inkMuted} />
+          <ActivityIndicator size="large" color={colors.onSurfaceMuted} />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconWrap}>
-            <Ionicons name="gift-outline" size={36} color={colors.ember} />
+            <Ionicons name="gift-outline" size={36} color={colors.primary} />
           </View>
           <Text style={styles.emptyTitle}>No gifted items yet</Text>
           <Text style={styles.emptySubtitle}>
@@ -403,7 +403,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           </Text>
 
           <View style={styles.taxInfoBanner}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.ember} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
             <Text style={styles.taxInfoText}>
               HMRC treats gifted items as taxable income if they're received in connection with your work. You'll need to declare their retail value on your Self Assessment.
             </Text>
@@ -419,7 +419,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
               end={{ x: 1, y: 0 }}
               style={styles.emptyAddBtn}
             >
-              <Ionicons name="add" size={18} color={colors.white} />
+              <Ionicons name="add" size={18} color={colors.surfaceLowest} />
               <Text style={styles.emptyAddBtnText}>Add your first item</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -434,7 +434,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           onRefresh={fetchItems}
           ListHeaderComponent={
             <View style={styles.listTaxNote}>
-              <Ionicons name="information-circle-outline" size={14} color={colors.ember} />
+              <Ionicons name="information-circle-outline" size={14} color={colors.primary} />
               <Text style={styles.listTaxNoteText}>
                 Gifted items are treated as taxable income by HMRC. Their retail value is added to your income total.
               </Text>
@@ -456,7 +456,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             end={{ x: 1, y: 0 }}
             style={styles.addButton}
           >
-            <Ionicons name="add" size={32} color={colors.white} />
+            <Ionicons name="add" size={32} color={colors.surfaceLowest} />
           </LinearGradient>
         </TouchableOpacity>
       )}
@@ -478,7 +478,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             </Text>
             <TouchableOpacity onPress={saveItem} disabled={loading}>
               {loading ? (
-                <ActivityIndicator color={colors.ember} />
+                <ActivityIndicator color={colors.primary} />
               ) : (
                 <Text style={styles.saveButtonText}>Save</Text>
               )}
@@ -516,7 +516,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                   onPress={takePhoto}
                   disabled={recognizing}
                 >
-                  <Ionicons name="camera" size={20} color={colors.ink} />
+                  <Ionicons name="camera" size={20} color={colors.onSurface} />
                   <Text style={styles.photoButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -525,14 +525,14 @@ export default function GiftedTrackerScreen({ navigation }: any) {
                   onPress={pickImage}
                   disabled={recognizing}
                 >
-                  <Ionicons name="images" size={20} color={colors.ink} />
+                  <Ionicons name="images" size={20} color={colors.onSurface} />
                   <Text style={styles.photoButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
 
               {recognizing && (
                 <View style={styles.recognizingContainer}>
-                  <ActivityIndicator color={colors.ember} />
+                  <ActivityIndicator color={colors.primary} />
                   <Text style={styles.recognizingText}>Recognizing item...</Text>
                 </View>
               )}
@@ -600,7 +600,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: 'row',
@@ -612,14 +612,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backArrow: {
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     fontFamily: fonts.display,
     marginTop: -1,
   },
@@ -630,22 +629,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.sm,
   },
   heroHeading: {
     fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -2,
     lineHeight: 46,
     marginBottom: spacing.xxl,
   },
   summaryCard: {
     marginHorizontal: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.lg,
@@ -659,12 +658,12 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   summaryValue: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   summaryValueGreen: {
     fontSize: 18,
@@ -686,7 +685,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -694,13 +693,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.lg,
@@ -709,7 +708,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     padding: spacing.md,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.lg,
   },
@@ -717,7 +716,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.ember,
+    color: colors.primary,
     lineHeight: 18,
   },
   emptyAddBtn: {
@@ -731,7 +730,7 @@ const styles = StyleSheet.create({
   emptyAddBtnText: {
     fontFamily: fonts.display,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   listContent: {
     paddingHorizontal: spacing.xl,
@@ -741,7 +740,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     padding: spacing.sm,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
   },
@@ -749,11 +748,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.ember,
+    color: colors.primary,
     lineHeight: 17,
   },
   itemCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -772,7 +771,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   itemRrp: {
@@ -784,13 +783,13 @@ const styles = StyleSheet.create({
   itemDate: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: 4,
   },
   itemNotes: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontStyle: 'italic',
   },
   deleteBtn: {
@@ -810,7 +809,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -818,23 +817,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
-    borderBottomWidth: 1.5,
-    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 18,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.primary,
   },
   modalContent: {
     flex: 1,
@@ -854,10 +851,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
+    backgroundColor: colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -878,15 +872,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.full,
   },
   photoButtonText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   recognizingContainer: {
     flexDirection: 'row',
@@ -897,7 +889,7 @@ const styles = StyleSheet.create({
   recognizingText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   formSection: {
     gap: spacing.md,
@@ -905,19 +897,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     height: 52,
     paddingHorizontal: 14,
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   textArea: {
     height: 100,

@@ -8,22 +8,23 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, fonts, spacing, borderRadius } from './theme';
+import { BlurView } from 'expo-blur';
+import { colors, fonts, spacing, borderRadius, gradients, glass } from './theme';
 
 const { width } = Dimensions.get('window');
 
-// Solar Flare Glow - decorative background element
-interface SolarGlowProps {
+// Liquid Gradient Glow — decorative background element
+interface LiquidGlowProps {
   variant?: 'primary' | 'secondary' | 'tertiary';
   size?: number;
   style?: ViewStyle;
 }
 
-export const SolarGlow: React.FC<SolarGlowProps> = ({ variant = 'primary', size = 200, style }) => {
+export const SolarGlow: React.FC<LiquidGlowProps> = ({ variant = 'primary', size = 200, style }) => {
   const glowColors: Record<string, [string, string, string, string]> = {
-    primary: ['#FF5C35', '#FFAA52', 'rgba(255,92,53,0.3)', 'transparent'],
-    secondary: ['#FFAA52', '#FF8C35', 'rgba(255,170,82,0.3)', 'transparent'],
-    tertiary: ['#FF6B8A', '#CC4466', 'rgba(255,100,120,0.2)', 'transparent'],
+    primary: ['#fe885c', '#9c3e18', 'rgba(156,62,24,0.3)', 'transparent'],
+    secondary: ['#7b8fd4', '#4855a2', 'rgba(72,85,162,0.3)', 'transparent'],
+    tertiary: ['#fe885c', '#4855a2', 'rgba(72,85,162,0.2)', 'transparent'],
   };
 
   return (
@@ -34,7 +35,7 @@ export const SolarGlow: React.FC<SolarGlowProps> = ({ variant = 'primary', size 
           width: size,
           height: size,
           borderRadius: size / 2,
-          opacity: 0.6,
+          opacity: 0.5,
         },
         style,
       ]}
@@ -50,6 +51,23 @@ export const SolarGlow: React.FC<SolarGlowProps> = ({ variant = 'primary', size 
   );
 };
 
+// Glass Card wrapper — glassmorphism container
+interface GlassCardProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  intensity?: number;
+}
+
+export const GlassCard: React.FC<GlassCardProps> = ({ children, style, intensity = 40 }) => {
+  return (
+    <View style={[styles.glassOuter, style]}>
+      <BlurView intensity={intensity} tint="light" style={styles.glassBlur}>
+        <View style={styles.glassInner}>{children}</View>
+      </BlurView>
+    </View>
+  );
+};
+
 // Progress Bar
 interface ProgressBarProps {
   progress: number;
@@ -58,12 +76,17 @@ interface ProgressBarProps {
 export const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
   return (
     <View style={styles.progressBarContainer}>
-      <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+      <LinearGradient
+        colors={gradients.warm}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[styles.progressFill, { width: `${progress * 100}%` }]}
+      />
     </View>
   );
 };
 
-// Primary Button
+// Primary Button — Liquid Gradient
 interface GlassButtonProps {
   title: string;
   onPress: () => void;
@@ -83,9 +106,16 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
         onPress={onPress}
         disabled={disabled}
         activeOpacity={0.8}
-        style={[styles.primaryButton, disabled && styles.disabledButton]}
+        style={disabled ? styles.disabledButton : undefined}
       >
-        <Text style={styles.primaryButtonText}>{title}</Text>
+        <LinearGradient
+          colors={gradients.button}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.primaryButton}
+        >
+          <Text style={styles.primaryButtonText}>{title}</Text>
+        </LinearGradient>
       </TouchableOpacity>
     );
   }
@@ -145,52 +175,66 @@ export const Eyebrow: React.FC<EyebrowProps> = ({ text }) => {
   return <Text style={styles.eyebrow}>{text}</Text>;
 };
 
-// Decorative Blobs (solar flare glows)
+// Decorative Blobs (liquid gradient glows)
 export const DecorativeBlobs: React.FC = () => {
   return (
     <>
       <SolarGlow variant="primary" size={300} style={{ top: -100, right: -100 }} />
-      <SolarGlow variant="tertiary" size={250} style={{ bottom: -80, left: -80 }} />
+      <SolarGlow variant="secondary" size={250} style={{ bottom: -80, left: -80 }} />
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  glassOuter: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+  },
+  glassBlur: {
+    overflow: 'hidden',
+    borderRadius: borderRadius.lg,
+  },
+  glassInner: {
+    backgroundColor: colors.glass,
+    padding: spacing.lg,
+    borderWidth: glass.borderWidth,
+    borderColor: glass.borderColor,
+    borderRadius: borderRadius.lg,
+  },
   progressBarContainer: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: borderRadius.sm,
+    height: 6,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.gradientMid,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
   },
   primaryButton: {
-    backgroundColor: colors.gradientMid,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
   },
   primaryButtonText: {
     color: colors.white,
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: fonts.displaySemi,
+    letterSpacing: 0.3,
   },
   ghostButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.glass,
     borderWidth: 1.5,
-    borderColor: colors.white,
-    borderRadius: borderRadius.sm,
-    paddingVertical: 14,
-    paddingHorizontal: spacing.lg,
+    borderColor: colors.outlineVariant,
+    borderRadius: borderRadius.full,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
   },
   ghostButtonText: {
-    color: colors.white,
-    fontSize: 14,
+    color: colors.onSurface,
+    fontSize: 16,
     fontFamily: fonts.displaySemi,
   },
   disabledButton: {
@@ -202,7 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: colors.gradientMid,
+    color: colors.primary,
     fontSize: 15,
     fontFamily: fonts.displaySemi,
   },
@@ -220,22 +264,23 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 15,
     fontFamily: fonts.body,
-    color: 'rgba(250,250,250,0.7)',
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
   },
   questionText: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: fonts.display,
     color: colors.white,
     textAlign: 'center',
     marginBottom: spacing.xl,
+    letterSpacing: -0.3,
   },
   eyebrow: {
-    fontSize: 10,
-    fontFamily: fonts.displaySemi,
-    letterSpacing: 1.2,
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: 'rgba(250,250,250,0.4)',
+    color: 'rgba(255,255,255,0.4)',
     marginBottom: spacing.md,
   },
 });

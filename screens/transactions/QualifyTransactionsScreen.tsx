@@ -296,7 +296,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.ember} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -336,13 +336,13 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             onPress={() => setShowMemoryJogger(!showMemoryJogger)}
           >
             <View style={styles.memoryJoggerTitleRow}>
-              <Ionicons name="bulb" size={20} color={colors.ember} />
+              <Ionicons name="bulb" size={20} color={colors.primary} />
               <Text style={styles.memoryJoggerTitle}>Memory Jogger</Text>
             </View>
             <Ionicons
               name={showMemoryJogger ? 'chevron-up' : 'chevron-down'}
               size={20}
-              color={colors.inkMuted}
+              color={colors.onSurfaceMuted}
             />
           </TouchableOpacity>
 
@@ -361,7 +361,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => copyToClipboard(transaction.merchant_name)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name={copiedText === transaction.merchant_name ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === transaction.merchant_name ? colors.positive : colors.ember} />
+                  <Ionicons name={copiedText === transaction.merchant_name ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === transaction.merchant_name ? colors.positive : colors.primary} />
                   <Text style={styles.searchTermText}>{transaction.merchant_name}</Text>
                   {copiedText === transaction.merchant_name && <Text style={styles.copiedBadge}>Copied!</Text>}
                 </TouchableOpacity>
@@ -375,7 +375,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(amountOnly)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.positive : colors.ember} />
+                      <Ionicons name={copiedText === amountOnly ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === amountOnly ? colors.positive : colors.primary} />
                       <Text style={styles.searchTermText}>{amountOnly}</Text>
                       {copiedText === amountOnly && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -391,7 +391,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(merchantAmount)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.positive : colors.ember} />
+                      <Ionicons name={copiedText === merchantAmount ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === merchantAmount ? colors.positive : colors.primary} />
                       <Text style={styles.searchTermText}>{merchantAmount}</Text>
                       {copiedText === merchantAmount && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -407,7 +407,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                       onPress={() => copyToClipboard(receiptSearch)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.positive : colors.ember} />
+                      <Ionicons name={copiedText === receiptSearch ? "checkmark-circle" : "copy-outline"} size={16} color={copiedText === receiptSearch ? colors.positive : colors.primary} />
                       <Text style={styles.searchTermText} numberOfLines={1}>{transaction.merchant_name} receipt OR order</Text>
                       {copiedText === receiptSearch && <Text style={styles.copiedBadge}>Copied!</Text>}
                     </TouchableOpacity>
@@ -418,15 +418,15 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
               <View style={styles.searchTips}>
                 <Text style={styles.searchTipTitle}>Where to look:</Text>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="mail-outline" size={16} color={colors.inkMuted} />
+                  <Ionicons name="mail-outline" size={16} color={colors.onSurfaceMuted} />
                   <Text style={styles.searchTipText}>Email inbox & receipts folder</Text>
                 </View>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="chatbubble-outline" size={16} color={colors.inkMuted} />
+                  <Ionicons name="chatbubble-outline" size={16} color={colors.onSurfaceMuted} />
                   <Text style={styles.searchTipText}>WhatsApp & iMessage</Text>
                 </View>
                 <View style={styles.searchTipRow}>
-                  <Ionicons name="images-outline" size={16} color={colors.inkMuted} />
+                  <Ionicons name="images-outline" size={16} color={colors.onSurfaceMuted} />
                   <Text style={styles.searchTipText}>Photos app (screenshots)</Text>
                 </View>
               </View>
@@ -446,7 +446,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
           {noReceiptMode ? (
             <View style={styles.noReceiptWarning}>
               <View style={styles.noReceiptWarningHeader}>
-                <Ionicons name="alert-circle" size={24} color={colors.ember} />
+                <Ionicons name="alert-circle" size={24} color={colors.primary} />
                 <Text style={styles.noReceiptWarningTitle}>No Receipt Mode</Text>
               </View>
               <Text style={styles.noReceiptWarningText}>
@@ -462,7 +462,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   setNoReceiptMode(false);
                 }}
               >
-                <Ionicons name="receipt-outline" size={18} color={colors.ember} />
+                <Ionicons name="receipt-outline" size={18} color={colors.primary} />
                 <Text style={styles.addReceiptInsteadText}>Add a receipt instead</Text>
               </TouchableOpacity>
             </View>
@@ -470,7 +470,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color={colors.ember} />
+                  <Ionicons name="document-text" size={48} color={colors.primary} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -508,7 +508,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={24} color={colors.ember} />
+                  <Ionicons name="camera" size={24} color={colors.primary} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -517,7 +517,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={24} color={colors.ember} />
+                  <Ionicons name="images" size={24} color={colors.primary} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
@@ -527,7 +527,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={24} color={colors.ember} />
+                <Ionicons name="document-text" size={24} color={colors.primary} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
 
@@ -556,7 +556,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color={colors.ember} />
+              <ActivityIndicator color={colors.primary} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -636,11 +636,11 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
               style={styles.gradientButton}
             >
               {saving ? (
-                <ActivityIndicator color={colors.white} />
+                <ActivityIndicator color={colors.surfaceLowest} />
               ) : (
                 <>
                   <Text style={styles.gradientButtonText}>Save Evidence</Text>
-                  <Ionicons name="checkmark" size={20} color={colors.white} />
+                  <Ionicons name="checkmark" size={20} color={colors.surfaceLowest} />
                 </>
               )}
             </LinearGradient>
@@ -662,7 +662,7 @@ export default function QualifyTransactionsScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   loadingContainer: {
     flex: 1,
@@ -680,24 +680,22 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
   },
   backArrow: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.ink,
+    color: colors.onSurface,
     marginTop: -1,
   },
   screenLabel: {
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    color: colors.ember,
+    letterSpacing: 2,
+    color: colors.primary,
     fontFamily: fonts.bodyBold,
   },
   content: {
@@ -705,7 +703,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   transactionCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -713,7 +711,7 @@ const styles = StyleSheet.create({
   merchantName: {
     fontSize: 20,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: spacing.xs,
   },
   amount: {
@@ -742,17 +740,17 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   explanation: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     lineHeight: 20,
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
     overflow: 'hidden',
@@ -771,7 +769,7 @@ const styles = StyleSheet.create({
   memoryJoggerTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   memoryJoggerContent: {
     paddingHorizontal: spacing.lg,
@@ -780,7 +778,7 @@ const styles = StyleSheet.create({
   memoryJoggerSubtitle: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.sm,
   },
   // Search suggestions styles
@@ -790,16 +788,14 @@ const styles = StyleSheet.create({
   searchSuggestionLabel: {
     fontSize: 13,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 10,
   },
   searchTermChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     marginBottom: spacing.xs,
@@ -807,12 +803,11 @@ const styles = StyleSheet.create({
   },
   searchTermChipCopied: {
     backgroundColor: colors.tagIncomeBg,
-    borderColor: colors.positive,
   },
   searchTermText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
     flex: 1,
   },
   copiedBadge: {
@@ -821,16 +816,14 @@ const styles = StyleSheet.create({
     color: colors.positive,
   },
   searchTips: {
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
     padding: 14,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   searchTipTitle: {
     fontSize: 13,
     fontFamily: fonts.displaySemi,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 10,
   },
   searchTipRow: {
@@ -842,7 +835,7 @@ const styles = StyleSheet.create({
   searchTipText: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   section: {
     marginBottom: spacing.lg,
@@ -850,15 +843,15 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.ember,
-    letterSpacing: 1.5,
+    color: colors.primary,
+    letterSpacing: 2,
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.sm,
   },
   uploadButtons: {
@@ -867,30 +860,26 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   uploadButtonText: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: colors.ember,
+    color: colors.primary,
   },
   pdfUploadButton: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
     padding: spacing.md,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.xs,
     marginTop: spacing.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   noReceiptButton: {
     flexDirection: 'row',
@@ -920,12 +909,12 @@ const styles = StyleSheet.create({
   noReceiptWarningTitle: {
     fontSize: 18,
     fontFamily: fonts.display,
-    color: colors.ember,
+    color: colors.primary,
   },
   noReceiptWarningText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: spacing.xs,
     lineHeight: 20,
   },
@@ -935,7 +924,7 @@ const styles = StyleSheet.create({
   noReceiptWarningItem: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: 4,
     lineHeight: 18,
   },
@@ -945,31 +934,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     paddingVertical: 10,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   addReceiptInsteadText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ember,
+    color: colors.primary,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   pdfFileName: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.ink,
+    color: colors.onSurface,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
   },
@@ -985,7 +970,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
   },
   changeImageButton: {
     position: 'absolute',
@@ -1002,7 +987,7 @@ const styles = StyleSheet.create({
   changeImageText: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   uploadingContainer: {
     flexDirection: 'row',
@@ -1013,32 +998,29 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   input: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     height: 52,
     paddingHorizontal: 14,
     fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
   },
   inputFocused: {
-    borderColor: colors.ember,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
   textInput: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.ink,
+    color: colors.onSurface,
     minHeight: 120,
   },
   textInputNoReceipt: {
@@ -1047,7 +1029,7 @@ const styles = StyleSheet.create({
   charCount: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: spacing.xs,
     textAlign: 'right',
   },
@@ -1073,7 +1055,7 @@ const styles = StyleSheet.create({
   gradientButtonText: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   saveButtonDisabled: {
     opacity: 0.5,
@@ -1087,6 +1069,6 @@ const styles = StyleSheet.create({
   skipButtonText: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
 });

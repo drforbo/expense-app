@@ -122,7 +122,7 @@ export default function UploadStatementScreen({ navigation }: any) {
         {isUploading ? (
           <View style={styles.uploadZone}>
             <View style={styles.uploadingContent}>
-              <ActivityIndicator color={colors.ember} size="large" />
+              <ActivityIndicator color={colors.primary} size="large" />
               <Text style={styles.uploadingText}>{getUploadStatusText()}</Text>
               <Text style={styles.uploadingSubtext}>{uploadState.filename}</Text>
               <Text style={styles.uploadingHint}>You can navigate away</Text>
@@ -145,7 +145,7 @@ export default function UploadStatementScreen({ navigation }: any) {
                 end={{ x: 1, y: 0 }}
                 style={styles.uploadButton}
               >
-                <Ionicons name="cloud-upload" size={20} color={colors.white} style={{ marginRight: spacing.sm }} />
+                <Ionicons name="cloud-upload" size={20} color={colors.surfaceLowest} style={{ marginRight: spacing.sm }} />
                 <Text style={styles.uploadButtonText}>Choose PDF File</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -162,11 +162,11 @@ export default function UploadStatementScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.ember} />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color={colors.inkMuted} />
+            <Ionicons name="document-outline" size={48} color={colors.onSurfaceMuted} />
             <Text style={styles.emptyText}>No statements uploaded yet</Text>
             <Text style={styles.emptySubtext}>Upload your first bank statement to get started</Text>
           </View>
@@ -211,7 +211,7 @@ export default function UploadStatementScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
   headerContent: {
     paddingHorizontal: spacing.xl,
@@ -221,15 +221,15 @@ const styles = StyleSheet.create({
   screenLabel: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: colors.ember,
+    color: colors.primary,
     marginBottom: spacing.xs,
   },
   heading: {
     fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.ink,
+    color: colors.onSurface,
     lineHeight: 34,
   },
   content: {
@@ -237,11 +237,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   uploadZone: {
-    borderWidth: 2,
-    borderColor: colors.inkFaint,
-    borderStyle: 'dashed',
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -253,14 +250,14 @@ const styles = StyleSheet.create({
   uploadZoneTitle: {
     fontFamily: fonts.display,
     fontSize: 20,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -0.3,
     marginBottom: 4,
   },
   uploadZoneSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   uploadButton: {
     borderRadius: borderRadius.full,
@@ -273,7 +270,7 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.white,
+    color: colors.surfaceLowest,
   },
   uploadingContent: {
     alignItems: 'center',
@@ -282,36 +279,36 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontFamily: fonts.display,
     fontSize: 20,
-    color: colors.ink,
+    color: colors.onSurface,
     letterSpacing: -0.2,
     marginTop: spacing.md,
   },
   uploadingSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: 4,
   },
   uploadingHint: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginTop: spacing.sm,
     fontStyle: 'italic',
   },
   supportText: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     lineHeight: 20,
     marginBottom: spacing.xl,
   },
   sectionTitle: {
     fontSize: 11,
     fontFamily: fonts.bodyBold,
-    letterSpacing: 1.2,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     marginBottom: spacing.md,
   },
   loadingContainer: {
@@ -321,18 +318,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     padding: 40,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
   },
   emptyText: {
     fontFamily: fonts.bodyBold,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontSize: 16,
     marginTop: spacing.md,
   },
   emptySubtext: {
     fontFamily: fonts.body,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
     fontSize: 16,
     marginTop: 4,
     textAlign: 'center',
@@ -340,7 +337,7 @@ const styles = StyleSheet.create({
   statementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -349,7 +346,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.blush,
+    backgroundColor: colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -360,13 +357,13 @@ const styles = StyleSheet.create({
   statementName: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   statementMeta: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
+    color: colors.onSurfaceMuted,
   },
   statusBadge: {
     borderRadius: borderRadius.xs,

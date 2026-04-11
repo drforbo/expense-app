@@ -260,25 +260,7 @@ export default function DashboardScreen({ navigation }: any) {
     return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
   };
 
-  // Calculate next SA deadline: 31 Jan following the tax year end
-  const getNextDueDate = () => {
-    const now = new Date();
-    const year = now.getMonth() >= 3 && now.getDate() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
-    // Tax year is year/year+1, filing deadline is 31 Jan year+2
-    const deadline = new Date(year + 2, 0, 31);
-    if (now > deadline) {
-      // Already past this deadline, show next year's
-      return new Date(year + 3, 0, 31);
-    }
-    return deadline;
-  };
-
-  const formatDueDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  };
-
   const taxYearPercent = getTaxYearProgress();
-  const nextDueDate = getNextDueDate();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -287,6 +269,7 @@ export default function DashboardScreen({ navigation }: any) {
       {isUploading && (
         <LinearGradient
           colors={[...gradients.hero]}
+          locations={[...gradients.heroLocations]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.uploadBanner}
@@ -301,7 +284,7 @@ export default function DashboardScreen({ navigation }: any) {
       {/* Statements processing banner */}
       {!isUploading && statementsProcessing > 0 && (
         <View style={styles.processingBanner}>
-          <ActivityIndicator size="small" color={colors.ember} />
+          <ActivityIndicator size="small" color={colors.primary} />
           <Text style={styles.processingBannerText}>
             Processing {statementsProcessing} statement{statementsProcessing > 1 ? 's' : ''}... We'll notify you when done
           </Text>
@@ -316,7 +299,7 @@ export default function DashboardScreen({ navigation }: any) {
             {uploadState.result.transaction_count} transactions added
           </Text>
           <TouchableOpacity onPress={hideUploadComplete}>
-            <Ionicons name="close" size={18} color={colors.inkMuted} />
+            <Ionicons name="close" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -326,20 +309,16 @@ export default function DashboardScreen({ navigation }: any) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header row: greeting left, avatar right */}
+        {/* Header: BOPP logo + gradient avatar */}
         <View style={styles.header}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={styles.screenLabel}>DASHBOARD</Text>
-            <Text style={styles.sectionHeading}>
-              {!hasTransactions ? "Let's get your\ntaxes sorted." : `Hey ${userName}`}
-            </Text>
-          </View>
+          <Text style={styles.logoText}>bopp</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('Settings')}
             activeOpacity={0.8}
           >
             <LinearGradient
               colors={[...gradients.hero]}
+              locations={[...gradients.heroLocations]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
@@ -351,7 +330,7 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Profile incomplete prompt (subtle) */}
+        {/* Profile incomplete prompt */}
         {profileLoaded && !profileCompleted && (
           <TouchableOpacity
             style={styles.profilePromptCard}
@@ -360,7 +339,7 @@ export default function DashboardScreen({ navigation }: any) {
           >
             <View style={styles.profilePromptRow}>
               <View style={styles.profilePromptIcon}>
-                <Ionicons name="person-outline" size={18} color={colors.ember} />
+                <Ionicons name="person-outline" size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.profilePromptTitle}>Complete your profile</Text>
@@ -368,30 +347,29 @@ export default function DashboardScreen({ navigation }: any) {
                   Add your employment details for an accurate tax estimate.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
             </View>
           </TouchableOpacity>
         )}
 
-        {/* Hero gradient tax card */}
+        {/* Hero gradient card — clean liquid gradient, no orbs */}
         <LinearGradient
           colors={[...gradients.hero]}
-          locations={[0, 0.5, 1]}
+          locations={[...gradients.heroLocations]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
-          {/* Decorative orbs */}
-          <View style={styles.orbLarge} />
-          <View style={styles.orbSmall} />
-
-          <Text style={styles.heroCardLabel}>TAX SET ASIDE</Text>
-          <Text style={styles.heroCardValue}>
+          <Text style={styles.heroEyebrow}>TAX SET ASIDE</Text>
+          <Text style={styles.heroNumber}>
             {loadingCounts ? '...' : taxOwed !== null ? `£${taxOwed.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'}
           </Text>
 
-          {/* Pills row */}
-          <View style={styles.heroPillsRow}>
+          {taxOwed !== null && taxOwed > 0 && (
+            <Text style={styles.heroStatusLine}>✓  On track for Jan payments</Text>
+          )}
+
+          <View style={styles.heroPills}>
             <View style={styles.heroPill}>
               <Text style={styles.heroPillText}>{taxYearPercent}% of year done</Text>
             </View>
@@ -400,96 +378,87 @@ export default function DashboardScreen({ navigation }: any) {
                 {taxOwed !== null && taxOwed > 0 ? 'on track' : 'no tax yet'}
               </Text>
             </View>
+            <TouchableOpacity
+              style={styles.heroPillAction}
+              onPress={() => navigation.getParent()?.navigate('Tax')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.heroPillActionText}>Optimise →</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Progress bar */}
           <View style={styles.heroProgressBg}>
             <View style={[styles.heroProgressFill, { width: `${taxYearPercent}%` as any }]} />
-          </View>
-
-          {/* Next due date sub-card */}
-          <View style={styles.heroDueDateCard}>
-            <Text style={styles.heroDueDateLabel}>NEXT DUE DATE</Text>
-            <Text style={styles.heroDueDateValue}>{formatDueDate(nextDueDate)}</Text>
           </View>
         </LinearGradient>
 
         {/* Stat cards row: Earned + Owed */}
-        <View style={styles.statCardsRow}>
-          <View style={styles.statCardEarned}>
-            <Text style={styles.cardLabel}>EARNED</Text>
-            <Text style={styles.statCardValue}>
-              {loadingCounts ? '...' : formatCurrency(totalIncome)}
-            </Text>
-          </View>
-          <View style={styles.statCardOwed}>
-            <Text style={styles.cardLabel}>OWED</Text>
-            <Text style={[styles.statCardValue, { color: colors.ember }]}>
-              {loadingCounts ? '...' : taxOwed !== null ? formatCurrency(taxOwed) : '—'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Quick action pills */}
-        <View style={styles.quickActionsRow}>
-          <LinearGradient
-            colors={[...gradients.button]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.quickActionGradient}
-          >
-            <TouchableOpacity
-              style={styles.quickActionInner}
-              onPress={() => navigation.getParent()?.navigate('Transactions')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.quickActionTextActive}>+ income</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-
-          <TouchableOpacity
-            style={styles.quickActionOutlined}
-            onPress={() => navigation.getParent()?.navigate('Transactions')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.quickActionTextInactive}>expenses</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickActionOutlined}
-            onPress={() => navigation.getParent()?.navigate('Tax')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.quickActionTextInactive}>tax</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Next actions section */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.screenLabel}>NEXT STEPS</Text>
-        </View>
-
-        {/* CTA: No transactions -- upload prompt */}
-        {profileLoaded && !hasTransactions && (
-          <TouchableOpacity
-            style={styles.ctaCard}
-            onPress={() => navigation.getParent()?.navigate('Upload')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.ctaRow}>
-              <View style={styles.ctaIconWrap}>
-                <Text style={{ fontSize: 20 }}>📄</Text>
+        <View style={styles.statRow}>
+          {/* Earned card */}
+          <View style={styles.statCard}>
+            <LinearGradient
+              colors={[...gradients.statEarned]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.statAccent}
+            />
+            <View style={styles.statContent}>
+              <View style={styles.statIconWrap}>
+                <Text style={{ fontSize: 16 }}>💰</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ctaTitle}>Upload a statement</Text>
-                <Text style={styles.ctaSub}>
-                  Get started by uploading a bank statement to track your expenses.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <Text style={styles.statLabel}>EARNED</Text>
+              <Text style={styles.statNum}>
+                {loadingCounts ? '...' : formatCurrency(totalIncome)}
+              </Text>
             </View>
-          </TouchableOpacity>
-        )}
+          </View>
+
+          {/* Owed card */}
+          <View style={styles.statCard}>
+            <LinearGradient
+              colors={[...gradients.statOwed]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.statAccent}
+            />
+            <View style={styles.statContent}>
+              <View style={styles.statIconWrap}>
+                <Text style={{ fontSize: 16 }}>📋</Text>
+              </View>
+              <Text style={styles.statLabel}>TOTAL OWED</Text>
+              <Text style={styles.statNum}>
+                {loadingCounts ? '...' : taxOwed !== null ? formatCurrency(taxOwed) : '—'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Next steps section */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionEyebrow}>NEXT STEPS</Text>
+        </View>
+
+        {/* CTA: Upload a statement — always visible */}
+        <TouchableOpacity
+          style={styles.ctaCard}
+          onPress={() => navigation.navigate('Upload')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.ctaRow}>
+            <View style={styles.ctaIconWrap}>
+              <Text style={{ fontSize: 20 }}>📄</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ctaTitle}>Upload a statement</Text>
+              <Text style={styles.ctaSub}>
+                {hasTransactions
+                  ? 'Add another bank statement to keep your records up to date.'
+                  : 'Get started by uploading a bank statement to track your expenses.'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </View>
+        </TouchableOpacity>
 
         {/* CTA: Uncategorised transactions */}
         {hasTransactions && uncategorizedCount > 0 && (
@@ -510,7 +479,7 @@ export default function DashboardScreen({ navigation }: any) {
                   Swipe through your transactions to categorise them.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
             </View>
           </TouchableOpacity>
         )}
@@ -534,7 +503,7 @@ export default function DashboardScreen({ navigation }: any) {
                   Add receipts to qualify your deductions.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
             </View>
           </TouchableOpacity>
         )}
@@ -558,7 +527,7 @@ export default function DashboardScreen({ navigation }: any) {
                     : 'PR packages count as income'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
             </View>
           </TouchableOpacity>
         )}
@@ -580,88 +549,55 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Recent transactions section */}
+        {/* Timeline section */}
         {recentTransactions.length > 0 && (
           <>
-            <View style={styles.sectionRowSpaced}>
-              <Text style={styles.sectionHeading}>Recent</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Timeline</Text>
               <TouchableOpacity onPress={() => navigation.getParent()?.navigate('Transactions')}>
-                <Text style={styles.sectionLink}>See all</Text>
+                <Text style={styles.sectionLink}>View Archive</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.recentCard}>
-              {recentTransactions.map((item, index) => {
-                const isIncome = item.transaction_type === 'income' || item.amount < 0;
-                const isExpense = !isIncome;
-                const taxSaving = isExpense && item.tax_deductible && item.qualified
-                  ? (Math.abs(item.amount) * ((item.business_percent || 100) / 100) * 0.2)
-                  : 0;
-                const isLast = index === recentTransactions.length - 1;
+            {recentTransactions.map((item) => {
+              const isIncome = item.transaction_type === 'income' || item.amount < 0;
+              const isExpense = !isIncome;
+              const taxSaving = isExpense && item.tax_deductible && item.qualified
+                ? (Math.abs(item.amount) * ((item.business_percent || 100) / 100) * 0.2)
+                : 0;
 
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.transactionRow,
-                      isLast && { borderBottomWidth: 0 },
-                    ]}
-                    onPress={() => navigation.navigate('EditTransaction', {
-                      transactionId: item.id,
-                      transactionType: item.transaction_type || (isIncome ? 'income' : 'expense'),
-                    })}
-                    activeOpacity={0.7}
-                  >
-                    {/* Emoji icon */}
-                    <View style={[
-                      styles.transactionIcon,
-                      { backgroundColor: isExpense ? colors.blush : colors.parchment },
-                    ]}>
-                      <Text style={{ fontSize: 15 }}>{getCategoryEmoji(item.category_name)}</Text>
-                    </View>
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.tlItem}
+                  onPress={() => navigation.navigate('EditTransaction', {
+                    transactionId: item.id,
+                    transactionType: item.transaction_type || (isIncome ? 'income' : 'expense'),
+                  })}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.tlIcon}>
+                    <Text style={{ fontSize: 20 }}>{getCategoryEmoji(item.category_name)}</Text>
+                  </View>
 
-                    {/* Details */}
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.transactionName} numberOfLines={1}>
-                        {item.merchant_name}
-                      </Text>
-                      <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                        {item.category_name && (
-                          <View style={styles.categoryTag}>
-                            <Text style={styles.categoryTagText}>{item.category_name}</Text>
-                          </View>
-                        )}
-                        <Text style={styles.transactionDate}>{formatDate(item.transaction_date)}</Text>
-                      </View>
-                    </View>
+                  <View style={styles.tlMid}>
+                    <Text style={styles.tlName} numberOfLines={1}>{item.merchant_name}</Text>
+                    <Text style={styles.tlSub}>
+                      {item.category_name || 'Uncategorised'} · {formatDate(item.transaction_date)}
+                    </Text>
+                  </View>
 
-                    {/* Amount */}
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={[
-                        styles.transactionAmount,
-                        { color: isIncome ? colors.ember : colors.ink },
-                      ]}>
-                        {isIncome ? '+' : '-'}{formatAmount(item.amount)}
-                      </Text>
-                      {isExpense && taxSaving > 0 && (
-                        <Text style={styles.taxSaving}>
-                          saves £{taxSaving.toFixed(2)}
-                        </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* View all transactions link */}
-            <TouchableOpacity
-              style={styles.allTransactionsLink}
-              onPress={() => navigation.getParent()?.navigate('Transactions')}
-            >
-              <Text style={styles.allTransactionsText}>View all transactions</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.ember} />
-            </TouchableOpacity>
+                  <View style={styles.tlRight}>
+                    <Text style={[styles.tlAmt, { color: isIncome ? colors.primary : colors.onSurface }]}>
+                      {isIncome ? '+' : '-'}{formatAmount(item.amount)}
+                    </Text>
+                    {isExpense && taxSaving > 0 && (
+                      <Text style={styles.tlSaving}>saves £{taxSaving.toFixed(2)}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </>
         )}
       </ScrollView>
@@ -672,13 +608,15 @@ export default function DashboardScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.parchment,
+    backgroundColor: colors.surface,
   },
+
+  // Banners
   uploadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
     gap: 10,
   },
   uploadBannerText: {
@@ -689,59 +627,51 @@ const styles = StyleSheet.create({
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blush,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: 10,
+    backgroundColor: colors.surfaceContainerLow,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
     gap: 10,
   },
   processingBannerText: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.ember,
+    color: colors.primary,
     flex: 1,
   },
   toastBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: 12,
+    backgroundColor: colors.surfaceLowest,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
     gap: 10,
+    borderRadius: borderRadius.md,
+    marginHorizontal: spacing.md,
   },
   toastText: {
     flex: 1,
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.ink,
+    color: colors.onSurface,
   },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: 100,
-  },
+
+  scroll: { flex: 1 },
+  content: { paddingBottom: 120 },
 
   // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xxl,
-    marginTop: spacing.lg,
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
-  screenLabel: {
-    fontSize: 11,
-    fontFamily: fonts.bodyBold,
-    letterSpacing: 1.5,
-    color: colors.ember,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  sectionHeading: {
-    fontSize: 28,
-    fontFamily: fonts.displaySemi,
-    color: colors.ink,
+  logoText: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
   },
   avatar: {
     width: 40,
@@ -749,290 +679,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    borderWidth: 1.5,
+    borderColor: colors.glassBorder,
   },
   avatarText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 16,
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
     color: colors.white,
   },
 
-  // Hero gradient card
-  heroCard: {
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  orbLarge: {
-    position: 'absolute',
-    top: -50,
-    right: -50,
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    opacity: 0.15,
-  },
-  orbSmall: {
-    position: 'absolute',
-    bottom: -30,
-    left: -30,
-    width: 120,
-    height: 120,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    opacity: 0.15,
-  },
-  heroCardLabel: {
-    ...typography.cardLabel,
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
-  },
-  heroCardValue: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 52,
-    color: colors.white,
-    letterSpacing: -2,
-    lineHeight: 58,
-  },
-  heroPillsRow: {
-    flexDirection: 'row',
-    gap: 7,
-    marginTop: 10,
-    flexWrap: 'wrap',
-  },
-  heroPill: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-  },
-  heroPillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.white,
-  },
-  heroProgressBg: {
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 9999,
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  heroProgressFill: {
-    height: 3,
-    backgroundColor: colors.white,
-    borderRadius: 9999,
-  },
-  heroDueDateCard: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 16,
-  },
-  heroDueDateLabel: {
-    ...typography.cardLabel,
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
-  },
-  heroDueDateValue: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 18,
-    color: colors.white,
-  },
-
-  // Stat cards
-  statCardsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: spacing.xl,
-  },
-  statCardEarned: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: 16,
-  },
-  statCardOwed: {
-    flex: 1,
-    backgroundColor: colors.blush,
-    borderRadius: borderRadius.lg,
-    padding: 16,
-  },
-  cardLabel: {
-    ...typography.cardLabel,
-    color: colors.inkMuted,
-    marginBottom: 4,
-  },
-  statCardValue: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 22,
-    color: colors.ink,
-    letterSpacing: -0.5,
-  },
-
-  // Quick action pills
-  quickActionsRow: {
-    flexDirection: 'row',
-    gap: 7,
-    marginBottom: spacing.xxl,
-  },
-  quickActionGradient: {
-    borderRadius: 9999,
-    overflow: 'hidden',
-  },
-  quickActionInner: {
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-  },
-  quickActionTextActive: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.white,
-  },
-  quickActionOutlined: {
-    borderWidth: 1.5,
-    borderColor: colors.inkFaint,
-    borderRadius: 9999,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-  },
-  quickActionTextInactive: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.ink,
-  },
-
-  // Section labels
-  sectionRow: {
-    marginBottom: spacing.md,
-  },
-  sectionRowSpaced: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.xxl,
-    marginBottom: spacing.md,
-  },
-  sectionLink: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.ember,
-  },
-
-  // CTA / next-action cards
-  ctaCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  ctaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  ctaIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.parchment,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ctaTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
-    marginBottom: 2,
-  },
-  ctaSub: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.inkMuted,
-    lineHeight: 18,
-  },
-
-  // Recent transactions card
-  recentCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-  },
-
-  // Transaction rows
-  transactionRow: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.inkFaint,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  transactionIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: borderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  transactionName: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.ink,
-    marginBottom: 2,
-  },
-  categoryTag: {
-    backgroundColor: colors.blush,
-    borderRadius: borderRadius.xs,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  categoryTagText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.ember,
-  },
-  transactionDate: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.inkMuted,
-  },
-  transactionAmount: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-  },
-  taxSaving: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.positive,
-    marginTop: 1,
-  },
-
-  // All transactions link
-  allTransactionsLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  allTransactionsText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ember,
-  },
-
-  // Profile prompt (subtle)
+  // Profile prompt
   profilePromptCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surfaceLowest,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
   profilePromptRow: {
@@ -1040,24 +701,261 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profilePromptIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.blush,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
   profilePromptTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.ink,
-    marginBottom: 2,
+    fontSize: 15,
+    color: colors.onSurface,
+    marginBottom: 3,
   },
   profilePromptSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.inkMuted,
-    lineHeight: 18,
+    color: colors.onSurfaceMuted,
+    lineHeight: 19,
+  },
+
+  // Hero gradient card
+  heroCard: {
+    borderRadius: borderRadius.lg,
+    paddingTop: 28,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    marginHorizontal: spacing.md,
+    marginBottom: 20,
+    overflow: 'hidden',
+    minHeight: 220,
+  },
+  heroEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    color: 'rgba(255,255,255,0.70)',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  heroNumber: {
+    fontFamily: fonts.display,
+    fontSize: 52,
+    color: colors.white,
+    letterSpacing: -1,
+    lineHeight: 52,
+    marginBottom: 10,
+  },
+  heroStatusLine: {
+    fontFamily: fonts.bodyMed,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.82)',
+    marginBottom: 22,
+  },
+  heroPills: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  heroPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: borderRadius.full,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  heroPillText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.white,
+  },
+  heroPillAction: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: borderRadius.full,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+    marginLeft: 'auto',
+  },
+  heroPillActionText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.white,
+  },
+  heroProgressBg: {
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 2,
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  heroProgressFill: {
+    height: 3,
+    backgroundColor: colors.white,
+    borderRadius: 2,
+  },
+
+  // Stat cards
+  statRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: spacing.md,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  statAccent: {
+    height: 3,
+  },
+  statContent: {
+    padding: 18,
+  },
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.surfaceContainerLow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: colors.onSurfaceMuted,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  statNum: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+
+  // Section labels
+  sectionRow: {
+    paddingHorizontal: 20,
+    marginBottom: spacing.md,
+  },
+  sectionEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: spacing.xs,
+    paddingBottom: 14,
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  sectionLink: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.secondary,
+  },
+
+  // CTA / next-action cards
+  ctaCard: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.md,
+    marginBottom: 10,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  ctaIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceContainerLow,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctaTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.onSurface,
+    marginBottom: 3,
+  },
+  ctaSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    lineHeight: 19,
+  },
+
+  // Timeline items — individual cards with spacing
+  tlItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.md,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    marginHorizontal: spacing.md,
+    marginBottom: 10,
+  },
+  tlIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceContainerLow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  tlMid: {
+    flex: 1,
+  },
+  tlName: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.onSurface,
+  },
+  tlSub: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.onSurfaceMuted,
+    marginTop: 2,
+  },
+  tlRight: {
+    alignItems: 'flex-end',
+  },
+  tlAmt: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+  },
+  tlSaving: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.positive,
+    marginTop: 2,
   },
 });
