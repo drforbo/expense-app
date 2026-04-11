@@ -1340,8 +1340,8 @@ export default function TransactionCategorizationScreen({
                   styles.resultBadge,
                   {
                     backgroundColor: isIncome
-                      ? (categorization.taxDeductible ? colors.tagExpenseBg : colors.surface)
-                      : (categorization.taxDeductible ? colors.tagIncomeBg : colors.surface)
+                      ? (categorization.taxDeductible ? colors.tagExpenseBg : colors.white)
+                      : (categorization.taxDeductible ? colors.tagIncomeBg : colors.white)
                   }
                 ]}>
                   <Ionicons
@@ -1485,14 +1485,14 @@ export default function TransactionCategorizationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   content: {
     paddingHorizontal: 20,
@@ -1513,7 +1513,7 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   backArrow: {
     fontSize: 16,
@@ -1600,7 +1600,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   transactionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.xl,
@@ -1681,7 +1681,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   optionButton: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: 18,
     flexDirection: 'row',
@@ -1698,7 +1698,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   answersContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginTop: spacing.lg,
@@ -1818,7 +1818,7 @@ const styles = StyleSheet.create({
   customAnswerContainer: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     borderWidth: 1.5,
@@ -1833,7 +1833,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   customInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -1891,7 +1891,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   splitItem: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.sm,
@@ -1947,7 +1947,7 @@ const styles = StyleSheet.create({
   feedbackContainer: {
     marginTop: spacing.md,
     width: '100%',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     borderWidth: 1.5,
@@ -1963,7 +1963,7 @@ const styles = StyleSheet.create({
   },
   feedbackInput: {
     width: '100%',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -1997,7 +1997,7 @@ const styles = StyleSheet.create({
   },
   // Smart Suggestion Card Styles
   suggestionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -2066,7 +2066,7 @@ const styles = StyleSheet.create({
   },
   // Memory Jogger Styles
   memoryJoggerSection: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
     overflow: 'hidden',
@@ -2111,7 +2111,7 @@ const styles = StyleSheet.create({
   searchTermChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -2136,7 +2136,7 @@ const styles = StyleSheet.create({
     color: colors.positive,
   },
   searchTips: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     borderWidth: 1.5,

@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: colors.inkFaint,
   },
   transactionItemGrouped: {
     marginLeft: spacing.sm,
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
   },
   // Subscription banner
   subscriptionBanner: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     marginHorizontal: spacing.xl,
     marginTop: spacing.md,
     marginBottom: spacing.sm,

@@ -139,13 +139,13 @@ export default function BankStatementsScreen({ navigation }: any) {
   const getStatusDot = (status: MonthData['status']): string => {
     switch (status) {
       case 'complete':
-        return '#1A7A40';
+        return colors.positive;
       case 'processing':
-        return '#FF8C00';
+        return colors.emberLight;
       case 'pending':
-        return '#FF4500';
+        return colors.ember;
       default:
-        return '#DDD';
+        return colors.inkFaint;
     }
   };
 
@@ -157,34 +157,15 @@ export default function BankStatementsScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      {/* Gradient Header Block */}
-      <LinearGradient
-        colors={gradients.primary}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      >
-        {/* Flare overlays */}
-        <View style={styles.flareTopRight} />
-        <View style={styles.flareBottomLeft} />
-
-        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
-          <View style={styles.headerInner}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Text style={styles.backArrow}>{'<'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.screenLabel}>BANK STATEMENTS</Text>
-            <Text style={styles.heading}>{'your\nstatements.'}</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Screen label + heading */}
+        <Text style={styles.screenLabel}>UPLOAD</Text>
+        <Text style={styles.heading}>{'your\nstatements.'}</Text>
         {/* Processing banner — shows when statements are being processed */}
         {isProcessing && (
           <View style={styles.processingBanner}>
-            <ActivityIndicator color={colors.gradientMid} size="small" />
+            <ActivityIndicator color={colors.ember} size="small" />
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={styles.processingBannerTitle}>Processing your statements...</Text>
               <Text style={styles.processingBannerSub}>
@@ -205,7 +186,7 @@ export default function BankStatementsScreen({ navigation }: any) {
             style={{ marginBottom: spacing.lg }}
           >
             <LinearGradient
-              colors={gradients.primary}
+              colors={gradients.hero}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.processButton}
@@ -225,7 +206,7 @@ export default function BankStatementsScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.gradientMid} />
+            <ActivityIndicator color={colors.ember} />
           </View>
         ) : (
           monthsData.map((month) => {
@@ -267,7 +248,7 @@ export default function BankStatementsScreen({ navigation }: any) {
                   )}
                 </View>
 
-                <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                <Ionicons name="chevron-forward" size={20} color={colors.inkMuted} />
               </TouchableOpacity>
             );
           })
@@ -277,71 +258,31 @@ export default function BankStatementsScreen({ navigation }: any) {
         <View style={{ height: spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
+
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerGradient: {
-    paddingTop: 14,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    overflow: 'hidden',
-  },
-  flareTopRight: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  flareBottomLeft: {
-    position: 'absolute',
-    bottom: -30,
-    left: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  headerInner: {
-    paddingTop: spacing.sm,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-  },
-  backArrow: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.white,
-    marginTop: -1,
+    backgroundColor: colors.parchment,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.6)',
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   heading: {
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.white,
+    color: colors.ink,
     letterSpacing: -1.5,
     lineHeight: 34,
+    marginBottom: spacing.xl,
   },
   content: {
     flex: 1,
@@ -351,20 +292,20 @@ const styles = StyleSheet.create({
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.tagExpenseBg,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.blush,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
   processingBannerTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   processingBannerSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginTop: 2,
   },
   processButton: {
@@ -386,10 +327,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.midGrey,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.ember,
     marginBottom: spacing.md,
-    letterSpacing: 0.1,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   loadingContainer: {
@@ -399,8 +341,8 @@ const styles = StyleSheet.create({
   monthCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -422,7 +364,7 @@ const styles = StyleSheet.create({
   monthMeta: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   bankTagsRow: {
     flexDirection: 'row',
@@ -431,7 +373,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   bankTag: {
-    backgroundColor: colors.tagBlueBg,
+    backgroundColor: colors.blush,
     borderRadius: borderRadius.xs,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -439,7 +381,7 @@ const styles = StyleSheet.create({
   bankTagText: {
     fontFamily: fonts.body,
     fontSize: 11,
-    color: colors.tagBlueText,
+    color: colors.ember,
     letterSpacing: 0.2,
   },
 });

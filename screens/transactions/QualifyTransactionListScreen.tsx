@@ -107,7 +107,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.gradientMid} />
+        <ActivityIndicator size="large" color={colors.ember} />
         <Text style={styles.loadingText}>Loading transactions...</Text>
       </View>
     );
@@ -116,23 +116,16 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
   if (transactions.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Gradient Header */}
-        <LinearGradient
-          colors={gradients.primary as unknown as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientHeader}
-        >
-          {/* Flare overlays */}
-          <View style={styles.flareTopRight} />
-          <View style={styles.flareBottomLeft} />
-
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>{'\u2190'}</Text>
+        {/* Header */}
+        <View style={styles.headerFlat}>
+          <TouchableOpacity style={styles.backButtonFlat} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonFlatText}>{'\u2190'}</Text>
           </TouchableOpacity>
-          <Text style={styles.screenLabel}>QUALIFY</Text>
-          <Text style={styles.headerTitle}>{'transactions\nto qualify.'}</Text>
-        </LinearGradient>
+        </View>
+        <View style={styles.headerContent}>
+          <Text style={styles.screenLabelFlat}>QUALIFY</Text>
+          <Text style={styles.headerTitleFlat}>{'transactions\nto qualify.'}</Text>
+        </View>
 
         <View style={styles.centerContainer}>
           <View style={styles.emptyStateIcon}>
@@ -147,7 +140,7 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={gradients.primary as unknown as [string, string, ...string[]]}
+              colors={gradients.hero as unknown as [string, string, ...string[]]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.primaryButton}
@@ -162,29 +155,22 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Gradient Header */}
-      <LinearGradient
-        colors={gradients.primary as unknown as [string, string, ...string[]]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientHeader}
-      >
-        {/* Flare overlays */}
-        <View style={styles.flareTopRight} />
-        <View style={styles.flareBottomLeft} />
-
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>{'\u2190'}</Text>
+      {/* Header */}
+      <View style={styles.headerFlat}>
+        <TouchableOpacity style={styles.backButtonFlat} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonFlatText}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.screenLabel}>QUALIFY</Text>
-        <Text style={styles.headerTitle}>{'transactions\nto qualify.'}</Text>
+      </View>
+      <View style={styles.headerContent}>
+        <Text style={styles.screenLabelFlat}>QUALIFY</Text>
+        <Text style={styles.headerTitleFlat}>{'transactions\nto qualify.'}</Text>
 
         {/* Stats */}
         <View style={styles.statsRow}>
           <Text style={styles.statNumber}>{transactions.length}</Text>
           <Text style={styles.statLabel}>to qualify</Text>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Transaction List */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.listContent}>
@@ -238,84 +224,70 @@ export default function QualifyTransactionListScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.parchment,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
-    backgroundColor: colors.white,
+    backgroundColor: colors.parchment,
   },
-  // Gradient Header
-  gradientHeader: {
+  // Flat Header
+  headerFlat: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    overflow: 'hidden',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
-  flareTopRight: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(255,224,128,0.15)',
-  },
-  flareBottomLeft: {
-    position: 'absolute',
-    bottom: -30,
-    left: -30,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
+  backButtonFlat: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.lg,
   },
-  backButtonText: {
-    color: colors.white,
-    fontSize: 18,
-    fontFamily: fonts.body,
+  backButtonFlatText: {
+    color: colors.ink,
+    fontSize: 16,
+    fontFamily: fonts.bodyBold,
+    marginTop: -1,
   },
-  screenLabel: {
-    fontSize: 10,
+  headerContent: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  screenLabelFlat: {
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1.5,
+    color: colors.ember,
     fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
-  headerTitle: {
-    fontFamily: fonts.display,
+  headerTitleFlat: {
+    fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.white,
+    color: colors.ink,
     lineHeight: 34,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     gap: spacing.sm,
   },
   statNumber: {
     fontFamily: fonts.display,
     fontSize: 36,
-    color: colors.white,
+    color: colors.ink,
   },
   statLabel: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.inkMuted,
     textTransform: 'uppercase',
   },
   // Transaction list
@@ -330,9 +302,10 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   transactionIcon: {
     width: 38,
@@ -395,7 +368,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     marginTop: spacing.md,
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   emptyStateIcon: {
     width: 100,
@@ -415,7 +388,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontFamily: fonts.body,
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },

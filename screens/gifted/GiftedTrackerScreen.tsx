@@ -352,7 +352,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
         style={styles.deleteBtn}
         onPress={() => deleteItem(item.id)}
       >
-        <Ionicons name="trash" size={18} color="#FF4500" />
+        <Ionicons name="trash" size={18} color={colors.ember} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -390,12 +390,12 @@ export default function GiftedTrackerScreen({ navigation }: any) {
       {/* List */}
       {loading && items.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.midGrey} />
+          <ActivityIndicator size="large" color={colors.inkMuted} />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconWrap}>
-            <Ionicons name="gift-outline" size={36} color={colors.tagBlueText} />
+            <Ionicons name="gift-outline" size={36} color={colors.ember} />
           </View>
           <Text style={styles.emptyTitle}>No gifted items yet</Text>
           <Text style={styles.emptySubtitle}>
@@ -403,7 +403,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           </Text>
 
           <View style={styles.taxInfoBanner}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.ember} />
             <Text style={styles.taxInfoText}>
               HMRC treats gifted items as taxable income if they're received in connection with your work. You'll need to declare their retail value on your Self Assessment.
             </Text>
@@ -414,7 +414,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={gradients.primary as unknown as string[]}
+              colors={gradients.hero as unknown as string[]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.emptyAddBtn}
@@ -434,7 +434,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           onRefresh={fetchItems}
           ListHeaderComponent={
             <View style={styles.listTaxNote}>
-              <Ionicons name="information-circle-outline" size={14} color={colors.tagBlueText} />
+              <Ionicons name="information-circle-outline" size={14} color={colors.ember} />
               <Text style={styles.listTaxNoteText}>
                 Gifted items are treated as taxable income by HMRC. Their retail value is added to your income total.
               </Text>
@@ -451,7 +451,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
           style={styles.fabContainer}
         >
           <LinearGradient
-            colors={gradients.primary as unknown as string[]}
+            colors={gradients.hero as unknown as string[]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.addButton}
@@ -478,7 +478,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
             </Text>
             <TouchableOpacity onPress={saveItem} disabled={loading}>
               {loading ? (
-                <ActivityIndicator color={colors.gradientMid} />
+                <ActivityIndicator color={colors.ember} />
               ) : (
                 <Text style={styles.saveButtonText}>Save</Text>
               )}
@@ -532,7 +532,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 
               {recognizing && (
                 <View style={styles.recognizingContainer}>
-                  <ActivityIndicator color={colors.gradientMid} />
+                  <ActivityIndicator color={colors.ember} />
                   <Text style={styles.recognizingText}>Recognizing item...</Text>
                 </View>
               )}
@@ -600,7 +600,7 @@ export default function GiftedTrackerScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
@@ -627,11 +627,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: '#FF4500',
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.sm,
   },
   heroHeading: {
@@ -644,10 +645,8 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginHorizontal: spacing.xl,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: spacing.xl,
     marginBottom: spacing.lg,
     gap: spacing.sm,
@@ -660,7 +659,7 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   summaryValue: {
     fontSize: 18,
@@ -687,7 +686,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.tagBlueBg,
+    backgroundColor: colors.blush,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -701,7 +700,7 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.lg,
@@ -710,7 +709,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     padding: spacing.md,
-    backgroundColor: colors.tagBlueBg,
+    backgroundColor: colors.blush,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.lg,
   },
@@ -718,7 +717,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.tagBlueText,
+    color: colors.ember,
     lineHeight: 18,
   },
   emptyAddBtn: {
@@ -742,7 +741,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     padding: spacing.sm,
-    backgroundColor: colors.tagBlueBg,
+    backgroundColor: colors.blush,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.md,
   },
@@ -750,14 +749,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.tagBlueText,
+    color: colors.ember,
     lineHeight: 17,
   },
   itemCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: 'row',
@@ -787,13 +784,13 @@ const styles = StyleSheet.create({
   itemDate: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginBottom: 4,
   },
   itemNotes: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     fontStyle: 'italic',
   },
   deleteBtn: {
@@ -813,7 +810,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -832,12 +829,12 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   saveButtonText: {
     fontSize: 16,
     fontFamily: fonts.bodyBold,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   modalContent: {
     flex: 1,
@@ -857,7 +854,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderStyle: 'dashed',
@@ -881,7 +878,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: borderRadius.full,
@@ -900,7 +897,7 @@ const styles = StyleSheet.create({
   recognizingText: {
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   formSection: {
     gap: spacing.md,
@@ -912,7 +909,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,

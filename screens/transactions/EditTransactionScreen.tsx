@@ -193,7 +193,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.midGrey} />
+          <ActivityIndicator size="large" color={colors.inkMuted} />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeAreaView>
@@ -276,7 +276,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
                 onPress={() => setSelectedType(option.key)}
               >
                 <LinearGradient
-                  colors={['#FF8C00', '#FF4500', '#CC1A00']}
+                  colors={[...gradients.button]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.typePill}
@@ -299,7 +299,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 
         {isPersonalOrPaye && (
           <View style={styles.typeNote}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.midGrey} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.inkMuted} />
             <Text style={styles.typeNoteText}>This won't affect your tax calculation</Text>
           </View>
         )}
@@ -351,9 +351,9 @@ export default function EditTransactionScreen({ route, navigation }: any) {
               <Ionicons
                 name={transaction.tax_deductible ? 'checkmark-circle' : 'close-circle'}
                 size={16}
-                color={transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey}
+                color={transaction.tax_deductible ? colors.tagIncomeText : colors.inkMuted}
               />
-              <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey }]}>
+              <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagIncomeText : colors.inkMuted }]}>
                 {transaction.tax_deductible ? 'Tax Deductible' : 'Not Deductible'}
               </Text>
             </View>
@@ -400,7 +400,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={gradients.primary as unknown as string[]}
+            colors={gradients.button as unknown as string[]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -420,7 +420,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     fontSize: 16,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   header: {
     flexDirection: 'row',
@@ -460,11 +460,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: '#FF4500',
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.sm,
   },
   heroHeading: {
@@ -476,10 +477,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   detailsCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: spacing.xl,
     marginBottom: spacing.lg,
   },
@@ -508,7 +507,7 @@ const styles = StyleSheet.create({
   transactionDate: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   amountRow: {
     flexDirection: 'row',
@@ -521,7 +520,7 @@ const styles = StyleSheet.create({
   amountLabel: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   amountValue: {
     fontSize: 24,
@@ -538,10 +537,10 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   categoryBadge: {
-    backgroundColor: colors.tagExpenseBg,
+    backgroundColor: colors.blush,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: borderRadius.xs,
@@ -549,7 +548,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.tagExpenseText,
+    color: colors.ember,
   },
   sectionTitle: {
     fontSize: 16,
@@ -558,17 +557,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   inputCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: spacing.xl,
     marginBottom: spacing.md,
   },
   inputLabel: {
     fontSize: 13,
     fontFamily: fonts.displaySemi,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginBottom: spacing.xs,
   },
   percentInputRow: {
@@ -577,7 +574,7 @@ const styles = StyleSheet.create({
   },
   percentInput: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -590,17 +587,17 @@ const styles = StyleSheet.create({
   percentSign: {
     fontSize: 22,
     fontFamily: fonts.display,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginLeft: spacing.sm,
   },
   inputHelper: {
     fontSize: 12,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginTop: spacing.xs,
   },
   explanationInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -629,7 +626,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tagIncomeBg,
   },
   statusInactive: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
@@ -658,7 +655,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderWidth: 1.5,
-    borderColor: 'rgba(255,69,0,0.2)',
+    borderColor: colors.inkFaint,
     borderRadius: borderRadius.full,
     paddingVertical: 14,
     alignItems: 'center',
@@ -667,7 +664,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 16,
     fontFamily: fonts.displaySemi,
-    color: '#FF4500',
+    color: colors.ember,
   },
   footer: {
     paddingHorizontal: spacing.xl,
@@ -706,8 +703,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: borderRadius.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: colors.inkFaint,
+    backgroundColor: colors.white,
   },
   typePillTextSelected: {
     fontSize: 13,
@@ -717,7 +714,7 @@ const styles = StyleSheet.create({
   typePillText: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   typeNote: {
     flexDirection: 'row',
@@ -729,6 +726,6 @@ const styles = StyleSheet.create({
   typeNoteText: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
 });

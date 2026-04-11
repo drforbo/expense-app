@@ -355,7 +355,7 @@ export default function SubscriptionReviewScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   scrollView: {
     flex: 1,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 2.5,
-    color: '#FF4500',
+    color: colors.ember,
     fontFamily: fonts.displaySemi,
     marginBottom: spacing.sm,
   },
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   subscriptionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   transactionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderWidth: 1.5,
     borderColor: colors.border,
     padding: spacing.sm,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoryButton: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
   },
   businessSection: {
     marginTop: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   percentButton: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderWidth: 1.5,
     borderColor: colors.border,
     paddingVertical: 10,

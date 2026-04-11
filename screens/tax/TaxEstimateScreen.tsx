@@ -147,31 +147,32 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.screenLabel}>TAX ESTIMATE</Text>
-        <View style={{ width: 32 }} />
-      </View>
+      {/* Screen label in content area */}
 
       {loading ? (
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.gradientMid} />
+          <ActivityIndicator color={colors.ember} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+          {/* Screen label */}
+          <Text style={styles.screenLabel}>TAX</Text>
 
           {/* Hero heading */}
           <Text style={styles.heroHeading}>{'your tax\nestimate.'}</Text>
 
           {/* Total owed */}
-          <View style={styles.totalCard}>
+          <LinearGradient
+            colors={gradients.hero}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.totalCard}
+          >
             <Text style={styles.totalLabel}>OWED VIA SELF ASSESSMENT</Text>
             <Text style={styles.totalValue}>{breakdown ? fmt(breakdown.totalTaxOwed) : '—'}</Text>
             <Text style={styles.totalSub}>2025–26 tax year estimate</Text>
-          </View>
+          </LinearGradient>
 
           {/* Breakdown */}
           <Text style={styles.sectionLabel}>HOW WE GOT THERE</Text>
@@ -222,7 +223,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
 
           {/* Disclaimer */}
           <View style={styles.disclaimer}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.ember} />
             <Text style={styles.disclaimerText}>
               This is an estimate based on your transactions and profile. It does not account for all allowances or reliefs. Consult an accountant for your official return.
             </Text>
@@ -263,8 +264,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
             <View style={styles.nextDivider} />
 
             <View style={styles.nextItem}>
-              <View style={[styles.nextIcon, { backgroundColor: colors.tagBlueBg }]}>
-                <Ionicons name="calendar-outline" size={20} color={colors.tagBlueText} />
+              <View style={[styles.nextIcon, { backgroundColor: colors.blush }]}>
+                <Ionicons name="calendar-outline" size={20} color={colors.ember} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.nextTitle}>File with HMRC</Text>
@@ -282,7 +283,7 @@ export default function TaxEstimateScreen({ navigation }: any) {
             style={{ marginTop: spacing.lg }}
           >
             <LinearGradient
-              colors={gradients.primary}
+              colors={gradients.hero}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.filingGuideCta}
@@ -296,13 +297,8 @@ export default function TaxEstimateScreen({ navigation }: any) {
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.backToDashboard}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.backToDashboardText}>← Back to dashboard</Text>
-          </TouchableOpacity>
+          {/* Spacer */}
+          <View style={{ height: spacing.xl }} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -323,7 +319,7 @@ function Row({ label, value, bold, color, accent }: {
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10 }} />;
+  return <View style={{ height: 1, backgroundColor: colors.inkFaint, marginVertical: 10 }} />;
 }
 
 const rowStyles = StyleSheet.create({
@@ -335,8 +331,8 @@ const rowStyles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.midGrey,
+    fontSize: 15,
+    color: colors.inkMuted,
     flex: 1,
   },
   value: {
@@ -359,36 +355,16 @@ const rowStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-  backBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backBtnText: {
-    fontSize: 16,
-    color: colors.ink,
-    fontFamily: fonts.bodyBold,
-    marginTop: -1,
+    backgroundColor: colors.parchment,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: colors.gradientMid,
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
+    marginBottom: spacing.xs,
   },
   heroHeading: {
     fontFamily: fonts.display,
@@ -402,6 +378,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.parchment,
   },
   content: {
     paddingHorizontal: spacing.xl,
@@ -409,43 +386,43 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   totalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
   totalLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   totalValue: {
     fontFamily: fonts.display,
     fontSize: 52,
-    color: colors.negative,
+    color: colors.white,
     letterSpacing: -2,
     marginBottom: 6,
   },
   totalSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.muted,
+    color: 'rgba(255,255,255,0.6)',
   },
   sectionLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.muted,
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.ember,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   breakdownCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
@@ -454,8 +431,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: spacing.xl,
     padding: spacing.md,
-    backgroundColor: colors.tagBlueBg,
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.blush,
+    borderRadius: borderRadius.lg,
   },
   payeNote: {
     flexDirection: 'row',
@@ -476,13 +453,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.tagBlueText,
+    color: colors.ember,
     lineHeight: 18,
   },
   nextCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
+  },
+  nextDivider: {
+    height: 1,
+    backgroundColor: colors.inkFaint,
+    marginVertical: 4,
   },
   nextItem: {
     flexDirection: 'row',
@@ -506,13 +488,8 @@ const styles = StyleSheet.create({
   nextSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     lineHeight: 18,
-  },
-  nextDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 4,
   },
   filingGuideCta: {
     flexDirection: 'row',
@@ -533,14 +510,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.white,
     opacity: 0.7,
-  },
-  backToDashboard: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-  },
-  backToDashboardText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 16,
-    color: colors.gradientMid,
   },
 });

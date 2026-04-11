@@ -525,7 +525,7 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   backArrow: {
     fontSize: 16,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   phaseCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   countBadge: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   transactionList: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1.5,
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tagExpenseBg,
   },
   personalPill: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   groupCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,

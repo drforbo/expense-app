@@ -2730,7 +2730,7 @@ export default function ProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   loadingContainer: {
     flex: 1,
@@ -2750,7 +2750,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderColor: colors.ink,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2761,11 +2761,12 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: colors.gradientMid,
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   heroHeading: {
@@ -2781,7 +2782,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
     marginTop: 16,
     marginBottom: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: 4,
   },
@@ -2795,7 +2796,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   tabActive: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
@@ -2856,11 +2857,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     fontFamily: fonts.bodyBold,
-    color: colors.muted,
-    letterSpacing: 2,
+    color: colors.ember,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
@@ -2875,8 +2876,8 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   infoCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     marginBottom: 24,
     overflow: 'hidden',
   },
@@ -2886,12 +2887,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
   },
   infoLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   infoValueRow: {
     flexDirection: 'row',
@@ -2899,19 +2900,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   infoValue: {
-    fontSize: 16,
-    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    fontFamily: fonts.displayMed,
     color: colors.ink,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.inkFaint,
     marginHorizontal: spacing.lg,
   },
   // Account management styles
   accountCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -2960,7 +2961,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
   },
   emailCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: 14,
     marginBottom: 12,
@@ -2974,7 +2975,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   questionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     marginBottom: 16,
@@ -2999,7 +3000,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderWidth: 1.5,
     borderColor: colors.border,
     minWidth: '30%',
@@ -3048,7 +3049,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: 24,
@@ -3067,7 +3068,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -3108,7 +3109,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
@@ -3159,7 +3160,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     borderWidth: 1.5,
     borderColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   confirmButton: {
     backgroundColor: colors.gradientMid,
@@ -3178,7 +3179,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   customInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -3196,7 +3197,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
   },
   checkbox: {
     width: 24,
@@ -3226,7 +3227,7 @@ const styles = StyleSheet.create({
   },
   // Checklist tab styles - Achievement Card
   achievementCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     marginBottom: 20,
@@ -3263,7 +3264,7 @@ const styles = StyleSheet.create({
   },
   // Tracking cards within achievement section
   trackingCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -3327,7 +3328,7 @@ const styles = StyleSheet.create({
   },
   // Overall progress card
   progressCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     marginBottom: 20,
@@ -3387,7 +3388,7 @@ const styles = StyleSheet.create({
   },
   clItem: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: 16,
     marginBottom: 8,
@@ -3494,7 +3495,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -3513,7 +3514,7 @@ const styles = StyleSheet.create({
   selectedCountryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.full,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -3533,7 +3534,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textAreaInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -3582,7 +3583,7 @@ const styles = StyleSheet.create({
   },
   taxDisclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     padding: 12,
     borderRadius: borderRadius.sm,
     marginTop: 16,
@@ -3629,7 +3630,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: 14,
   },

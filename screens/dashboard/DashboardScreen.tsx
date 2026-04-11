@@ -13,10 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../../lib/supabase';
 import { useUpload } from '../../context/UploadContext';
-import { colors, fonts, spacing, borderRadius } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius, gradients, typography } from '../../lib/theme';
 import { apiPost } from '../../lib/api';
 
-// Category → emoji mapping for recent transaction rows
+// Category -> emoji mapping for recent transaction rows
 const CATEGORY_EMOJI: Record<string, string> = {
   'Travel': '✈️',
   'Transport': '🚗',
@@ -134,7 +134,7 @@ export default function DashboardScreen({ navigation }: any) {
         try { return await apiPost(path, body); } catch { return fallback; }
       };
 
-      // Phase 1: Profile (fast) — renders greeting, profile prompt, upload cards immediately
+      // Phase 1: Profile (fast) -- renders greeting, profile prompt, upload cards immediately
       const profilePromise = supabase.from('user_profiles')
         .select('first_name, profile_completed, receives_gifted_items, bank_account_count')
         .eq('user_id', user.id).single();
@@ -260,7 +260,25 @@ export default function DashboardScreen({ navigation }: any) {
     return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
   };
 
+  // Calculate next SA deadline: 31 Jan following the tax year end
+  const getNextDueDate = () => {
+    const now = new Date();
+    const year = now.getMonth() >= 3 && now.getDate() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    // Tax year is year/year+1, filing deadline is 31 Jan year+2
+    const deadline = new Date(year + 2, 0, 31);
+    if (now > deadline) {
+      // Already past this deadline, show next year's
+      return new Date(year + 3, 0, 31);
+    }
+    return deadline;
+  };
+
+  const formatDueDate = (date: Date) => {
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
   const taxYearPercent = getTaxYearProgress();
+  const nextDueDate = getNextDueDate();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -268,7 +286,7 @@ export default function DashboardScreen({ navigation }: any) {
       {/* Upload progress banner */}
       {isUploading && (
         <LinearGradient
-          colors={['#FF8C00', '#FF4500', '#CC1A00']}
+          colors={[...gradients.hero]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.uploadBanner}
@@ -283,7 +301,7 @@ export default function DashboardScreen({ navigation }: any) {
       {/* Statements processing banner */}
       {!isUploading && statementsProcessing > 0 && (
         <View style={styles.processingBanner}>
-          <ActivityIndicator size="small" color={colors.gradientMid} />
+          <ActivityIndicator size="small" color={colors.ember} />
           <Text style={styles.processingBannerText}>
             Processing {statementsProcessing} statement{statementsProcessing > 1 ? 's' : ''}... We'll notify you when done
           </Text>
@@ -298,7 +316,7 @@ export default function DashboardScreen({ navigation }: any) {
             {uploadState.result.transaction_count} transactions added
           </Text>
           <TouchableOpacity onPress={hideUploadComplete}>
-            <Ionicons name="close" size={18} color={colors.midGrey} />
+            <Ionicons name="close" size={18} color={colors.inkMuted} />
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -311,9 +329,9 @@ export default function DashboardScreen({ navigation }: any) {
         {/* Header row: greeting left, avatar right */}
         <View style={styles.header}>
           <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={styles.greetingSub}>hey {userName} 👋</Text>
-            <Text style={!hasTransactions ? styles.heroHeadingSmall : styles.heroHeading}>
-              {!hasTransactions ? "let's get your\ntaxes sorted." : "here's\nyour tax."}
+            <Text style={styles.screenLabel}>DASHBOARD</Text>
+            <Text style={styles.sectionHeading}>
+              {!hasTransactions ? "Let's get your\ntaxes sorted." : `Hey ${userName}`}
             </Text>
           </View>
           <TouchableOpacity
@@ -321,7 +339,7 @@ export default function DashboardScreen({ navigation }: any) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#FF8C00', '#FF4500', '#CC1A00']}
+              colors={[...gradients.hero]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatar}
@@ -333,66 +351,7 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Upload progress card */}
-        {profileLoaded && bankAccountCount > 0 && uploadedMonthBanks < bankAccountCount * 12 && (
-          <TouchableOpacity
-            style={styles.uploadProgressCard}
-            onPress={() => navigation.navigate('BankStatements')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.uploadProgressHeader}>
-              <Ionicons name="documents-outline" size={22} color={colors.gradientMid} />
-              <Text style={styles.uploadProgressTitle}>Statement uploads</Text>
-            </View>
-            <Text style={styles.uploadProgressSub}>
-              {uploadedMonthBanks} of {bankAccountCount * 12} month/account uploads done
-            </Text>
-            <View style={styles.uploadProgressBarBg}>
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[
-                  styles.uploadProgressBarFill,
-                  { width: `${Math.min(100, (uploadedMonthBanks / (bankAccountCount * 12)) * 100)}%` as any },
-                ]}
-              />
-            </View>
-            <Text style={styles.uploadProgressHint}>
-              {bankAccountCount} account{bankAccountCount > 1 ? 's' : ''} x 12 months · Tap to upload
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* First-time user: upload prompt */}
-        {profileLoaded && !hasTransactions && bankAccountCount === 0 && (
-          <TouchableOpacity
-            style={styles.welcomeCard}
-            onPress={() => navigation.navigate('BankStatements')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.welcomeIconWrap}>
-              <Text style={{ fontSize: 28 }}>📄</Text>
-            </View>
-            <Text style={styles.welcomeTitle}>Upload a bank statement</Text>
-            <Text style={styles.welcomeSub}>
-              Get started by uploading a PDF bank statement. We'll read your transactions and help you track expenses for your tax return.
-            </Text>
-            <LinearGradient
-              colors={['#FF8C00', '#FF4500', '#CC1A00']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.welcomeCtaGradient}
-            >
-              <View style={styles.welcomeCta}>
-                <Ionicons name="add" size={18} color={colors.white} />
-                <Text style={styles.welcomeCtaText}>Upload statement</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-
-        {/* Profile incomplete prompt */}
+        {/* Profile incomplete prompt (subtle) */}
         {profileLoaded && !profileCompleted && (
           <TouchableOpacity
             style={styles.profilePromptCard}
@@ -401,30 +360,30 @@ export default function DashboardScreen({ navigation }: any) {
           >
             <View style={styles.profilePromptRow}>
               <View style={styles.profilePromptIcon}>
-                <Ionicons name="person-outline" size={20} color={colors.gradientMid} />
+                <Ionicons name="person-outline" size={18} color={colors.ember} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.profilePromptTitle}>Complete your profile</Text>
                 <Text style={styles.profilePromptSub}>
-                  Your tax estimate won't be accurate until you've added your employment details, student loan plan, and tax year info.
+                  Add your employment details for an accurate tax estimate.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
             </View>
           </TouchableOpacity>
         )}
 
         {/* Hero gradient tax card */}
         <LinearGradient
-          colors={['#FFD166', '#FF8C00', '#FF4500', '#990000']}
-          locations={[0, 0.35, 0.7, 1]}
+          colors={[...gradients.hero]}
+          locations={[0, 0.5, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
-          {/* Flare overlays */}
-          <View style={styles.flareTopRight} />
-          <View style={styles.flareBottomLeft} />
+          {/* Decorative orbs */}
+          <View style={styles.orbLarge} />
+          <View style={styles.orbSmall} />
 
           <Text style={styles.heroCardLabel}>TAX SET ASIDE</Text>
           <Text style={styles.heroCardValue}>
@@ -433,12 +392,12 @@ export default function DashboardScreen({ navigation }: any) {
 
           {/* Pills row */}
           <View style={styles.heroPillsRow}>
-            <View style={styles.heroPillGhost}>
-              <Text style={styles.heroPillGhostText}>{taxYearPercent}% of year done</Text>
+            <View style={styles.heroPill}>
+              <Text style={styles.heroPillText}>{taxYearPercent}% of year done</Text>
             </View>
-            <View style={styles.heroPillSolid}>
-              <Text style={styles.heroPillSolidText}>
-                {taxOwed !== null && taxOwed > 0 ? 'on track ✓' : 'no tax yet'}
+            <View style={styles.heroPill}>
+              <Text style={styles.heroPillText}>
+                {taxOwed !== null && taxOwed > 0 ? 'on track' : 'no tax yet'}
               </Text>
             </View>
           </View>
@@ -447,19 +406,25 @@ export default function DashboardScreen({ navigation }: any) {
           <View style={styles.heroProgressBg}>
             <View style={[styles.heroProgressFill, { width: `${taxYearPercent}%` as any }]} />
           </View>
+
+          {/* Next due date sub-card */}
+          <View style={styles.heroDueDateCard}>
+            <Text style={styles.heroDueDateLabel}>NEXT DUE DATE</Text>
+            <Text style={styles.heroDueDateValue}>{formatDueDate(nextDueDate)}</Text>
+          </View>
         </LinearGradient>
 
         {/* Stat cards row: Earned + Owed */}
         <View style={styles.statCardsRow}>
-          <View style={styles.statCardNeutral}>
-            <Text style={styles.statCardLabel}>EARNED</Text>
-            <Text style={styles.statCardValueBlack}>
+          <View style={styles.statCardEarned}>
+            <Text style={styles.cardLabel}>EARNED</Text>
+            <Text style={styles.statCardValue}>
               {loadingCounts ? '...' : formatCurrency(totalIncome)}
             </Text>
           </View>
-          <View style={styles.statCardWarning}>
-            <Text style={styles.statCardLabelOrange}>OWED</Text>
-            <Text style={styles.statCardValueRed}>
+          <View style={styles.statCardOwed}>
+            <Text style={styles.cardLabel}>OWED</Text>
+            <Text style={[styles.statCardValue, { color: colors.ember }]}>
               {loadingCounts ? '...' : taxOwed !== null ? formatCurrency(taxOwed) : '—'}
             </Text>
           </View>
@@ -468,275 +433,237 @@ export default function DashboardScreen({ navigation }: any) {
         {/* Quick action pills */}
         <View style={styles.quickActionsRow}>
           <LinearGradient
-            colors={['#FF8C00', '#FF4500', '#CC1A00']}
+            colors={[...gradients.button]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.quickActionGradient}
           >
             <TouchableOpacity
               style={styles.quickActionInner}
-              onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'income' })}
+              onPress={() => navigation.getParent()?.navigate('Transactions')}
               activeOpacity={0.8}
             >
-              <Text style={styles.quickActionTextWhite}>+ income</Text>
+              <Text style={styles.quickActionTextActive}>+ income</Text>
             </TouchableOpacity>
           </LinearGradient>
 
           <TouchableOpacity
             style={styles.quickActionOutlined}
-            onPress={() => navigation.navigate('CategorizedTransactions', { filterType: 'expense' })}
+            onPress={() => navigation.getParent()?.navigate('Transactions')}
             activeOpacity={0.8}
           >
-            <Text style={styles.quickActionTextBlack}>expenses</Text>
+            <Text style={styles.quickActionTextInactive}>expenses</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.quickActionOutlined}
-            onPress={() => navigation.navigate('TaxEstimate')}
+            onPress={() => navigation.getParent()?.navigate('Tax')}
             activeOpacity={0.8}
           >
-            <Text style={styles.quickActionTextBlack}>checklist</Text>
+            <Text style={styles.quickActionTextInactive}>tax</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Your progress section */}
+        {/* Next actions section */}
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionLabel}>YOUR PROGRESS</Text>
+          <Text style={styles.screenLabel}>NEXT STEPS</Text>
         </View>
 
-        {/* Step 1: Upload */}
-        <TouchableOpacity
-          style={styles.stepCard}
-          onPress={() => navigation.navigate('BankStatements')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.stepHeaderRow}>
-            {bankAccountCount > 0 && uploadedMonthBanks >= bankAccountCount * 12 ? (
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500', '#CC1A00']}
-                style={styles.stepNumberDone}
-              >
-                <Ionicons name="checkmark" size={14} color={colors.white} />
-              </LinearGradient>
-            ) : (
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>1</Text>
+        {/* CTA: No transactions -- upload prompt */}
+        {profileLoaded && !hasTransactions && (
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => navigation.getParent()?.navigate('Upload')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaRow}>
+              <View style={styles.ctaIconWrap}>
+                <Text style={{ fontSize: 20 }}>📄</Text>
               </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepTitle}>Upload statements</Text>
-              <Text style={styles.stepSub}>
-                {bankAccountCount > 0
-                  ? `${uploadedMonthBanks} of ${bankAccountCount * 12} uploads`
-                  : 'Add your bank statements'}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.ctaTitle}>Upload a statement</Text>
+                <Text style={styles.ctaSub}>
+                  Get started by uploading a bank statement to track your expenses.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </View>
-          {bankAccountCount > 0 && (
-            <View style={styles.stepProgressBg}>
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.stepProgressFill, {
-                  width: `${Math.min(100, (uploadedMonthBanks / (bankAccountCount * 12)) * 100)}%` as any,
-                }]}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
-        {/* Step 2: Categorise */}
-        <TouchableOpacity
-          style={styles.stepCard}
-          onPress={() => navigation.navigate('ReviewCategorization')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.stepHeaderRow}>
-            {totalTransactionCount > 0 && uncategorizedCount === 0 ? (
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500', '#CC1A00']}
-                style={styles.stepNumberDone}
-              >
-                <Ionicons name="checkmark" size={14} color={colors.white} />
-              </LinearGradient>
-            ) : (
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>2</Text>
+        {/* CTA: Uncategorised transactions */}
+        {hasTransactions && uncategorizedCount > 0 && (
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => navigation.navigate('SwipeCategorize', { transactions: [] })}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaRow}>
+              <View style={styles.ctaIconWrap}>
+                <Text style={{ fontSize: 20 }}>🏷️</Text>
               </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepTitle}>Categorise transactions</Text>
-              <Text style={styles.stepSub}>
-                {loadingCounts ? 'Loading...'
-                  : totalTransactionCount === 0 ? 'Upload statements first'
-                  : uncategorizedCount > 0 ? `${categorizedCount} of ${totalTransactionCount} done`
-                  : 'All done!'}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.ctaTitle}>
+                  You have {uncategorizedCount} to categorise
+                </Text>
+                <Text style={styles.ctaSub}>
+                  Swipe through your transactions to categorise them.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </View>
-          {totalTransactionCount > 0 && (
-            <View style={styles.stepProgressBg}>
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.stepProgressFill, {
-                  width: `${Math.min(100, (categorizedCount / totalTransactionCount) * 100)}%` as any,
-                }]}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
-        {/* Step 3: Add evidence */}
-        <TouchableOpacity
-          style={styles.stepCard}
-          onPress={() => navigation.navigate('QualifyTransactionList')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.stepHeaderRow}>
-            {categorizedCount > 0 && unqualifiedCount === 0 ? (
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500', '#CC1A00']}
-                style={styles.stepNumberDone}
-              >
-                <Ionicons name="checkmark" size={14} color={colors.white} />
-              </LinearGradient>
-            ) : (
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>3</Text>
+        {/* CTA: Needs evidence */}
+        {hasTransactions && unqualifiedCount > 0 && (
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => navigation.navigate('QualifyTransactionList')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaRow}>
+              <View style={styles.ctaIconWrap}>
+                <Text style={{ fontSize: 20 }}>🧾</Text>
               </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepTitle}>Add receipts & evidence</Text>
-              <Text style={styles.stepSub}>
-                {loadingCounts ? 'Loading...'
-                  : categorizedCount === 0 ? 'Categorise transactions first'
-                  : unqualifiedCount > 0 ? `${qualifiedCount} of ${categorizedCount} done`
-                  : 'All done!'}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.ctaTitle}>
+                  {unqualifiedCount} expense{unqualifiedCount !== 1 ? 's' : ''} need a receipt
+                </Text>
+                <Text style={styles.ctaSub}>
+                  Add receipts to qualify your deductions.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </View>
-          {categorizedCount > 0 && (
-            <View style={styles.stepProgressBg}>
-              <LinearGradient
-                colors={['#FF8C00', '#FF4500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.stepProgressFill, {
-                  width: `${Math.min(100, (qualifiedCount / categorizedCount) * 100)}%` as any,
-                }]}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {/* Gifted items card */}
         {receivesGifts && (
           <TouchableOpacity
-            style={styles.stepCard}
+            style={styles.ctaCard}
             onPress={() => navigation.navigate('GiftedTracker')}
             activeOpacity={0.8}
           >
-            <View style={styles.stepHeaderRow}>
-              <View style={styles.stepNumber}>
-                <Text style={{ fontSize: 14 }}>🎁</Text>
+            <View style={styles.ctaRow}>
+              <View style={styles.ctaIconWrap}>
+                <Text style={{ fontSize: 20 }}>🎁</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.stepTitle}>Log gifted items</Text>
-                <Text style={styles.stepSub}>
+                <Text style={styles.ctaTitle}>Log gifted items</Text>
+                <Text style={styles.ctaSub}>
                   {giftedItemsCount > 0
                     ? `${giftedItemsCount} item${giftedItemsCount !== 1 ? 's' : ''} logged`
                     : 'PR packages count as income'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.inkMuted} />
             </View>
           </TouchableOpacity>
         )}
 
-        {/* Recent drops section */}
+        {/* All good state */}
+        {hasTransactions && uncategorizedCount === 0 && unqualifiedCount === 0 && !receivesGifts && (
+          <View style={styles.ctaCard}>
+            <View style={styles.ctaRow}>
+              <View style={styles.ctaIconWrap}>
+                <Text style={{ fontSize: 20 }}>✅</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.ctaTitle}>You're all caught up</Text>
+                <Text style={styles.ctaSub}>
+                  No actions needed right now.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Recent transactions section */}
         {recentTransactions.length > 0 && (
           <>
             <View style={styles.sectionRowSpaced}>
-              <Text style={styles.sectionHeading}>{'recent drops \u{1F4B8}'}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('CategorizedTransactions')}>
-                <Text style={styles.sectionLink}>all</Text>
+              <Text style={styles.sectionHeading}>Recent</Text>
+              <TouchableOpacity onPress={() => navigation.getParent()?.navigate('Transactions')}>
+                <Text style={styles.sectionLink}>See all</Text>
               </TouchableOpacity>
             </View>
 
-            {recentTransactions.map((item) => {
-              const isIncome = item.transaction_type === 'income' || item.amount < 0;
-              const isExpense = !isIncome;
-              const taxSaving = isExpense && item.tax_deductible && item.qualified
-                ? (Math.abs(item.amount) * ((item.business_percent || 100) / 100) * 0.2)
-                : 0;
+            <View style={styles.recentCard}>
+              {recentTransactions.map((item, index) => {
+                const isIncome = item.transaction_type === 'income' || item.amount < 0;
+                const isExpense = !isIncome;
+                const taxSaving = isExpense && item.tax_deductible && item.qualified
+                  ? (Math.abs(item.amount) * ((item.business_percent || 100) / 100) * 0.2)
+                  : 0;
+                const isLast = index === recentTransactions.length - 1;
 
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.transactionRow}
-                  onPress={() => navigation.navigate('EditTransaction', {
-                    transactionId: item.id,
-                    transactionType: item.transaction_type || (isIncome ? 'income' : 'expense'),
-                  })}
-                  activeOpacity={0.7}
-                >
-                  {/* Emoji icon */}
-                  <View style={[
-                    styles.transactionIcon,
-                    { backgroundColor: isExpense ? colors.tagExpenseBg : colors.surface },
-                  ]}>
-                    <Text style={{ fontSize: 15 }}>{getCategoryEmoji(item.category_name)}</Text>
-                  </View>
-
-                  {/* Details */}
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.transactionName} numberOfLines={1}>
-                      {item.merchant_name}
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-                      {item.category_name && (
-                        <View style={styles.categoryTag}>
-                          <Text style={styles.categoryTagText}>{item.category_name}</Text>
-                        </View>
-                      )}
-                      <Text style={styles.transactionDate}>{formatDate(item.transaction_date)}</Text>
-                    </View>
-                  </View>
-
-                  {/* Amount */}
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={[
-                      styles.transactionAmount,
-                      { color: isIncome ? colors.positive : colors.negative },
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.transactionRow,
+                      isLast && { borderBottomWidth: 0 },
+                    ]}
+                    onPress={() => navigation.navigate('EditTransaction', {
+                      transactionId: item.id,
+                      transactionType: item.transaction_type || (isIncome ? 'income' : 'expense'),
+                    })}
+                    activeOpacity={0.7}
+                  >
+                    {/* Emoji icon */}
+                    <View style={[
+                      styles.transactionIcon,
+                      { backgroundColor: isExpense ? colors.blush : colors.parchment },
                     ]}>
-                      {isIncome ? '+' : '-'}{formatAmount(item.amount)}
-                    </Text>
-                    {isExpense && taxSaving > 0 && (
-                      <Text style={styles.taxSaving}>
-                        saves £{taxSaving.toFixed(2)}
+                      <Text style={{ fontSize: 15 }}>{getCategoryEmoji(item.category_name)}</Text>
+                    </View>
+
+                    {/* Details */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.transactionName} numberOfLines={1}>
+                        {item.merchant_name}
                       </Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+                      <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+                        {item.category_name && (
+                          <View style={styles.categoryTag}>
+                            <Text style={styles.categoryTagText}>{item.category_name}</Text>
+                          </View>
+                        )}
+                        <Text style={styles.transactionDate}>{formatDate(item.transaction_date)}</Text>
+                      </View>
+                    </View>
+
+                    {/* Amount */}
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[
+                        styles.transactionAmount,
+                        { color: isIncome ? colors.ember : colors.ink },
+                      ]}>
+                        {isIncome ? '+' : '-'}{formatAmount(item.amount)}
+                      </Text>
+                      {isExpense && taxSaving > 0 && (
+                        <Text style={styles.taxSaving}>
+                          saves £{taxSaving.toFixed(2)}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* View all transactions link */}
+            <TouchableOpacity
+              style={styles.allTransactionsLink}
+              onPress={() => navigation.getParent()?.navigate('Transactions')}
+            >
+              <Text style={styles.allTransactionsText}>View all transactions</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.ember} />
+            </TouchableOpacity>
           </>
         )}
-
-        {/* All transactions link */}
-        <TouchableOpacity
-          style={styles.allTransactionsLink}
-          onPress={() => navigation.navigate('CategorizedTransactions')}
-        >
-          <Text style={styles.allTransactionsText}>View all transactions</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.gradientMid} />
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -745,7 +672,7 @@ export default function DashboardScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   uploadBanner: {
     flexDirection: 'row',
@@ -762,7 +689,7 @@ const styles = StyleSheet.create({
   processingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.tagExpenseBg,
+    backgroundColor: colors.blush,
     paddingHorizontal: spacing.xl,
     paddingVertical: 10,
     gap: 10,
@@ -770,13 +697,13 @@ const styles = StyleSheet.create({
   processingBannerText: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.gradientMid,
+    color: colors.ember,
     flex: 1,
   },
   toastBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     paddingHorizontal: spacing.xl,
     paddingVertical: 12,
     gap: 10,
@@ -794,6 +721,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: 100,
   },
+
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -801,25 +730,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
     marginTop: spacing.lg,
   },
-  greetingSub: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.midGrey,
+  screenLabel: {
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    textTransform: 'uppercase',
     marginBottom: 4,
   },
-  heroHeading: {
-    fontFamily: fonts.display,
-    fontSize: 34,
-    color: colors.ink,
-    letterSpacing: -1.5,
-    lineHeight: 42,
-  },
-  heroHeadingSmall: {
-    fontFamily: fonts.display,
+  sectionHeading: {
     fontSize: 28,
+    fontFamily: fonts.displaySemi,
     color: colors.ink,
-    letterSpacing: -1,
-    lineHeight: 34,
   },
   avatar: {
     width: 40,
@@ -830,51 +752,50 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   avatarText: {
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemi,
     fontSize: 16,
     color: colors.white,
   },
 
   // Hero gradient card
   heroCard: {
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.md,
     overflow: 'hidden',
     position: 'relative',
   },
-  flareTopRight: {
+  orbLarge: {
     position: 'absolute',
     top: -50,
     right: -50,
     width: 180,
     height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255,224,128,0.15)',
+    borderRadius: 999,
+    backgroundColor: colors.white,
+    opacity: 0.15,
   },
-  flareBottomLeft: {
+  orbSmall: {
     position: 'absolute',
     bottom: -30,
     left: -30,
     width: 120,
     height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    borderRadius: 999,
+    backgroundColor: colors.white,
+    opacity: 0.15,
   },
   heroCardLabel: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
+    ...typography.cardLabel,
     color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
     marginBottom: 4,
   },
   heroCardValue: {
-    fontFamily: fonts.display,
-    fontSize: 38,
+    fontFamily: fonts.displaySemi,
+    fontSize: 52,
     color: colors.white,
     letterSpacing: -2,
-    lineHeight: 46,
+    lineHeight: 58,
   },
   heroPillsRow: {
     flexDirection: 'row',
@@ -882,27 +803,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     flexWrap: 'wrap',
   },
-  heroPillGhost: {
+  heroPill: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 9999,
+    borderRadius: 20,
     paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
-  heroPillGhostText: {
+  heroPillText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
+    fontSize: 12,
     color: colors.white,
-  },
-  heroPillSolid: {
-    backgroundColor: colors.white,
-    borderRadius: 9999,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  heroPillSolidText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: '#FF4500',
   },
   heroProgressBg: {
     height: 3,
@@ -916,6 +826,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 9999,
   },
+  heroDueDateCard: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+  },
+  heroDueDateLabel: {
+    ...typography.cardLabel,
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: 4,
+  },
+  heroDueDateValue: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
+    color: colors.white,
+  },
 
   // Stat cards
   statCardsRow: {
@@ -923,47 +849,27 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: spacing.xl,
   },
-  statCardNeutral: {
+  statCardEarned: {
     flex: 1,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: 12,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    padding: 16,
   },
-  statCardWarning: {
+  statCardOwed: {
     flex: 1,
-    backgroundColor: colors.tagExpenseBg,
-    borderRadius: borderRadius.md,
-    padding: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,69,0,0.13)',
+    backgroundColor: colors.blush,
+    borderRadius: borderRadius.lg,
+    padding: 16,
   },
-  statCardLabel: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 2,
+  cardLabel: {
+    ...typography.cardLabel,
+    color: colors.inkMuted,
+    marginBottom: 4,
   },
-  statCardLabelOrange: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.tagExpenseText,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  statCardValueBlack: {
-    fontFamily: fonts.display,
-    fontSize: 20,
+  statCardValue: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 22,
     color: colors.ink,
-    letterSpacing: -0.5,
-  },
-  statCardValueRed: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.negative,
     letterSpacing: -0.5,
   },
 
@@ -981,19 +887,19 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 16,
   },
-  quickActionTextWhite: {
+  quickActionTextActive: {
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: colors.white,
   },
   quickActionOutlined: {
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.inkFaint,
     borderRadius: 9999,
     paddingVertical: 9,
     paddingHorizontal: 16,
   },
-  quickActionTextBlack: {
+  quickActionTextInactive: {
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: colors.ink,
@@ -1003,13 +909,6 @@ const styles = StyleSheet.create({
   sectionRow: {
     marginBottom: spacing.md,
   },
-  sectionLabel: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
   sectionRowSpaced: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1017,78 +916,58 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxl,
     marginBottom: spacing.md,
   },
-  sectionHeading: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.ink,
-    letterSpacing: -0.5,
-  },
   sectionLink: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: '#FF4500',
+    color: colors.ember,
   },
 
-  // Step cards
-  stepCard: {
-    backgroundColor: colors.surface,
+  // CTA / next-action cards
+  ctaCard: {
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.sm,
   },
-  stepHeaderRow: {
+  ctaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.border,
+  ctaIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.parchment,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  stepNumberDone: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepNumberText: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 13,
-    color: colors.midGrey,
-  },
-  stepTitle: {
+  ctaTitle: {
     fontFamily: fonts.bodyBold,
     fontSize: 14,
     color: colors.ink,
     marginBottom: 2,
   },
-  stepSub: {
+  ctaSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
+    lineHeight: 18,
   },
-  stepProgressBg: {
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
+
+  // Recent transactions card
+  recentCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    marginTop: spacing.md,
-  },
-  stepProgressFill: {
-    height: '100%',
-    borderRadius: 2,
   },
 
   // Transaction rows
   transactionRow: {
-    paddingVertical: 11,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: colors.inkFaint,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -1108,7 +987,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   categoryTag: {
-    backgroundColor: colors.tagExpenseBg,
+    backgroundColor: colors.blush,
     borderRadius: borderRadius.xs,
     paddingHorizontal: 7,
     paddingVertical: 2,
@@ -1116,12 +995,12 @@ const styles = StyleSheet.create({
   categoryTagText: {
     fontFamily: fonts.bodyBold,
     fontSize: 10,
-    color: colors.tagExpenseText,
+    color: colors.ember,
   },
   transactionDate: {
     fontFamily: fonts.body,
     fontSize: 10,
-    color: colors.muted,
+    color: colors.inkMuted,
   },
   transactionAmount: {
     fontFamily: fonts.bodyBold,
@@ -1146,116 +1025,25 @@ const styles = StyleSheet.create({
   allTransactionsText: {
     fontFamily: fonts.bodyBold,
     fontSize: 14,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
 
-  // Upload progress card
-  uploadProgressCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  uploadProgressHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  uploadProgressTitle: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 18,
-    color: colors.ink,
-  },
-  uploadProgressSub: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.midGrey,
-    marginBottom: spacing.sm,
-  },
-  uploadProgressBarBg: {
-    height: 6,
-    backgroundColor: colors.border,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: spacing.xs,
-  },
-  uploadProgressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  uploadProgressHint: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.muted,
-  },
-
-  // Welcome card
-  welcomeCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    marginBottom: spacing.xxl,
-    alignItems: 'center',
-  },
-  welcomeIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.tagExpenseBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  welcomeTitle: {
-    fontFamily: fonts.display,
-    fontSize: 22,
-    color: colors.ink,
-    letterSpacing: -0.2,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  welcomeSub: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.midGrey,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: spacing.xl,
-  },
-  welcomeCtaGradient: {
-    borderRadius: 9999,
-    overflow: 'hidden',
-  },
-  welcomeCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-  },
-  welcomeCtaText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 16,
-    color: colors.white,
-  },
-
-  // Profile prompt
+  // Profile prompt (subtle)
   profilePromptCard: {
-    backgroundColor: colors.tagExpenseBg,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.md,
   },
   profilePromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   profilePromptIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.background,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.blush,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -1269,7 +1057,7 @@ const styles = StyleSheet.create({
   profilePromptSub: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     lineHeight: 18,
   },
 });

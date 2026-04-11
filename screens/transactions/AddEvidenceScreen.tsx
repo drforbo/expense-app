@@ -271,7 +271,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
             <View style={styles.imageContainer}>
               {isPdf ? (
                 <View style={styles.pdfPreview}>
-                  <Ionicons name="document-text" size={48} color={colors.gradientMid} />
+                  <Ionicons name="document-text" size={48} color={colors.ember} />
                   <Text style={styles.pdfFileName} numberOfLines={2}>
                     {pdfFileName || 'PDF Receipt'}
                   </Text>
@@ -307,7 +307,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('camera')}
                   disabled={uploading}
                 >
-                  <Ionicons name="camera" size={20} color={colors.gradientMid} />
+                  <Ionicons name="camera" size={20} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Take Photo</Text>
                 </TouchableOpacity>
 
@@ -316,7 +316,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                   onPress={() => pickImage('library')}
                   disabled={uploading}
                 >
-                  <Ionicons name="images" size={20} color={colors.gradientMid} />
+                  <Ionicons name="images" size={20} color={colors.ember} />
                   <Text style={styles.uploadButtonText}>Choose Photo</Text>
                 </TouchableOpacity>
               </View>
@@ -326,7 +326,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
                 onPress={() => pickPdf()}
                 disabled={uploading}
               >
-                <Ionicons name="document-text" size={20} color={colors.gradientMid} />
+                <Ionicons name="document-text" size={20} color={colors.ember} />
                 <Text style={styles.uploadButtonText}>Upload PDF Receipt</Text>
               </TouchableOpacity>
             </View>
@@ -334,7 +334,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 
           {uploading && (
             <View style={styles.uploadingContainer}>
-              <ActivityIndicator color={colors.gradientMid} />
+              <ActivityIndicator color={colors.ember} />
               <Text style={styles.uploadingText}>Uploading...</Text>
             </View>
           )}
@@ -383,7 +383,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
           style={{ marginBottom: 40 }}
         >
           <LinearGradient
-            colors={gradients.primary as unknown as string[]}
+            colors={gradients.hero as unknown as string[]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.saveButton, (saving || uploading) && styles.saveButtonDisabled]}
@@ -403,7 +403,7 @@ export default function AddEvidenceScreen({ route, navigation }: AddEvidenceScre
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
@@ -431,11 +431,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: '#FF4500',
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.sm,
     marginTop: spacing.sm,
   },
@@ -448,10 +449,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl,
   },
   transactionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     padding: spacing.xl,
     marginBottom: spacing.lg,
   },
@@ -470,7 +469,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   section: {
     marginBottom: spacing.lg,
@@ -484,7 +483,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 13,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginBottom: spacing.sm,
   },
   uploadArea: {
@@ -510,7 +509,7 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -523,7 +522,7 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontSize: 14,
     fontFamily: fonts.displaySemi,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   imageContainer: {
     position: 'relative',
@@ -532,13 +531,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
   },
   pdfPreview: {
     width: '100%',
     height: 200,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
     justifyContent: 'center',
@@ -580,10 +579,10 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontSize: 14,
     fontFamily: fonts.body,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -594,7 +593,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   textInput: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,

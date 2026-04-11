@@ -9,18 +9,15 @@ import { colors } from './lib/theme';
 import SimpleOnboarding from './screens/onboarding/SimpleOnboarding';
 import DashboardScreen from './screens/dashboard/DashboardScreen';
 import SettingsScreen from './screens/settings/SettingsScreen';
-import TransactionListScreen from './screens/transactions/TransactionListScreen';
-import TransactionCategorizationScreen from './screens/transactions/TransactionCategorizationScreen';
+import TransactionsScreen from './screens/transactions/TransactionsScreen';
+import SwipeCategorizeScreen from './screens/transactions/SwipeCategorizeScreen';
 import QualifyTransactionListScreen from './screens/transactions/QualifyTransactionListScreen';
 import QualifyTransactionsScreen from './screens/transactions/QualifyTransactionsScreen';
 import AddEvidenceScreen from './screens/transactions/AddEvidenceScreen';
 import EditTransactionScreen from './screens/transactions/EditTransactionScreen';
-import CategorizedTransactionsScreen from './screens/transactions/CategorizedTransactionsScreen';
-import SubscriptionReviewScreen from './screens/transactions/SubscriptionReviewScreen';
 import UploadStatementScreen from './screens/upload/UploadStatementScreen';
 import BankStatementsScreen from './screens/upload/BankStatementsScreen';
 import MonthDetailScreen from './screens/upload/MonthDetailScreen';
-import ReviewCategorizationScreen from './screens/transactions/ReviewCategorizationScreen';
 import TaxEstimateScreen from './screens/tax/TaxEstimateScreen';
 import FilingGuideScreen from './screens/tax/FilingGuideScreen';
 import ProfileScreen from './screens/profile/ProfileScreen';
@@ -29,26 +26,23 @@ import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
 type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: undefined;
-  UploadStatement: undefined;
-  TransactionList: undefined;
-  TransactionCategorization: { transaction?: any; allTransactions?: any[]; preGeneratedQuestions?: any; batchMode?: boolean; batchMerchant?: string };
-  SubscriptionReview: { subscriptions: any[] };
+  SwipeCategorize: { transactions: any[] };
   QualifyTransactionList: undefined;
   QualifyTransactions: { transaction: any };
   AddEvidence: { transaction: any };
   EditTransaction: { transactionId: string; transactionType: string };
-  CategorizedTransactions: { filterType?: string };
-  TaxEstimate: undefined;
+  UploadStatement: undefined;
+  MonthDetail: { month: string; monthLabel: string };
   FilingGuide: undefined;
   Profile: undefined;
   GiftedTracker: undefined;
-  BankStatements: undefined;
-  MonthDetail: { month: string; monthLabel: string };
-  ReviewCategorization: undefined;
 };
 
 type TabParamList = {
+  Home: undefined;
   Transactions: undefined;
+  Upload: undefined;
+  Tax: undefined;
   Settings: undefined;
 };
 
@@ -61,17 +55,45 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: colors.gradientMid,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarShowLabel: false,
+        tabBarActiveTintColor: colors.ember,
+        tabBarInactiveTintColor: colors.inkMuted,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: styles.tabLabel,
       }}
     >
       <Tab.Screen
-        name="Transactions"
+        name="Home"
         component={DashboardScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="flash" size={size} color={color} />
+            <Ionicons name="home-outline" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Transactions"
+        component={TransactionsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="receipt-outline" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Upload"
+        component={BankStatementsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cloud-upload-outline" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Tax"
+        component={TaxEstimateScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calculator-outline" size={22} color={color} />
           ),
         }}
       />
@@ -80,7 +102,7 @@ function MainTabs() {
         component={SettingsScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
+            <Ionicons name="person-circle-outline" size={22} color={color} />
           ),
         }}
       />
@@ -124,7 +146,7 @@ export default function AppNavigator() {
         .single();
       setIsOnboarded(!!profile);
     } catch (error) {
-      console.error('Error checking onboarding status:', error);
+      if (__DEV__) console.error('Error checking onboarding status:', error);
       setIsOnboarded(false);
     }
   };
@@ -139,7 +161,7 @@ export default function AppNavigator() {
         });
       }
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      if (__DEV__) console.error('Error completing onboarding:', error);
     }
   };
 
@@ -151,7 +173,7 @@ export default function AppNavigator() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: colors.parchment },
         }}
         initialRouteName={isOnboarded ? 'MainTabs' : 'Onboarding'}
       >
@@ -159,22 +181,16 @@ export default function AppNavigator() {
           {() => <SimpleOnboarding onComplete={handleOnboardingComplete} />}
         </Stack.Screen>
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ animation: 'fade' }} />
-        <Stack.Screen name="UploadStatement" component={UploadStatementScreen} />
-        <Stack.Screen name="TransactionList" component={TransactionListScreen} />
-        <Stack.Screen name="TransactionCategorization" component={TransactionCategorizationScreen} />
+        <Stack.Screen name="SwipeCategorize" component={SwipeCategorizeScreen} />
         <Stack.Screen name="QualifyTransactionList" component={QualifyTransactionListScreen} />
         <Stack.Screen name="QualifyTransactions" component={QualifyTransactionsScreen} />
         <Stack.Screen name="AddEvidence" component={AddEvidenceScreen} />
         <Stack.Screen name="EditTransaction" component={EditTransactionScreen} />
-        <Stack.Screen name="CategorizedTransactions" component={CategorizedTransactionsScreen} />
-        <Stack.Screen name="SubscriptionReview" component={SubscriptionReviewScreen} />
-        <Stack.Screen name="TaxEstimate" component={TaxEstimateScreen} />
+        <Stack.Screen name="UploadStatement" component={UploadStatementScreen} />
+        <Stack.Screen name="MonthDetail" component={MonthDetailScreen} />
         <Stack.Screen name="FilingGuide" component={FilingGuideScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="GiftedTracker" component={GiftedTrackerScreen} />
-        <Stack.Screen name="BankStatements" component={BankStatementsScreen} />
-        <Stack.Screen name="MonthDetail" component={MonthDetailScreen} />
-        <Stack.Screen name="ReviewCategorization" component={ReviewCategorizationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -182,13 +198,18 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.inkFaint,
     paddingTop: 8,
     paddingBottom: 28,
     height: 64 + 28,
     elevation: 0,
     shadowOpacity: 0,
+  },
+  tabLabel: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 10,
+    letterSpacing: 0.3,
   },
 });

@@ -109,35 +109,20 @@ export default function UploadStatementScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      {/* Gradient Header Block */}
-      <LinearGradient
-        colors={gradients.primary}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      >
-        {/* Flare overlays */}
-        <View style={styles.flareTopRight} />
-        <View style={styles.flareBottomLeft} />
+    <SafeAreaView style={styles.container} edges={['top']}>
 
-        <SafeAreaView edges={['top']} style={{ backgroundColor: 'transparent' }}>
-          <View style={styles.headerInner}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <Text style={styles.backArrow}>{'<'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.screenLabel}>UPLOAD</Text>
-            <Text style={styles.heading}>{'upload your\nstatement.'}</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      {/* Flat Header */}
+      <View style={styles.headerContent}>
+        <Text style={styles.screenLabel}>UPLOAD</Text>
+        <Text style={styles.heading}>{'upload a\nstatement.'}</Text>
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Upload Drop Zone */}
         {isUploading ? (
           <View style={styles.uploadZone}>
             <View style={styles.uploadingContent}>
-              <ActivityIndicator color={colors.gradientMid} size="large" />
+              <ActivityIndicator color={colors.ember} size="large" />
               <Text style={styles.uploadingText}>{getUploadStatusText()}</Text>
               <Text style={styles.uploadingSubtext}>{uploadState.filename}</Text>
               <Text style={styles.uploadingHint}>You can navigate away</Text>
@@ -155,7 +140,7 @@ export default function UploadStatementScreen({ navigation }: any) {
               style={{ marginTop: spacing.lg, width: '100%' }}
             >
               <LinearGradient
-                colors={gradients.primary}
+                colors={gradients.button}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.uploadButton}
@@ -177,11 +162,11 @@ export default function UploadStatementScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={colors.gradientMid} />
+            <ActivityIndicator color={colors.ember} />
           </View>
         ) : statements.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-outline" size={48} color={colors.muted} />
+            <Ionicons name="document-outline" size={48} color={colors.inkMuted} />
             <Text style={styles.emptyText}>No statements uploaded yet</Text>
             <Text style={styles.emptySubtext}>Upload your first bank statement to get started</Text>
           </View>
@@ -226,77 +211,37 @@ export default function UploadStatementScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
-  headerGradient: {
-    paddingTop: 14,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    overflow: 'hidden',
-  },
-  flareTopRight: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  flareBottomLeft: {
-    position: 'absolute',
-    bottom: -30,
-    left: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  headerInner: {
+  headerContent: {
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-  },
-  backArrow: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.white,
-    marginTop: -1,
+    paddingBottom: spacing.lg,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.6)',
-    fontFamily: fonts.displaySemi,
+    color: colors.ember,
     marginBottom: spacing.xs,
   },
   heading: {
-    fontFamily: fonts.display,
+    fontFamily: fonts.displaySemi,
     fontSize: 28,
-    color: colors.white,
-    letterSpacing: -1.5,
+    color: colors.ink,
     lineHeight: 34,
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
   },
   uploadZone: {
     borderWidth: 2,
-    borderColor: 'rgba(255,69,0,0.27)',
+    borderColor: colors.inkFaint,
     borderStyle: 'dashed',
-    borderRadius: 18,
-    backgroundColor: '#FFF8F5',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.blush,
     padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -315,7 +260,7 @@ const styles = StyleSheet.create({
   uploadZoneSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   uploadButton: {
     borderRadius: borderRadius.full,
@@ -344,30 +289,30 @@ const styles = StyleSheet.create({
   uploadingSubtext: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     marginTop: 4,
   },
   uploadingHint: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.inkMuted,
     marginTop: spacing.sm,
     fontStyle: 'italic',
   },
   supportText: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     lineHeight: 20,
     marginBottom: spacing.xl,
   },
   sectionTitle: {
+    fontSize: 11,
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.midGrey,
-    marginBottom: spacing.md,
-    letterSpacing: 0.1,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
+    color: colors.inkMuted,
+    marginBottom: spacing.md,
   },
   loadingContainer: {
     padding: 40,
@@ -376,18 +321,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     padding: 40,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
   },
   emptyText: {
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     fontSize: 16,
     marginTop: spacing.md,
   },
   emptySubtext: {
     fontFamily: fonts.body,
-    color: colors.muted,
+    color: colors.inkMuted,
     fontSize: 16,
     marginTop: 4,
     textAlign: 'center',
@@ -395,8 +340,8 @@ const styles = StyleSheet.create({
   statementCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -404,7 +349,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.tagExpenseBg,
+    backgroundColor: colors.blush,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -421,7 +366,7 @@ const styles = StyleSheet.create({
   statementMeta: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   statusBadge: {
     borderRadius: borderRadius.xs,

@@ -12,10 +12,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts, spacing, borderRadius, gradients } from '../../lib/theme';
+import { colors, fonts, spacing, borderRadius } from '../../lib/theme';
 
 interface SimpleOnboardingProps {
   onComplete: () => void;
@@ -312,39 +311,17 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           style={styles.authToggleButton}
           onPress={() => setAuthMode('signup')}
         >
-          {authMode === 'signup' ? (
-            <LinearGradient
-              colors={gradients.primary as unknown as string[]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.authTogglePill}
-            >
-              <Text style={styles.authToggleTextActive}>Sign up</Text>
-            </LinearGradient>
-          ) : (
-            <View style={styles.authTogglePill}>
-              <Text style={styles.authToggleText}>Sign up</Text>
-            </View>
-          )}
+          <View style={[styles.authTogglePill, authMode === 'signup' && styles.authTogglePillActive]}>
+            <Text style={[styles.authToggleText, authMode === 'signup' && styles.authToggleTextActive]}>Sign up</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.authToggleButton}
           onPress={() => setAuthMode('login')}
         >
-          {authMode === 'login' ? (
-            <LinearGradient
-              colors={gradients.primary as unknown as string[]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.authTogglePill}
-            >
-              <Text style={styles.authToggleTextActive}>Log in</Text>
-            </LinearGradient>
-          ) : (
-            <View style={styles.authTogglePill}>
-              <Text style={styles.authToggleText}>Log in</Text>
-            </View>
-          )}
+          <View style={[styles.authTogglePill, authMode === 'login' && styles.authTogglePillActive]}>
+            <Text style={[styles.authToggleText, authMode === 'login' && styles.authToggleTextActive]}>Log in</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -358,7 +335,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="First name"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colors.nightMuted}
                 autoCapitalize="words"
                 autoComplete="given-name"
               />
@@ -371,7 +348,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Last name"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colors.nightMuted}
                 autoCapitalize="words"
                 autoComplete="family-name"
               />
@@ -386,7 +363,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             value={email}
             onChangeText={setEmail}
             placeholder="your@email.com"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.nightMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
@@ -400,7 +377,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             value={password}
             onChangeText={setPassword}
             placeholder={authMode === 'signup' ? 'At least 6 characters' : 'Your password'}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.nightMuted}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoComplete="password"
@@ -412,32 +389,25 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
-              color={colors.muted}
+              color={colors.nightMuted}
             />
           </TouchableOpacity>
         </View>
 
-        <LinearGradient
-          colors={gradients.primary as unknown as string[]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.gradientButton, loading && styles.buttonDisabled]}
+        <TouchableOpacity
+          style={[styles.ctaButton, loading && styles.buttonDisabled]}
+          onPress={authMode === 'signup' ? handleSignUp : handleLogin}
+          disabled={loading}
+          activeOpacity={0.8}
         >
-          <TouchableOpacity
-            style={styles.gradientButtonInner}
-            onPress={authMode === 'signup' ? handleSignUp : handleLogin}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.gradientButtonText}>
-                {authMode === 'signup' ? "let's go \u2192" : "log in \u2192"}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </LinearGradient>
+          {loading ? (
+            <ActivityIndicator color={colors.night} />
+          ) : (
+            <Text style={styles.ctaButtonText}>
+              {authMode === 'signup' ? "let's go \u2192" : "log in \u2192"}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -480,26 +450,19 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               value={customWorkType}
               onChangeText={setCustomWorkType}
               placeholder="e.g., dog walking, consulting"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colors.nightMuted}
               autoFocus
               onSubmitEditing={handleOtherSubmit}
             />
           </View>
-          <LinearGradient
-            colors={gradients.primary as unknown as string[]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.gradientButton, !customWorkType.trim() && styles.buttonDisabled]}
+          <TouchableOpacity
+            style={[styles.ctaButton, !customWorkType.trim() && styles.buttonDisabled]}
+            onPress={handleOtherSubmit}
+            disabled={!customWorkType.trim()}
+            activeOpacity={0.8}
           >
-            <TouchableOpacity
-              style={styles.gradientButtonInner}
-              onPress={handleOtherSubmit}
-              disabled={!customWorkType.trim()}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+            <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -513,27 +476,20 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           value={jobRole}
           onChangeText={setJobRole}
           placeholder="e.g., freelance photographer, UGC creator"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.nightMuted}
           autoFocus
           onSubmitEditing={handleJobRoleNext}
         />
       </View>
 
-      <LinearGradient
-        colors={gradients.primary as unknown as string[]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.gradientButton, !jobRole.trim() && styles.buttonDisabled]}
+      <TouchableOpacity
+        style={[styles.ctaButton, !jobRole.trim() && styles.buttonDisabled]}
+        onPress={handleJobRoleNext}
+        disabled={!jobRole.trim()}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          style={styles.gradientButtonInner}
-          onPress={handleJobRoleNext}
-          disabled={!jobRole.trim()}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -550,26 +506,19 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               setMainClients(updated);
             }}
             placeholder={index === 0 ? 'e.g., Nike' : index === 1 ? 'e.g., Gymshark' : 'e.g., Agency name'}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.nightMuted}
             autoFocus={index === 0}
           />
         </View>
       ))}
 
-      <LinearGradient
-        colors={gradients.primary as unknown as string[]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientButton}
+      <TouchableOpacity
+        style={styles.ctaButton}
+        onPress={handleMainClientsNext}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          style={styles.gradientButtonInner}
-          onPress={handleMainClientsNext}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.skipButton}
@@ -600,7 +549,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           onPressOut={stopIncrement}
           activeOpacity={0.6}
         >
-          <Ionicons name="remove" size={28} color={colors.ink} />
+          <Ionicons name="remove" size={28} color={colors.white} />
         </TouchableOpacity>
 
         <View style={styles.currencyFieldContainer}>
@@ -611,7 +560,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             onChangeText={(text) => handleCurrencyInput(text, setMonthlyIncome)}
             keyboardType="number-pad"
             placeholder="0"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.nightMuted}
           />
         </View>
 
@@ -621,26 +570,19 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           onPressOut={stopIncrement}
           activeOpacity={0.6}
         >
-          <Ionicons name="add" size={28} color={colors.ink} />
+          <Ionicons name="add" size={28} color={colors.white} />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.incrementHint}>Tap or hold to adjust by £100</Text>
 
-      <LinearGradient
-        colors={gradients.primary as unknown as string[]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientButton}
+      <TouchableOpacity
+        style={styles.ctaButton}
+        onPress={handleIncomeNext}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          style={styles.gradientButtonInner}
-          onPress={handleIncomeNext}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -716,7 +658,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.gradientMid} />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       )}
     </View>
@@ -753,7 +695,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               onPressOut={stopIncrement}
               activeOpacity={0.6}
             >
-              <Ionicons name="remove" size={28} color={colors.ink} />
+              <Ionicons name="remove" size={28} color={colors.white} />
             </TouchableOpacity>
 
             <View style={styles.currencyFieldContainer}>
@@ -764,7 +706,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 onChangeText={(text) => handleCurrencyInput(text, setEmploymentIncome)}
                 keyboardType="number-pad"
                 placeholder="0"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colors.nightMuted}
               />
             </View>
 
@@ -774,26 +716,19 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               onPressOut={stopIncrement}
               activeOpacity={0.6}
             >
-              <Ionicons name="add" size={28} color={colors.ink} />
+              <Ionicons name="add" size={28} color={colors.white} />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.incrementHint}>Tap or hold to adjust by £1,000</Text>
 
-          <LinearGradient
-            colors={gradients.primary as unknown as string[]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradientButton}
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={() => setCurrentStep('studentLoan')}
+            activeOpacity={0.8}
           >
-            <TouchableOpacity
-              style={styles.gradientButtonInner}
-              onPress={() => setCurrentStep('studentLoan')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.gradientButtonText}>that's me {'\u2192'}</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+            <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -849,7 +784,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.gradientMid} />
+          <ActivityIndicator size="large" color={colors.ember} />
         </View>
       )}
     </View>
@@ -859,9 +794,16 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Glowing orb effect */}
+      <View style={styles.orbContainer} pointerEvents="none">
+        <View style={styles.orbOuter} />
+        <View style={styles.orbMiddle} />
+        <View style={styles.orbInner} />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={{ flex: 1 }}
       >
         {currentStep !== 'signup' && (
           <View style={styles.header}>
@@ -870,20 +812,16 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               <Text style={styles.backButtonText}>{'\u2190'}</Text>
             </TouchableOpacity>
 
-            {/* Progress bar - 3 segments */}
+            {/* Progress dots - 3 segments */}
             <View style={styles.progressBarContainer}>
               {[1, 2, 3].map((seg) => (
-                seg <= activeSegments ? (
-                  <LinearGradient
-                    key={seg}
-                    colors={['#FF8C00', '#FF4500']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.progressSegmentActive}
-                  />
-                ) : (
-                  <View key={seg} style={styles.progressSegmentInactive} />
-                )
+                <View
+                  key={seg}
+                  style={[
+                    styles.progressDot,
+                    seg <= activeSegments && styles.progressDotActive,
+                  ]}
+                />
               ))}
             </View>
           </View>
@@ -932,30 +870,21 @@ interface OptionCardProps {
 }
 
 const OptionCard: React.FC<OptionCardProps> = ({ emoji, text, selected, onPress }) => {
-  if (selected) {
-    return (
-      <LinearGradient
-        colors={gradients.primary as unknown as string[]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.optionCardGradient}
-      >
-        <TouchableOpacity style={styles.optionCardInner} onPress={onPress} activeOpacity={0.8}>
-          <Text style={styles.optionEmoji}>{emoji}</Text>
-          <Text style={[styles.optionText, styles.optionTextSelected]}>{text}</Text>
-          <View style={styles.optionCheckCircleFilled}>
-            <Text style={styles.optionCheckMark}>{'\u2713'}</Text>
-          </View>
-        </TouchableOpacity>
-      </LinearGradient>
-    );
-  }
-
   return (
-    <TouchableOpacity style={styles.optionCard} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.optionCard, selected && styles.optionCardSelected]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <Text style={styles.optionEmoji}>{emoji}</Text>
       <Text style={styles.optionText}>{text}</Text>
-      <View style={styles.optionCheckCircleEmpty} />
+      {selected ? (
+        <View style={styles.optionCheckCircleFilled}>
+          <Text style={styles.optionCheckMark}>{'\u2713'}</Text>
+        </View>
+      ) : (
+        <View style={styles.optionCheckCircleEmpty} />
+      )}
     </TouchableOpacity>
   );
 };
@@ -965,8 +894,42 @@ const OptionCard: React.FC<OptionCardProps> = ({ emoji, text, selected, onPress 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.night,
   },
+
+  // Glowing orb
+  orbContainer: {
+    position: 'absolute',
+    top: -120,
+    left: '50%',
+    marginLeft: -200,
+    width: 400,
+    height: 400,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbOuter: {
+    position: 'absolute',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: 'rgba(232,71,10,0.06)',
+  },
+  orbMiddle: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(245,166,35,0.08)',
+  },
+  orbInner: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(232,71,10,0.12)',
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -980,30 +943,29 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButtonText: {
-    color: colors.ink,
+    color: colors.white,
     fontSize: 14,
     fontWeight: '700',
   },
   progressBarContainer: {
     flex: 1,
     flexDirection: 'row',
-    gap: 5,
+    justifyContent: 'flex-end',
+    gap: 6,
   },
-  progressSegmentActive: {
-    flex: 1,
-    height: 3,
-    borderRadius: 9999,
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.nightFaint,
   },
-  progressSegmentInactive: {
-    flex: 1,
-    height: 3,
-    borderRadius: 9999,
-    backgroundColor: colors.border,
+  progressDotActive: {
+    backgroundColor: colors.ember,
   },
   content: {
     flex: 1,
@@ -1017,17 +979,17 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   stepLabel: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 10,
-    color: '#FF4500',
-    letterSpacing: 2.5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    color: colors.ember,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   heroHeading: {
     fontFamily: fonts.display,
     fontSize: 38,
-    color: colors.ink,
+    color: colors.white,
     letterSpacing: -2,
     lineHeight: 46,
     marginBottom: 8,
@@ -1035,7 +997,7 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     marginTop: 4,
   },
   stepContainer: {
@@ -1051,13 +1013,13 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 48,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     marginBottom: spacing.xs,
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 16,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     fontFamily: fonts.body,
     textAlign: 'center',
   },
@@ -1065,7 +1027,7 @@ const styles = StyleSheet.create({
   // Auth toggle
   authToggle: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.nightGlass,
     borderRadius: borderRadius.full,
     padding: 4,
     marginBottom: 24,
@@ -1079,15 +1041,18 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     alignItems: 'center',
   },
+  authTogglePillActive: {
+    backgroundColor: colors.white,
+  },
   authToggleText: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.nightMuted,
   },
   authToggleTextActive: {
     fontSize: 14,
     fontFamily: fonts.bodyBold,
-    color: colors.white,
+    color: colors.night,
   },
 
   // Form
@@ -1097,20 +1062,20 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontFamily: fonts.bodyBold,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     marginBottom: -4,
   },
   inputWrapper: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.nightGlass,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.nightFaint,
   },
   input: {
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 15,
-    color: colors.ink,
+    color: colors.white,
     fontFamily: fonts.body,
   },
   passwordContainer: {
@@ -1126,23 +1091,21 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  // Gradient CTA button
-  gradientButton: {
-    borderRadius: 9999,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-  },
-  gradientButtonInner: {
+  // White CTA button
+  ctaButton: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.full,
     paddingVertical: 17,
     paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: spacing.sm,
   },
-  gradientButtonText: {
+  ctaButtonText: {
     fontFamily: fonts.display,
     fontSize: 15,
-    color: colors.white,
+    color: colors.night,
     letterSpacing: -0.3,
   },
   buttonDisabled: {
@@ -1152,24 +1115,18 @@ const styles = StyleSheet.create({
   // Option cards
   optionCard: {
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.nightFaint,
     borderRadius: 16,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: 9,
-    backgroundColor: colors.background,
+    backgroundColor: colors.nightGlass,
   },
-  optionCardGradient: {
-    borderRadius: 16,
-    marginBottom: 9,
-  },
-  optionCardInner: {
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  optionCardSelected: {
+    borderColor: colors.ember,
+    backgroundColor: 'rgba(232,71,10,0.15)',
   },
   optionEmoji: {
     fontSize: 20,
@@ -1178,9 +1135,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.display,
     fontSize: 14,
-    color: colors.ink,
-  },
-  optionTextSelected: {
     color: colors.white,
   },
   optionCheckCircleEmpty: {
@@ -1188,18 +1142,18 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.nightFaint,
   },
   optionCheckCircleFilled: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.white,
+    backgroundColor: colors.ember,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionCheckMark: {
-    color: '#FF4500',
+    color: colors.white,
     fontWeight: '900',
     fontSize: 11,
   },
@@ -1210,7 +1164,7 @@ const styles = StyleSheet.create({
   },
   otherLabel: {
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     fontFamily: fonts.body,
   },
 
@@ -1228,18 +1182,18 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: borderRadius.full,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+    borderColor: colors.nightFaint,
+    backgroundColor: colors.nightGlass,
     justifyContent: 'center',
     alignItems: 'center',
   },
   currencyFieldContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.nightGlass,
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.nightFaint,
     paddingHorizontal: 20,
     paddingVertical: spacing.lg,
     minWidth: 180,
@@ -1248,13 +1202,13 @@ const styles = StyleSheet.create({
   currencyPrefix: {
     fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     letterSpacing: -2,
   },
   currencyInput: {
     fontSize: 38,
     fontFamily: fonts.display,
-    color: colors.ink,
+    color: colors.white,
     minWidth: 60,
     textAlign: 'center',
     padding: 0,
@@ -1262,7 +1216,7 @@ const styles = StyleSheet.create({
   },
   incrementHint: {
     fontSize: 11,
-    color: colors.muted,
+    color: colors.nightMuted,
     fontFamily: fonts.body,
     textAlign: 'center',
     marginBottom: 32,
@@ -1272,13 +1226,13 @@ const styles = StyleSheet.create({
   // Employment income inline
   employmentIncomeContainer: {
     marginTop: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.nightGlass,
     borderRadius: borderRadius.lg,
     padding: 20,
   },
   sliderLabel: {
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     marginBottom: spacing.md,
     fontFamily: fonts.body,
   },
@@ -1291,14 +1245,14 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: colors.midGrey,
+    color: colors.nightMuted,
     fontFamily: fonts.body,
   },
 
   // Loading overlay
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(15, 14, 13, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },

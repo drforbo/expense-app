@@ -1,66 +1,74 @@
 // Bopp Design System
-// Built from BOPP_DESIGN_SYSTEM.md — all values are exact, do not deviate.
+// Single source of truth — all values match the component redesign spec exactly.
 
 export const colors = {
-  // Backgrounds
-  background:     '#FFFFFF',   // every screen bg — pure white
-  surface:        '#F9F9F9',   // cards, rows, input fields
-  surfaceHover:   '#F5F5F5',   // pressed state on surface
+  // Light mode (most screens)
+  ember:          '#E8470A',   // primary orange-red
+  emberLight:     '#F5A623',   // amber/gold gradient start
+  emberDeep:      '#C0392B',   // deep red gradient end
+  parchment:      '#FAF7F0',   // off-white background
+  ink:            '#1A1A1A',   // primary text
+  inkMuted:       '#6B6B6B',   // secondary/label text
+  inkFaint:       '#D4CFC8',   // dividers, borders
+  blush:          '#FEF0EB',   // tinted parchment for owed/warning cards
+  white:          '#FFFFFF',
 
-  // Brand gradient — ALWAYS used together via LinearGradient, never as flat fills
-  gradientStart:  '#FF8C00',   // orange
-  gradientMid:    '#FF4500',   // red-orange
-  gradientEnd:    '#CC1A00',   // dark red
+  // Dark mode (Splash, Analytics header, Tax Estimate modal)
+  night:          '#0F0E0D',   // near-black background (warm, not cold)
+  nightMuted:     'rgba(255,255,255,0.6)',   // secondary text on dark
+  nightFaint:     'rgba(255,255,255,0.1)',   // dividers/borders on dark
+  nightGlass:     'rgba(255,255,255,0.12)',  // glass card on dark bg
 
-  // Text
-  ink:            '#000000',   // primary text — pure black
-  midGrey:        '#888888',   // secondary text, labels, dates
-  muted:          '#AAAAAA',   // placeholder, disabled, hints
-  white:          '#FFFFFF',   // text ON gradient backgrounds only
+  // Semantic — mapped to spec
+  positive:       '#2E7D32',   // verified, income success
+  negative:       '#E8470A',   // expense amounts, errors — same as ember
 
-  // Semantic
-  positive:       '#1A7A40',   // income amounts, success — dark green
-  negative:       '#CC1A00',   // expense amounts, errors — matches gradientEnd
-  warning:        '#FF8C00',   // matches gradientStart
+  // Legacy aliases (keep for screens not yet migrated)
+  background:     '#FAF7F0',   // maps to parchment
+  surface:        '#FFFFFF',   // cards are white on parchment
+  gradientStart:  '#F5A623',   // maps to emberLight
+  gradientMid:    '#E8470A',   // maps to ember
+  gradientEnd:    '#C0392B',   // maps to emberDeep
+  midGrey:        '#6B6B6B',   // maps to inkMuted
+  muted:          '#6B6B6B',   // maps to inkMuted
+  border:         '#D4CFC8',   // maps to inkFaint
+  black:          '#1A1A1A',   // maps to ink
 
   // Tags / badges
-  tagExpenseBg:   '#FFF0E8',   // expense category pill background
-  tagExpenseText: '#FF4500',   // expense category pill text
-  tagIncomeBg:    '#E8F5EE',   // income badge background
-  tagIncomeText:  '#1A7A40',   // income badge text
-  tagBlueBg:      '#E8F0FF',   // info/bank tag background
-  tagBlueText:    '#1A4ACC',   // info/bank tag text
-
-  // Borders
-  border:         '#F0F0F0',   // all dividers and card borders — 1.5px
-  borderStrong:   '#E0E0E0',   // focused inputs
-
-  // Gradient overlay tints (for use on gradient bg)
-  gradientTextPrimary:   '#FFFFFF',
-  gradientTextSecondary: 'rgba(255,255,255,0.6)',
-  gradientAccent:        'rgba(255,255,255,0.2)',
-
-  // Legacy aliases (keep for any screens not yet migrated)
-  black:          '#000000',
-  parchment:      '#FFFFFF',
-  textSecondary:  '#888888',
-  textMuted:      '#AAAAAA',
-  textOnAccent:   '#FFFFFF',
-  card:           '#F9F9F9',
-  dark:           '#F9F9F9',
+  tagExpenseBg:   '#FEF0EB',   // maps to blush
+  tagExpenseText: '#E8470A',   // maps to ember
+  tagIncomeBg:    '#E8F5E9',
+  tagIncomeText:  '#2E7D32',
 };
 
 export const gradients = {
-  primary: ['#FF8C00', '#FF4500', '#CC1A00'] as const,
-  hero:    ['#FFD166', '#FF8C00', '#FF4500', '#990000'] as const,
-  heroLocations: [0, 0.35, 0.7, 1] as const,
+  // Primary hero gradient — hero cards and large CTAs
+  hero:     ['#F5A623', '#E8470A', '#C0392B'] as const,
+
+  // Subtle warm gradient — section headers, small accent elements
+  warm:     ['#F5A623', '#E8470A'] as const,
+
+  // Ember to deep — buttons and active states
+  button:   ['#E8470A', '#C0392B'] as const,
+
+  // Income bar
+  income:   ['#F5A623', '#E8470A'] as const,
+
+  // Expense bar
+  expense:  ['#E8470A', '#C0392B'] as const,
+
+  // Neutral bar
+  neutral:  ['#D4CFC8', '#B8B2AA'] as const,
+
+  // Legacy alias
+  primary:  ['#F5A623', '#E8470A', '#C0392B'] as const,
 };
 
 export const fonts = {
   // Poppins — single family, weight variants
-  display:      'Poppins-Black',        // 900 — hero headings, big numbers, wordmark
-  displaySemi:  'Poppins-ExtraBold',    // 800 — screen labels, subheadings
-  displayMed:   'Poppins-Bold',         // 700 — CTA text, card titles
+  display:      'Poppins-Black',        // 900 — hero headings, big numbers
+  displaySemi:  'Poppins-ExtraBold',    // 800 — section headings, hero numbers
+  displayMed:   'Poppins-Bold',         // 700 — amounts, CTA text
   body:         'Poppins-Regular',      // 400 — body copy, labels, meta
   bodyBold:     'Poppins-SemiBold',     // 600 — emphasis, list items, tags
 };
@@ -78,8 +86,44 @@ export const spacing = {
 export const borderRadius = {
   xs:   6,     // tags, tiny badges
   sm:   10,    // transaction icons
-  md:   14,    // inputs, small cards
-  lg:   18,    // most cards, modal surfaces
-  xl:   22,    // hero cards, gradient cards
+  md:   16,    // upload rows, small cards
+  lg:   20,    // most cards, profile cards, checklist cards
+  xl:   24,    // hero cards, feature cards
   full: 9999,  // ALL buttons — pill shape always
+};
+
+// Typography presets matching the spec
+export const typography = {
+  screenLabel: {
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase' as const,
+  },
+  heroNumber: {
+    fontSize: 48,
+    fontFamily: fonts.displaySemi,
+  },
+  sectionHeading: {
+    fontSize: 28,
+    fontFamily: fonts.displaySemi,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontFamily: fonts.bodyBold,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase' as const,
+  },
+  bodyText: {
+    fontSize: 15,
+    fontFamily: fonts.body,
+  },
+  amountPrimary: {
+    fontSize: 22,
+    fontFamily: fonts.displayMed,
+  },
+  amountSecondary: {
+    fontSize: 15,
+    fontFamily: fonts.bodyBold,
+  },
 };

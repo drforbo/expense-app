@@ -155,7 +155,7 @@ export default function SettingsScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.gradientMid} />
+          <ActivityIndicator color={colors.ember} />
         </View>
       </SafeAreaView>
     );
@@ -191,7 +191,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={styles.sectionLabel}>EXPORT</Text>
         <TouchableOpacity onPress={handleExport} activeOpacity={0.8} disabled={exporting}>
           <LinearGradient
-            colors={gradients.primary}
+            colors={gradients.hero}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.exportCard}
@@ -246,12 +246,12 @@ export default function SettingsScreen({ navigation }: any) {
 
         <TouchableOpacity style={styles.editProfileBtn} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.editProfileText}>Edit tax profile</Text>
-          <Ionicons name="pencil" size={14} color={colors.gradientMid} />
+          <Ionicons name="pencil" size={14} color={colors.ember} />
         </TouchableOpacity>
 
         {/* Log out */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
-          <Ionicons name="log-out-outline" size={18} color={colors.gradientMid} />
+          <Ionicons name="log-out-outline" size={18} color={colors.ember} />
           <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
 
@@ -278,17 +278,17 @@ const profileRowStyles = StyleSheet.create({
   },
   border: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.inkFaint,
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.midGrey,
+    fontSize: 15,
+    color: colors.inkMuted,
     flex: 1,
   },
   value: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 16,
+    fontFamily: fonts.displayMed,
+    fontSize: 15,
     color: colors.ink,
     textAlign: 'right',
     flex: 1,
@@ -298,7 +298,7 @@ const profileRowStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.parchment,
   },
   loading: {
     flex: 1,
@@ -311,11 +311,12 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: colors.gradientMid,
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
     marginBottom: spacing.xs,
   },
   logo: {
@@ -329,8 +330,8 @@ const styles = StyleSheet.create({
   accountCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.xl,
     gap: spacing.md,
@@ -356,21 +357,21 @@ const styles = StyleSheet.create({
   accountEmail: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   sectionLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.muted,
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.ember,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
   },
   exportCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
     padding: spacing.xl,
     gap: spacing.md,
   },
@@ -394,8 +395,8 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
   },
   editProfileBtn: {
@@ -409,7 +410,7 @@ const styles = StyleSheet.create({
   editProfileText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -420,12 +421,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: borderRadius.full,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,69,0,0.2)',
-    backgroundColor: colors.background,
+    borderColor: colors.inkFaint,
+    backgroundColor: colors.parchment,
   },
   logoutText: {
     fontFamily: fonts.bodyBold,
     fontSize: 16,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
 });

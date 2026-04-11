@@ -127,7 +127,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: txnMonths.size >= monthsElapsed ? 'done' : txnMonths.size > 0 ? 'in_progress' : 'not_started',
         statusLabel: txnMonths.size >= monthsElapsed ? 'Up to date' : txnMonths.size > 0 ? `${txnMonths.size}/${monthsElapsed} months` : 'Not started',
         icon: 'document-text-outline',
-        color: colors.tagBlueText,
+        color: colors.ember,
         onPress: () => navigation.navigate('UploadStatement'),
       });
 
@@ -172,7 +172,7 @@ export default function FilingGuideScreen({ navigation }: any) {
           status: giftedCount > 0 ? 'in_progress' : 'not_started',
           statusLabel: giftedCount > 0 ? `${giftedCount} logged` : 'None logged',
           icon: 'gift-outline',
-          color: colors.tagBlueText,
+          color: colors.ember,
           onPress: () => navigation.navigate('GiftedTracker'),
         });
       }
@@ -191,7 +191,7 @@ export default function FilingGuideScreen({ navigation }: any) {
           status: completed.has('foreign_income') ? 'done' : 'not_started',
           statusLabel: completed.has('foreign_income') ? 'Done' : 'Action needed',
           icon: 'globe-outline',
-          color: colors.tagBlueText,
+          color: colors.ember,
         });
       }
 
@@ -203,7 +203,7 @@ export default function FilingGuideScreen({ navigation }: any) {
         status: completed.has('export_records') ? 'done' : 'not_started',
         statusLabel: completed.has('export_records') ? 'Done' : 'Not yet',
         icon: 'download-outline',
-        color: colors.midGrey,
+        color: colors.inkMuted,
       });
 
       // Step 8: File return
@@ -285,7 +285,7 @@ export default function FilingGuideScreen({ navigation }: any) {
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.gradientMid} />
+          <ActivityIndicator color={colors.ember} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -304,7 +304,7 @@ export default function FilingGuideScreen({ navigation }: any) {
 
           {/* Month coverage banner */}
           <View style={styles.monthBanner}>
-            <Ionicons name="calendar-outline" size={16} color={colors.tagBlueText} />
+            <Ionicons name="calendar-outline" size={16} color={colors.ember} />
             <Text style={styles.monthBannerText}>
               {monthsCovered === 0
                 ? `No months covered yet. Upload statements covering April ${taxYearStart.getFullYear()} onwards.`
@@ -382,7 +382,7 @@ export default function FilingGuideScreen({ navigation }: any) {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.tagBlueText} />
+            <Ionicons name="information-circle-outline" size={16} color={colors.ember} />
             <Text style={styles.footerText}>
               This is a general guide — not tax advice. Speak to a qualified accountant for your specific situation.
             </Text>
@@ -397,7 +397,7 @@ export default function FilingGuideScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.parchment,
   },
   header: {
     flexDirection: 'row',
@@ -422,11 +422,12 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   screenLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 2.5,
-    color: colors.gradientMid,
-    fontFamily: fonts.displaySemi,
+    letterSpacing: 1.5,
+    color: colors.ember,
+    fontFamily: fonts.bodyBold,
   },
   heroHeading: {
     fontFamily: fonts.display,
@@ -447,17 +448,17 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   progressCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.md,
   },
   progressLabel: {
     fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.muted,
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.ember,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 6,
   },
@@ -471,7 +472,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: colors.inkFaint,
   },
   progressBarFill: {
     height: 6,
@@ -482,19 +483,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     padding: spacing.md,
-    backgroundColor: colors.tagBlueBg,
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.blush,
+    borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
   },
   monthBannerText: {
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.tagBlueText,
+    color: colors.ember,
     lineHeight: 18,
   },
   stepCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.sm,
@@ -511,7 +512,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.inkFaint,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   stepContent: {
     flex: 1,
@@ -544,13 +545,13 @@ const styles = StyleSheet.create({
   },
   stepTitleDone: {
     textDecorationLine: 'line-through',
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   statusPill: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.border,
+    backgroundColor: colors.inkFaint,
   },
   statusPillDone: {
     backgroundColor: colors.tagIncomeBg,
@@ -561,23 +562,23 @@ const styles = StyleSheet.create({
   statusPillText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
   },
   statusPillTextDone: {
     color: colors.positive,
   },
   statusPillTextProgress: {
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   stepDesc: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.midGrey,
+    color: colors.inkMuted,
     lineHeight: 18,
     marginBottom: 6,
   },
   stepDescDone: {
-    color: colors.muted,
+    color: colors.inkMuted,
   },
   stepAction: {
     marginTop: 2,
@@ -585,12 +586,12 @@ const styles = StyleSheet.create({
   stepActionText: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
-    color: colors.gradientMid,
+    color: colors.ember,
   },
   stepToggleHint: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.inkMuted,
     marginTop: 2,
   },
   footer: {
@@ -598,14 +599,14 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.tagBlueBg,
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.blush,
+    borderRadius: borderRadius.lg,
   },
   footerText: {
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.tagBlueText,
+    color: colors.ember,
     lineHeight: 18,
   },
 });
