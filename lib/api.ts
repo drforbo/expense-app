@@ -29,6 +29,10 @@ export async function apiPost(path: string, body: Record<string, any>) {
     headers,
     body: JSON.stringify(body),
   });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error ${response.status}: ${errorText}`);
+  }
   return response.json();
 }
 
@@ -40,6 +44,10 @@ export async function apiUpload(path: string, formData: FormData) {
     headers,
     body: formData,
   });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API error ${response.status}: ${errorText}`);
+  }
   return response.json();
 }
 
