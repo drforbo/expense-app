@@ -28,6 +28,15 @@ interface Transaction {
   transaction_type: string;
 }
 
+type TransactionTypeOption = 'personal' | 'paye_income' | 'income' | 'expense';
+
+const TRANSACTION_TYPE_OPTIONS: { key: TransactionTypeOption; label: string }[] = [
+  { key: 'personal', label: 'Personal' },
+  { key: 'paye_income', label: 'PAYE Income' },
+  { key: 'income', label: 'Business Income' },
+  { key: 'expense', label: 'Business Expense' },
+];
+
 export default function EditTransactionScreen({ route, navigation }: any) {
   const { transactionId, transactionType } = route.params;
   const [loading, setLoading] = useState(true);
@@ -35,6 +44,7 @@ export default function EditTransactionScreen({ route, navigation }: any) {
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [businessPercent, setBusinessPercent] = useState('100');
   const [explanation, setExplanation] = useState('');
+  const [selectedType, setSelectedType] = useState<TransactionTypeOption>('expense');
 
   useEffect(() => {
     fetchTransaction();
@@ -58,6 +68,14 @@ export default function EditTransactionScreen({ route, navigation }: any) {
       setTransaction(data);
       setBusinessPercent(data.business_percent?.toString() || '100');
       setExplanation(data.explanation || '');
+      // Initialize the transaction type from the database value
+      const dbType = data.transaction_type as TransactionTypeOption;
+      if (['personal', 'paye_income', 'income', 'expense'].includes(dbType)) {
+        setSelectedType(dbType);
+      } else {
+        // Fallback: infer from route param or default to expense
+        setSelectedType(transactionType === 'income' ? 'income' : 'expense');
+      }
     } catch (error) {
       console.error('Error fetching transaction:', error);
       Alert.alert('Error', 'Failed to load transaction');
@@ -74,17 +92,39 @@ export default function EditTransactionScreen({ route, navigation }: any) {
       if (!user || !transaction) return;
 
       const percent = parseInt(businessPercent) || 0;
-      if (percent < 0 || percent > 100) {
+      if (selectedType === 'expense' && (percent < 0 || percent > 100)) {
         Alert.alert('Error', 'Business percentage must be between 0 and 100');
         return;
       }
 
+      // Build the update payload based on the selected transaction type
+      let updateData: Record<string, any> = {
+        transaction_type: selectedType,
+        explanation: explanation.trim(),
+      };
+
+      switch (selectedType) {
+        case 'personal':
+          updateData.tax_deductible = false;
+          updateData.business_percent = 0;
+          break;
+        case 'paye_income':
+          updateData.tax_deductible = false;
+          updateData.business_percent = 0;
+          break;
+        case 'income':
+          updateData.tax_deductible = false;
+          updateData.business_percent = 100;
+          break;
+        case 'expense':
+          updateData.business_percent = percent;
+          // Keep existing tax_deductible value
+          break;
+      }
+
       const { error } = await supabase
         .from('categorized_transactions')
-        .update({
-          business_percent: percent,
-          explanation: explanation.trim(),
-        })
+        .update(updateData)
         .eq('id', transactionId)
         .eq('user_id', user.id);
 
@@ -170,7 +210,11 @@ export default function EditTransactionScreen({ route, navigation }: any) {
     );
   }
 
-  const isIncome = transactionType === 'income' || transaction.transaction_type === 'income';
+  const isIncome = selectedType === 'income' || selectedType === 'paye_income';
+  const isPersonalOrPaye = selectedType === 'personal' || selectedType === 'paye_income';
+  const showBusinessPercent = selectedType === 'expense';
+  const showStatusBadges = selectedType === 'expense';
+  const showEvidenceButton = selectedType === 'expense';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -220,35 +264,79 @@ export default function EditTransactionScreen({ route, navigation }: any) {
           </View>
         </View>
 
+        {/* Transaction Type Picker */}
+        <Text style={styles.sectionTitle}>Transaction Type</Text>
+        <View style={styles.typePicker}>
+          {TRANSACTION_TYPE_OPTIONS.map((option) => {
+            const isSelected = selectedType === option.key;
+            return isSelected ? (
+              <TouchableOpacity
+                key={option.key}
+                activeOpacity={0.8}
+                onPress={() => setSelectedType(option.key)}
+              >
+                <LinearGradient
+                  colors={['#FF8C00', '#FF4500', '#CC1A00']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.typePill}
+                >
+                  <Text style={styles.typePillTextSelected}>{option.label}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                key={option.key}
+                style={styles.typePillUnselected}
+                activeOpacity={0.7}
+                onPress={() => setSelectedType(option.key)}
+              >
+                <Text style={styles.typePillText}>{option.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {isPersonalOrPaye && (
+          <View style={styles.typeNote}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.midGrey} />
+            <Text style={styles.typeNoteText}>This won't affect your tax calculation</Text>
+          </View>
+        )}
+
         {/* Editable Fields */}
         <Text style={styles.sectionTitle}>Edit Details</Text>
 
-        <View style={styles.inputCard}>
-          <Text style={styles.inputLabel}>Business Percentage</Text>
-          <View style={styles.percentInputRow}>
-            <TextInput
-              style={styles.percentInput}
-              value={businessPercent}
-              onChangeText={setBusinessPercent}
-              keyboardType="numeric"
-              maxLength={3}
-              placeholder="100"
-              placeholderTextColor={colors.muted}
-            />
-            <Text style={styles.percentSign}>%</Text>
+        {showBusinessPercent && (
+          <View style={styles.inputCard}>
+            <Text style={styles.inputLabel}>Business Percentage</Text>
+            <View style={styles.percentInputRow}>
+              <TextInput
+                style={styles.percentInput}
+                value={businessPercent}
+                onChangeText={setBusinessPercent}
+                keyboardType="numeric"
+                maxLength={3}
+                placeholder="100"
+                placeholderTextColor={colors.muted}
+              />
+              <Text style={styles.percentSign}>%</Text>
+            </View>
+            <Text style={styles.inputHelper}>
+              Business amount: {formatCurrency(transaction.amount * (parseInt(businessPercent) || 0) / 100)}
+            </Text>
           </View>
-          <Text style={styles.inputHelper}>
-            Business amount: {formatCurrency(transaction.amount * (parseInt(businessPercent) || 0) / 100)}
-          </Text>
-        </View>
+        )}
 
         <View style={styles.inputCard}>
-          <Text style={styles.inputLabel}>Explanation / Notes</Text>
+          <Text style={styles.inputLabel}>
+            {selectedType === 'expense' ? 'Explanation / Notes' : 'Notes'}
+          </Text>
           <TextInput
             style={styles.explanationInput}
             value={explanation}
             onChangeText={setExplanation}
-            placeholder="Why is this a business expense?"
+            placeholder={selectedType === 'expense' ? 'Why is this a business expense?' : 'Add any notes...'}
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}
@@ -257,19 +345,19 @@ export default function EditTransactionScreen({ route, navigation }: any) {
         </View>
 
         {/* Status Badges */}
-        <View style={styles.statusRow}>
-          <View style={[styles.statusBadge, transaction.tax_deductible ? styles.statusActive : styles.statusInactive]}>
-            <Ionicons
-              name={transaction.tax_deductible ? 'checkmark-circle' : 'close-circle'}
-              size={16}
-              color={transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey}
-            />
-            <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey }]}>
-              {transaction.tax_deductible ? 'Tax Deductible' : 'Not Deductible'}
-            </Text>
-          </View>
+        {showStatusBadges && (
+          <View style={styles.statusRow}>
+            <View style={[styles.statusBadge, transaction.tax_deductible ? styles.statusActive : styles.statusInactive]}>
+              <Ionicons
+                name={transaction.tax_deductible ? 'checkmark-circle' : 'close-circle'}
+                size={16}
+                color={transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey}
+              />
+              <Text style={[styles.statusText, { color: transaction.tax_deductible ? colors.tagIncomeText : colors.midGrey }]}>
+                {transaction.tax_deductible ? 'Tax Deductible' : 'Not Deductible'}
+              </Text>
+            </View>
 
-          {!isIncome && (
             <View style={[styles.statusBadge, transaction.qualified ? styles.statusActive : styles.statusWarning]}>
               <Ionicons
                 name={transaction.qualified ? 'checkmark-circle' : 'document-text-outline'}
@@ -280,10 +368,10 @@ export default function EditTransactionScreen({ route, navigation }: any) {
                 {transaction.qualified ? 'Has Evidence' : 'Needs Evidence'}
               </Text>
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
-        {!isIncome && !transaction.qualified && (
+        {showEvidenceButton && !transaction.qualified && (
           <TouchableOpacity
             style={styles.addEvidenceButton}
             onPress={() => {
@@ -601,5 +689,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.display,
     color: colors.white,
+  },
+  typePicker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  typePill: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    borderRadius: borderRadius.full,
+  },
+  typePillUnselected: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  typePillTextSelected: {
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
+  },
+  typePillText: {
+    fontSize: 13,
+    fontFamily: fonts.bodyBold,
+    color: colors.midGrey,
+  },
+  typeNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  typeNoteText: {
+    fontSize: 13,
+    fontFamily: fonts.body,
+    color: colors.midGrey,
   },
 });

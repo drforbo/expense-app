@@ -43,6 +43,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   client_fees: 'Client Fees',
   sales_income: 'Sales Income',
   employment_income: 'Employment Income',
+  paye_income: 'PAYE Income',
   other_income: 'Other Income',
 };
 
@@ -142,8 +143,8 @@ export default function ReviewCategorizationScreen({ navigation }: any) {
         correction: {
           category_id: newCategoryId,
           category_name: CATEGORY_LABELS[newCategoryId] || newCategoryId,
-          business_percent: newCategoryId === 'personal' ? 0 : 100,
-          tax_deductible: newCategoryId !== 'personal',
+          business_percent: (newCategoryId === 'personal' || newCategoryId === 'paye_income') ? 0 : 100,
+          tax_deductible: newCategoryId !== 'personal' && newCategoryId !== 'paye_income',
         },
       });
 
