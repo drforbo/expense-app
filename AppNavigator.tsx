@@ -23,6 +23,8 @@ import TaxEstimateScreen from './screens/tax/TaxEstimateScreen';
 import FilingGuideScreen from './screens/tax/FilingGuideScreen';
 import ProfileScreen from './screens/profile/ProfileScreen';
 import GiftedTrackerScreen from './screens/gifted/GiftedTrackerScreen';
+import HmrcConnectScreen from './screens/hmrc/HmrcConnectScreen';
+import HmrcSubmitScreen from './screens/hmrc/HmrcSubmitScreen';
 
 type RootStackParamList = {
   Onboarding: undefined;
@@ -37,6 +39,8 @@ type RootStackParamList = {
   FilingGuide: undefined;
   Profile: undefined;
   GiftedTracker: undefined;
+  HmrcConnect: undefined;
+  HmrcSubmit: { taxYear: string };
 };
 
 type TabParamList = {
@@ -199,6 +203,8 @@ export default function AppNavigator() {
         <Stack.Screen name="FilingGuide" component={FilingGuideScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="GiftedTracker" component={GiftedTrackerScreen} />
+        <Stack.Screen name="HmrcConnect" component={HmrcConnectScreen} />
+        <Stack.Screen name="HmrcSubmit" component={HmrcSubmitScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

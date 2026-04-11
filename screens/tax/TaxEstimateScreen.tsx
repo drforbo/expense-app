@@ -297,6 +297,24 @@ export default function TaxEstimateScreen({ navigation }: any) {
             </LinearGradient>
           </TouchableOpacity>
 
+          {/* HMRC MTD CTA */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('HmrcConnect')}
+            activeOpacity={0.8}
+            style={{ marginTop: spacing.sm }}
+          >
+            <View style={styles.hmrcCta}>
+              <View style={[styles.nextIcon, { backgroundColor: colors.surfaceContainer }]}>
+                <Ionicons name="business-outline" size={20} color={colors.secondary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.hmrcCtaTitle}>Making Tax Digital</Text>
+                <Text style={styles.hmrcCtaSub}>Connect to HMRC and submit quarterly updates</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+            </View>
+          </TouchableOpacity>
+
           {/* Spacer */}
           <View style={{ height: spacing.xl }} />
         </ScrollView>
@@ -510,5 +528,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.surfaceLowest,
     opacity: 0.7,
+  },
+  hmrcCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
+    padding: spacing.md,
+    paddingHorizontal: spacing.xl,
+  },
+  hmrcCtaTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 16,
+    color: colors.onSurface,
+    marginBottom: 2,
+  },
+  hmrcCtaSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
   },
 });
