@@ -28,6 +28,11 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [authMode, setAuthMode] = useState<AuthMode>('signup');
   const [loading, setLoading] = useState(false);
 
+  // Refs for input focus chaining on signup
+  const lastNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+
   // Auth fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -39,7 +44,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [workType, setWorkType] = useState<string>('');
   const [customWorkType, setCustomWorkType] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState(1000);
-  const [receivesGiftedItems, setReceivesGiftedItems] = useState(false);
+  const [receivesGiftedItems, setReceivesGiftedItems] = useState<boolean | null>(null);
   const [trackingGoal, setTrackingGoal] = useState<string>('');
   const [hasOtherEmployment, setHasOtherEmployment] = useState<boolean | null>(null);
   const [employmentIncome, setEmploymentIncome] = useState(30000);
@@ -198,7 +203,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           custom_work_type: workType === 'other' ? customWorkType : null,
           time_commitment: 'full_time', // Default
           monthly_income: monthlyIncome,
-          receives_gifted_items: receivesGiftedItems,
+          receives_gifted_items: receivesGiftedItems ?? false,
           bank_account_count: bankAccountCount,
           job_role: jobRole.trim() || null,
           main_clients: mainClients.filter(c => c.trim()).map(c => c.trim()),
@@ -268,11 +273,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   // Step-specific hero headings and subtitles
   const getStepHeading = (): string => {
     switch (currentStep) {
-      case 'workType': return `what's your\nside\nhustle? 💅`;
+      case 'workType':
+        if (workType === 'other') return `tell us\nwhat you do ✨`;
+        return `what's your\nside\nhustle? 💅`;
       case 'jobRole': return `what do\nyou\nactually do? 💼`;
       case 'mainClients': return `who pays\nyou? 💰`;
       case 'workLocation': return `where do\nyou\nwork? 🏠`;
-      case 'income': return `how much\ndo you\nearn? 💷`;
+      case 'income': return `how much\ndo you earn\nper month? 💷`;
       case 'giftedItems': return `do you get\nfree\nstuff? 🎁`;
       case 'bankAccounts': return `how many\nbank\naccounts? 🏦`;
       case 'registration': return `are you\nregistered? 📝`;
@@ -284,11 +291,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const getStepSubtitle = (): string => {
     switch (currentStep) {
-      case 'workType': return 'pick everything that applies';
+      case 'workType':
+        if (workType === 'other') return 'a few words is fine';
+        return 'pick the closest match';
       case 'jobRole': return 'helps us categorize your expenses';
       case 'mainClients': return 'helps us spot your income automatically';
       case 'workLocation': return 'affects which expenses are deductible';
-      case 'income': return 'from your side hustle, before tax';
+      case 'income': return 'average monthly income from your side hustle, before tax';
       case 'giftedItems': return 'PR packages count as taxable income';
       case 'bankAccounts': return 'where you receive income or pay expenses';
       case 'registration': return 'your HMRC status';
@@ -302,7 +311,6 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     <View style={styles.stepContainer}>
       <View style={styles.logoContainer}>
         <Text style={styles.logo}>bopp.</Text>
-        <Text style={styles.tagline}>Taxes hit different when{'\n'}they actually make sense.</Text>
       </View>
 
       {/* Auth mode toggle */}
@@ -338,12 +346,17 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 placeholderTextColor={colors.nightMuted}
                 autoCapitalize="words"
                 autoComplete="given-name"
+                textContentType="givenName"
+                returnKeyType="next"
+                onSubmitEditing={() => lastNameRef.current?.focus()}
+                blurOnSubmit={false}
               />
             </View>
 
             <Text style={styles.inputLabel}>Last name</Text>
             <View style={styles.inputWrapper}>
               <TextInput
+                ref={lastNameRef}
                 style={styles.input}
                 value={lastName}
                 onChangeText={setLastName}
@@ -351,6 +364,10 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
                 placeholderTextColor={colors.nightMuted}
                 autoCapitalize="words"
                 autoComplete="family-name"
+                textContentType="familyName"
+                returnKeyType="next"
+                onSubmitEditing={() => emailRef.current?.focus()}
+                blurOnSubmit={false}
               />
             </View>
           </>
@@ -359,6 +376,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         <Text style={styles.inputLabel}>Email</Text>
         <View style={styles.inputWrapper}>
           <TextInput
+            ref={emailRef}
             style={styles.input}
             value={email}
             onChangeText={setEmail}
@@ -367,12 +385,17 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            blurOnSubmit={false}
           />
         </View>
 
         <Text style={styles.inputLabel}>Password</Text>
         <View style={[styles.inputWrapper, styles.passwordContainer]}>
           <TextInput
+            ref={passwordRef}
             style={[styles.input, styles.passwordInput]}
             value={password}
             onChangeText={setPassword}
@@ -381,6 +404,9 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             autoComplete="password"
+            textContentType={authMode === 'signup' ? 'newPassword' : 'password'}
+            returnKeyType="go"
+            onSubmitEditing={authMode === 'signup' ? handleSignUp : handleLogin}
           />
           <TouchableOpacity
             style={styles.passwordToggle}
@@ -443,7 +469,6 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         </>
       ) : (
         <View style={styles.otherInputContainer}>
-          <Text style={styles.otherLabel}>What do you do?</Text>
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
@@ -452,6 +477,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               placeholder="e.g., dog walking, consulting"
               placeholderTextColor={colors.nightMuted}
               autoFocus
+              returnKeyType="done"
               onSubmitEditing={handleOtherSubmit}
             />
           </View>
@@ -478,6 +504,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           placeholder="e.g., freelance photographer, UGC creator"
           placeholderTextColor={colors.nightMuted}
           autoFocus
+          returnKeyType="done"
           onSubmitEditing={handleJobRoleNext}
         />
       </View>
@@ -600,7 +627,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       <OptionCard
         emoji="❌"
         text="No"
-        selected={receivesGiftedItems === false && currentStep === 'giftedItems'}
+        selected={receivesGiftedItems === false}
         onPress={() => {
           setReceivesGiftedItems(false);
           setTimeout(() => setCurrentStep('bankAccounts'), 300);
@@ -831,6 +858,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
         >
           {/* Step header for non-signup steps */}
           {currentStep !== 'signup' && (

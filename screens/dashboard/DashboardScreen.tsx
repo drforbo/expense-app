@@ -252,7 +252,8 @@ export default function DashboardScreen({ navigation }: any) {
   // Tax year progress (April 6 to April 5)
   const getTaxYearProgress = () => {
     const now = new Date();
-    const year = now.getMonth() >= 3 && now.getDate() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    const isAfterApril6 = now.getMonth() > 3 || (now.getMonth() === 3 && now.getDate() >= 6);
+    const year = isAfterApril6 ? now.getFullYear() : now.getFullYear() - 1;
     const start = new Date(year, 3, 6); // April 6
     const end = new Date(year + 1, 3, 5); // April 5 next year
     const total = end.getTime() - start.getTime();
@@ -371,7 +372,7 @@ export default function DashboardScreen({ navigation }: any) {
 
           <View style={styles.heroPills}>
             <View style={styles.heroPill}>
-              <Text style={styles.heroPillText}>{taxYearPercent}% of year done</Text>
+              <Text style={styles.heroPillText}>{taxYearPercent}% of tax year</Text>
             </View>
             <View style={styles.heroPill}>
               <Text style={styles.heroPillText}>
@@ -757,6 +758,7 @@ const styles = StyleSheet.create({
   },
   heroPills: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     alignItems: 'center',
   },
