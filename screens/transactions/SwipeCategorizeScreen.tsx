@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -62,6 +64,10 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
   const [showSummary, setShowSummary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [smartCategorizeResult, setSmartCategorizeResult] = useState<any>(null);
+  const [pendingPersonalId, setPendingPersonalId] = useState<string | null>(null);
+  const [showHelpSheet, setShowHelpSheet] = useState(false);
+  const [userWorkType, setUserWorkType] = useState<string | null>(null);
+  const [userJobRole, setUserJobRole] = useState<string | null>(null);
 
   // Animation refs
   const slideOutAnim = useRef(new Animated.Value(0)).current;
@@ -80,7 +86,13 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
       setInitialLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const result = await apiPost('/api/get_uncategorized_transactions', { user_id: user.id });
+      // Fetch profile + transactions in parallel
+      const [profileRes, result] = await Promise.all([
+        supabase.from('user_profiles').select('work_type, job_role').eq('user_id', user.id).single(),
+        apiPost('/api/get_uncategorized_transactions', { user_id: user.id }),
+      ]);
+      setUserWorkType(profileRes.data?.work_type || null);
+      setUserJobRole(profileRes.data?.job_role || null);
       const mapped = (result.transactions || []).map((t: any) => ({
         id: t.transaction_id || t.id,
         merchant_name: t.merchant_name || t.name || 'Unknown',
@@ -88,6 +100,10 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
         transaction_date: t.date || t.transaction_date,
         category_name: Array.isArray(t.category) ? t.category[0] : t.category_name,
         auto_category_name: Array.isArray(t.category) ? t.category[0] : t.auto_category_name,
+        auto_status: t.auto_status || null,
+        auto_confidence: t.auto_confidence ?? null,
+        auto_explanation: t.auto_explanation || null,
+        auto_tip_for_user: t.auto_tip_for_user || null,
       }));
       setTransactions(mapped);
     } catch (error) {
@@ -151,7 +167,7 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
     });
   }, [slideOutAnim, opacityAnim]);
 
-  const handleCategorize = useCallback(async (type: 'business' | 'personal' | 'unsure') => {
+  const handleCategorize = useCallback(async (type: 'business' | 'personal' | 'unsure', personalReason?: string) => {
     if (!currentTransaction) return;
 
     const id = currentTransaction.id;
@@ -173,12 +189,16 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
             business_percent: 0,
             tax_deductible: false,
           },
+          personal_reason: personalReason || null,
         });
       }
       // 'unsure' — we skip the API call and just move on, it stays uncategorized
     } catch (error: any) {
       console.error('Error categorizing:', error.message);
     }
+
+    // Reset the personal-reason expander for the next card
+    setPendingPersonalId(null);
 
     const newCategorized = [...categorized, { id, type }];
     setCategorized(newCategorized);
@@ -464,6 +484,14 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.screenLabel}>CATEGORISE</Text>
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => setShowHelpSheet(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.helpButtonText}>?</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Progress bar */}
@@ -518,45 +546,100 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
               Suggested: {categoryName}
             </Text>
           ) : null}
+
+          {/* Stage 1: Why we think this */}
+          {currentTransaction.auto_explanation ? (
+            <View style={styles.contextBlock}>
+              <Text style={styles.contextLabel}>WHY WE THINK THIS</Text>
+              <Text style={styles.contextText}>{currentTransaction.auto_explanation}</Text>
+            </View>
+          ) : null}
+
+          {/* Stage 1: Personalised tip */}
+          {currentTransaction.auto_tip_for_user ? (
+            <View style={[styles.contextBlock, styles.contextBlockTip]}>
+              <Text style={[styles.contextLabel, styles.contextLabelTip]}>FOR YOU</Text>
+              <Text style={styles.contextText}>{currentTransaction.auto_tip_for_user}</Text>
+            </View>
+          ) : null}
         </Animated.View>
       </View>
 
       {/* Action buttons */}
-      <View style={styles.buttonsContainer}>
-        {/* Business button */}
-        <TouchableOpacity
-          style={styles.ctaButtonWrap}
-          onPress={() => handleCategorize('business')}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={gradients.button as unknown as string[]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.ctaButton}
+      {pendingPersonalId === currentTransaction.id ? (
+        /* Personal "why?" chip row — replaces buttons while resolving */
+        <View style={styles.personalReasonContainer}>
+          <Text style={styles.personalReasonPrompt}>Why personal?</Text>
+          <View style={styles.chipRow}>
+            {[
+              { key: 'home', label: '🏠 At home' },
+              { key: 'personal_item', label: '🛍️ Personal item' },
+              { key: 'gift', label: '🎁 Gift' },
+              { key: 'other', label: '✨ Other' },
+            ].map(c => (
+              <TouchableOpacity
+                key={c.key}
+                style={styles.chip}
+                onPress={() => handleCategorize('personal', c.key)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.chipText}>{c.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.chipSkip}
+            onPress={() => handleCategorize('personal')}
+            activeOpacity={0.7}
           >
-            <Text style={styles.ctaButtonText}>Business</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <Text style={styles.chipSkipText}>Skip reason</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.buttonsContainer}>
+          {/* Business button */}
+          <TouchableOpacity
+            style={styles.ctaButtonWrap}
+            onPress={() => handleCategorize('business')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={gradients.button as unknown as string[]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.ctaButton}
+            >
+              <Text style={styles.ctaButtonText}>Business</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        {/* Personal button */}
-        <TouchableOpacity
-          style={styles.outlinedButton}
-          onPress={() => handleCategorize('personal')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.outlinedButtonText}>Personal</Text>
-        </TouchableOpacity>
+          {/* Personal button — opens the why-chips */}
+          <TouchableOpacity
+            style={styles.outlinedButton}
+            onPress={() => setPendingPersonalId(currentTransaction.id)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.outlinedButtonText}>Personal</Text>
+          </TouchableOpacity>
 
-        {/* Not sure button */}
-        <TouchableOpacity
-          style={styles.notSureButton}
-          onPress={() => handleCategorize('unsure')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.notSureText}>Not sure</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Not sure button */}
+          <TouchableOpacity
+            style={styles.notSureButton}
+            onPress={() => handleCategorize('unsure')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.notSureText}>Not sure</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Help sheet — "What counts as business for me" */}
+      <HelpSheet
+        visible={showHelpSheet}
+        onClose={() => setShowHelpSheet(false)}
+        workType={userWorkType}
+        jobRole={userJobRole}
+      />
     </SafeAreaView>
   );
 }
@@ -859,4 +942,283 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     paddingBottom: spacing.xxxl,
   },
+
+  // Help button in header
+  helpButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLowest,
+  },
+  helpButtonText: {
+    fontSize: 18,
+    fontFamily: fonts.bodyBold,
+    color: colors.primary,
+  },
+
+  // Stage 1: context blocks on swipe card
+  contextBlock: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surfaceContainerLow,
+    alignSelf: 'stretch',
+  },
+  contextBlockTip: {
+    backgroundColor: colors.tagExpenseBg,
+  },
+  contextLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: colors.onSurfaceMuted,
+    marginBottom: 4,
+  },
+  contextLabelTip: {
+    color: colors.primary,
+  },
+  contextText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurface,
+    lineHeight: 18,
+  },
+
+  // Personal-reason chips (replaces buttons row while resolving)
+  personalReasonContainer: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
+  personalReasonPrompt: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.onSurface,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  chip: {
+    backgroundColor: colors.surfaceLowest,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: borderRadius.full,
+  },
+  chipText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.onSurface,
+  },
+  chipSkip: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+  },
+  chipSkipText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    textDecorationLine: 'underline',
+  },
+
+  // Help sheet
+  helpSheetBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  helpSheetCard: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    paddingTop: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    maxHeight: '85%',
+  },
+  helpSheetGrabber: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceContainerHigh,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  helpSheetTitle: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  helpSheetSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.onSurfaceMuted,
+    marginBottom: spacing.lg,
+  },
+  helpEntry: {
+    marginBottom: spacing.lg,
+  },
+  helpEntryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 6,
+  },
+  helpEntryEmoji: {
+    fontSize: 20,
+  },
+  helpEntryTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.onSurface,
+    flex: 1,
+  },
+  helpEntryBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: borderRadius.full,
+  },
+  helpBadgeBusiness: {
+    backgroundColor: 'rgba(46,125,50,0.14)',
+  },
+  helpBadgePersonal: {
+    backgroundColor: colors.surfaceContainerLow,
+  },
+  helpBadgeMixed: {
+    backgroundColor: colors.tagExpenseBg,
+  },
+  helpEntryBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  helpEntryBody: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    lineHeight: 19,
+    marginLeft: 30,
+  },
+  helpCloseButton: {
+    backgroundColor: colors.primaryContainer,
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+    alignItems: 'center',
+  },
+  helpCloseButtonText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.onSurface,
+  },
 });
+
+// ---- HelpSheet: "What counts as business for me?" -------------------------
+
+type HelpEntry = {
+  emoji: string;
+  title: string;
+  verdict: 'BUSINESS' | 'PERSONAL' | 'MIXED';
+  body: string;
+};
+
+const HELP_ENTRIES_BY_WORKTYPE: Record<string, HelpEntry[]> = {
+  content_creation: [
+    { emoji: '🎥', title: 'Cameras, lights, microphones', verdict: 'BUSINESS', body: 'Equipment used to film content is deductible — even if you occasionally use it personally.' },
+    { emoji: '💻', title: 'Editing software & subscriptions', verdict: 'BUSINESS', body: 'Adobe, Final Cut, Canva, Notion — anything you use to make or run the channel.' },
+    { emoji: '🛍️', title: 'Props & wardrobe for shoots', verdict: 'MIXED', body: 'Bought specifically for content? Business. Wearing it day-to-day too? Probably personal.' },
+    { emoji: '✈️', title: 'Travel for brand trips or location shoots', verdict: 'BUSINESS', body: 'Trains, taxis, accommodation when the trip is for content — keep receipts.' },
+    { emoji: '🛒', title: 'Weekly grocery shop', verdict: 'PERSONAL', body: 'Food for yourself never counts, even if you film recipes occasionally.' },
+  ],
+  freelancing: [
+    { emoji: '💻', title: 'Design / dev software, tools', verdict: 'BUSINESS', body: 'Figma, GitHub, Notion, anything you use to deliver client work.' },
+    { emoji: '🚆', title: 'Travel to a client', verdict: 'BUSINESS', body: 'Trains, taxis, mileage — including parking — when going to see a client.' },
+    { emoji: '📚', title: 'Courses & training', verdict: 'BUSINESS', body: 'Skill-building that helps your freelance work. Keep the receipt.' },
+    { emoji: '🍽️', title: 'Lunch alone while working', verdict: 'PERSONAL', body: 'You\'d eat anyway. Subsistence only counts on overnight business trips.' },
+    { emoji: '🏠', title: 'Working from home', verdict: 'BUSINESS', body: 'You can claim a portion of bills (£6/wk flat rate, or actual cost) — set in Profile.' },
+  ],
+  side_hustle: [
+    { emoji: '📦', title: 'Stock you bought to resell', verdict: 'BUSINESS', body: 'Cost of goods sold. Track what you paid versus what you sold it for.' },
+    { emoji: '📮', title: 'Packaging & postage', verdict: 'BUSINESS', body: 'Tape, mailers, Royal Mail labels, returns postage — all deductible.' },
+    { emoji: '💸', title: 'Marketplace & payment fees', verdict: 'BUSINESS', body: 'Depop, eBay, Vinted, PayPal, Stripe fees — keep records.' },
+    { emoji: '📸', title: 'Photo lighting / props for listings', verdict: 'BUSINESS', body: 'If you bought it to photograph stock, it\'s a business cost.' },
+    { emoji: '☕', title: 'Coffee while sorting stock', verdict: 'PERSONAL', body: 'Day-to-day food and drink stays personal even when you\'re working.' },
+  ],
+};
+
+const DEFAULT_HELP_ENTRIES: HelpEntry[] = [
+  { emoji: '🛠️', title: 'Anything used solely for work', verdict: 'BUSINESS', body: 'If you only bought it because of your work, it\'s a business expense.' },
+  { emoji: '🔀', title: 'Used for both work and personal', verdict: 'MIXED', body: 'Estimate the % that\'s business and claim that portion. Phone bills, home office, etc.' },
+  { emoji: '🛒', title: 'Personal life stuff', verdict: 'PERSONAL', body: 'Groceries, rent, regular commute, personal subscriptions — never claim these.' },
+  { emoji: '🏛️', title: 'HMRC tax payments', verdict: 'PERSONAL', body: 'Self Assessment, National Insurance — these are your personal tax bills, not deductions.' },
+];
+
+function HelpSheet({
+  visible,
+  onClose,
+  workType,
+  jobRole,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  workType: string | null;
+  jobRole: string | null;
+}) {
+  const entries = (workType && HELP_ENTRIES_BY_WORKTYPE[workType]) || DEFAULT_HELP_ENTRIES;
+  const subtitle = jobRole
+    ? `Examples for ${jobRole.toLowerCase()}. Use as a guide, not a rule.`
+    : 'Examples based on what you told us. Use as a guide, not a rule.';
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <TouchableOpacity style={styles.helpSheetBackdrop} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity activeOpacity={1} style={styles.helpSheetCard} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.helpSheetGrabber} />
+          <Text style={styles.helpSheetTitle}>What counts as business?</Text>
+          <Text style={styles.helpSheetSubtitle}>{subtitle}</Text>
+
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {entries.map((entry, i) => {
+              const badgeStyle =
+                entry.verdict === 'BUSINESS' ? styles.helpBadgeBusiness :
+                entry.verdict === 'PERSONAL' ? styles.helpBadgePersonal :
+                styles.helpBadgeMixed;
+              const badgeColor =
+                entry.verdict === 'BUSINESS' ? colors.positive :
+                entry.verdict === 'PERSONAL' ? colors.onSurfaceMuted :
+                colors.primary;
+              return (
+                <View key={i} style={styles.helpEntry}>
+                  <View style={styles.helpEntryHeader}>
+                    <Text style={styles.helpEntryEmoji}>{entry.emoji}</Text>
+                    <Text style={styles.helpEntryTitle}>{entry.title}</Text>
+                    <View style={[styles.helpEntryBadge, badgeStyle]}>
+                      <Text style={[styles.helpEntryBadgeText, { color: badgeColor }]}>
+                        {entry.verdict}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.helpEntryBody}>{entry.body}</Text>
+                </View>
+              );
+            })}
+
+            <TouchableOpacity style={styles.helpCloseButton} onPress={onClose} activeOpacity={0.8}>
+              <Text style={styles.helpCloseButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
