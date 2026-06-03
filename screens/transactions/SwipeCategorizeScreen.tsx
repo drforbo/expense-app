@@ -10,6 +10,7 @@ import {
   Dimensions,
   Modal,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -68,6 +69,10 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
   const [showHelpSheet, setShowHelpSheet] = useState(false);
   const [userWorkType, setUserWorkType] = useState<string | null>(null);
   const [userJobRole, setUserJobRole] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [categorisationStage, setCategorisationStage] = useState<'learning' | 'validating' | 'autopilot' | null>(null);
+  // Per-transaction state used by both Stage 1 (questions) and Stage 2/3 (verdict)
+  const [cardKey, setCardKey] = useState(0); // bump to remount CategoriseCard between txns
 
   // Animation refs
   const slideOutAnim = useRef(new Animated.Value(0)).current;
@@ -86,13 +91,16 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
       setInitialLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      // Fetch profile + transactions in parallel
-      const [profileRes, result] = await Promise.all([
-        supabase.from('user_profiles').select('work_type, job_role').eq('user_id', user.id).single(),
+      // Fetch full profile + stage + transactions in parallel
+      const [profileRes, stageRes, result] = await Promise.all([
+        supabase.from('user_profiles').select('*').eq('user_id', user.id).single(),
+        apiPost('/api/get_categorization_stage', { user_id: user.id }).catch(() => ({ stage: 'validating' })),
         apiPost('/api/get_uncategorized_transactions', { user_id: user.id }),
       ]);
+      setUserProfile(profileRes.data || null);
       setUserWorkType(profileRes.data?.work_type || null);
       setUserJobRole(profileRes.data?.job_role || null);
+      setCategorisationStage(stageRes?.stage || 'validating');
       const mapped = (result.transactions || []).map((t: any) => ({
         id: t.transaction_id || t.id,
         merchant_name: t.merchant_name || t.name || 'Unknown',
@@ -167,38 +175,14 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
     });
   }, [slideOutAnim, opacityAnim]);
 
-  const handleCategorize = useCallback(async (type: 'business' | 'personal' | 'unsure', personalReason?: string) => {
+  // CategoriseCard handles its own API calls. This just advances the swipe.
+  const handleCategorize = useCallback(async (type: 'business' | 'personal' | 'unsure') => {
     if (!currentTransaction) return;
-
     const id = currentTransaction.id;
 
-    // Make the API call
-    try {
-      if (type === 'business') {
-        await apiPost('/api/confirm_categorization', {
-          transaction_ids: [id],
-          action: 'confirm',
-        });
-      } else if (type === 'personal') {
-        await apiPost('/api/confirm_categorization', {
-          transaction_ids: [id],
-          action: 'correct',
-          correction: {
-            category_id: 'personal',
-            category_name: 'Personal',
-            business_percent: 0,
-            tax_deductible: false,
-          },
-          personal_reason: personalReason || null,
-        });
-      }
-      // 'unsure' — we skip the API call and just move on, it stays uncategorized
-    } catch (error: any) {
-      console.error('Error categorizing:', error.message);
-    }
-
-    // Reset the personal-reason expander for the next card
+    // Reset per-card state for the next transaction
     setPendingPersonalId(null);
+    setCardKey(k => k + 1);
 
     const newCategorized = [...categorized, { id, type }];
     setCategorized(newCategorized);
@@ -509,129 +493,23 @@ export default function SwipeCategorizeScreen({ navigation, route }: any) {
         </Text>
       </View>
 
-      {/* Transaction card */}
-      <View style={styles.cardContainer}>
-        <Animated.View
-          style={[
-            styles.transactionCard,
-            {
-              transform: [{ translateX: slideOutAnim }],
-              opacity: opacityAnim,
-            },
-          ]}
-        >
-          {/* Emoji icon */}
-          <View style={styles.emojiCircle}>
-            <Text style={styles.emojiText}>{emoji}</Text>
-          </View>
-
-          {/* Merchant name */}
-          <Text style={styles.merchantName} numberOfLines={2}>
-            {currentTransaction.merchant_name || 'Unknown'}
-          </Text>
-
-          {/* Date */}
-          <Text style={styles.dateText}>
-            {formatDate(currentTransaction.transaction_date)}
-          </Text>
-
-          {/* Amount */}
-          <Text style={styles.amountText}>
-            {formatAmount(currentTransaction.amount)}
-          </Text>
-
-          {/* Category suggestion hint */}
-          {categoryName ? (
-            <Text style={styles.aiHint}>
-              Suggested: {categoryName}
-            </Text>
-          ) : null}
-
-          {/* Stage 1: Why we think this */}
-          {currentTransaction.auto_explanation ? (
-            <View style={styles.contextBlock}>
-              <Text style={styles.contextLabel}>WHY WE THINK THIS</Text>
-              <Text style={styles.contextText}>{currentTransaction.auto_explanation}</Text>
-            </View>
-          ) : null}
-
-          {/* Stage 1: Personalised tip */}
-          {currentTransaction.auto_tip_for_user ? (
-            <View style={[styles.contextBlock, styles.contextBlockTip]}>
-              <Text style={[styles.contextLabel, styles.contextLabelTip]}>FOR YOU</Text>
-              <Text style={styles.contextText}>{currentTransaction.auto_tip_for_user}</Text>
-            </View>
-          ) : null}
-        </Animated.View>
-      </View>
-
-      {/* Action buttons */}
-      {pendingPersonalId === currentTransaction.id ? (
-        /* Personal "why?" chip row — replaces buttons while resolving */
-        <View style={styles.personalReasonContainer}>
-          <Text style={styles.personalReasonPrompt}>Why personal?</Text>
-          <View style={styles.chipRow}>
-            {[
-              { key: 'home', label: '🏠 At home' },
-              { key: 'personal_item', label: '🛍️ Personal item' },
-              { key: 'gift', label: '🎁 Gift' },
-              { key: 'other', label: '✨ Other' },
-            ].map(c => (
-              <TouchableOpacity
-                key={c.key}
-                style={styles.chip}
-                onPress={() => handleCategorize('personal', c.key)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.chipText}>{c.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity
-            style={styles.chipSkip}
-            onPress={() => handleCategorize('personal')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.chipSkipText}>Skip reason</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.buttonsContainer}>
-          {/* Business button */}
-          <TouchableOpacity
-            style={styles.ctaButtonWrap}
-            onPress={() => handleCategorize('business')}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={gradients.button as unknown as string[]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.ctaButton}
-            >
-              <Text style={styles.ctaButtonText}>Business</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Personal button — opens the why-chips */}
-          <TouchableOpacity
-            style={styles.outlinedButton}
-            onPress={() => setPendingPersonalId(currentTransaction.id)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.outlinedButtonText}>Personal</Text>
-          </TouchableOpacity>
-
-          {/* Not sure button */}
-          <TouchableOpacity
-            style={styles.notSureButton}
-            onPress={() => handleCategorize('unsure')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.notSureText}>Not sure</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Transaction card — unified per-stage flow */}
+      <Animated.View
+        style={{
+          flex: 1,
+          transform: [{ translateX: slideOutAnim }],
+          opacity: opacityAnim,
+        }}
+      >
+        <CategoriseCard
+          key={`${currentTransaction.id}-${cardKey}`}
+          transaction={currentTransaction}
+          stage={categorisationStage || 'validating'}
+          userProfile={userProfile}
+          onOpenHelp={() => setShowHelpSheet(true)}
+          onComplete={(action) => handleCategorize(action)}
+        />
+      </Animated.View>
 
       {/* Help sheet — "What counts as business for me" */}
       <HelpSheet
@@ -1121,7 +999,626 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.onSurface,
   },
+
+  // -------- CategoriseCard (unified per-stage flow) --------
+  ccContainer: {
+    flex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  ccTxnHeader: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.lg,
+  },
+  ccMerchant: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  ccMerchantSub: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    marginTop: 4,
+  },
+  ccAmount: {
+    fontFamily: fonts.display,
+    fontSize: 32,
+    color: colors.onSurface,
+    marginTop: spacing.sm,
+    letterSpacing: -0.5,
+  },
+  ccBodyScroll: {
+    flex: 1,
+  },
+  ccLoadingWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  ccLoadingText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.onSurfaceMuted,
+  },
+  ccPhaseLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    color: colors.primary,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  ccQuestion: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    lineHeight: 26,
+    marginBottom: spacing.lg,
+  },
+  ccOption: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.md,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    marginBottom: 10,
+  },
+  ccOptionText: {
+    fontFamily: fonts.bodyMed,
+    fontSize: 15,
+    color: colors.onSurface,
+  },
+  ccOtherButton: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  ccOtherButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    textDecorationLine: 'underline',
+  },
+  ccCustomInputWrap: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  ccCustomInput: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.onSurface,
+    minHeight: 40,
+  },
+  ccVerdictBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: borderRadius.full,
+    marginBottom: 10,
+  },
+  ccVerdictBadgeBusiness: {
+    backgroundColor: 'rgba(46,125,50,0.16)',
+  },
+  ccVerdictBadgePersonal: {
+    backgroundColor: colors.surfaceContainerLow,
+  },
+  ccVerdictBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+  },
+  ccVerdictTitle: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    lineHeight: 28,
+    marginBottom: 10,
+  },
+  ccVerdictExplanation: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.onSurfaceMuted,
+    lineHeight: 21,
+    marginBottom: spacing.xl,
+  },
+  ccPrimaryButton: {
+    backgroundColor: colors.primaryContainer,
+    borderRadius: borderRadius.full,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  ccPrimaryButtonText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.onSurface,
+  },
+  ccSecondaryButton: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.full,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  ccSecondaryButtonText: {
+    fontFamily: fonts.bodyMed,
+    fontSize: 14,
+    color: colors.onSurface,
+  },
+  ccTertiaryButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  ccTertiaryButtonText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurfaceMuted,
+    textDecorationLine: 'underline',
+  },
+  ccCorrectionWrap: {
+    backgroundColor: colors.surfaceLowest,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  ccCorrectionLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.onSurface,
+    marginBottom: 8,
+  },
+  ccCorrectionInput: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.onSurface,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  ccTipBlock: {
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    marginBottom: spacing.lg,
+  },
+  ccTipLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  ccTipText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.onSurface,
+    lineHeight: 18,
+  },
 });
+
+// ---- CategoriseCard: per-stage card flow ----------------------------------
+
+type Stage = 'learning' | 'validating' | 'autopilot';
+type CardPhase = 'loading' | 'asking' | 'thinking' | 'verdict' | 'correcting' | 'submitting';
+
+const MAX_QUESTIONS = 3;
+
+type Question = { text: string; options: string[] };
+
+function CategoriseCard({
+  transaction,
+  stage,
+  userProfile,
+  onOpenHelp,
+  onComplete,
+}: {
+  transaction: any;
+  stage: Stage;
+  userProfile: any;
+  onOpenHelp: () => void;
+  onComplete: (type: 'business' | 'personal' | 'unsure') => void;
+}) {
+  const [phase, setPhase] = useState<CardPhase>('loading');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [verdict, setVerdict] = useState<any>(null);
+  const [showCustomFor, setShowCustomFor] = useState<number | null>(null);
+  const [customAnswer, setCustomAnswer] = useState('');
+  const [correctionText, setCorrectionText] = useState('');
+
+  const formatAmount = (amount: number | string): string => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const abs = Math.abs(num);
+    const prefix = num < 0 ? '+' : '';
+    return `${prefix}£${abs.toFixed(2)}`;
+  };
+
+  const formatDate = (d: string): string => {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  // Initialise per stage
+  useEffect(() => {
+    if (stage === 'learning') {
+      void loadInitialQuestion();
+    } else {
+      // Validating / autopilot: use pre-classified verdict from the server
+      setVerdict({
+        category_id: transaction.auto_category_id || 'personal',
+        category_name: transaction.auto_category_name || 'Personal',
+        business_percent: transaction.auto_business_percent ?? 0,
+        tax_deductible: transaction.auto_status === 'auto_business',
+        explanation: transaction.auto_explanation || "We couldn't classify this one — make the call.",
+        tip_for_user: transaction.auto_tip_for_user || null,
+      });
+      setPhase('verdict');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transaction.id]);
+
+  const loadInitialQuestion = async () => {
+    setPhase('loading');
+    try {
+      const data = await apiPost('/api/generate_questions', {
+        transaction,
+        userProfile: userProfile || {},
+        previousAnswers: {},
+      });
+      const qs: Question[] = data.questions || [];
+      if (qs.length === 0) {
+        // Nothing to ask — go straight to a verdict via answers={} (server can categorise without input)
+        await runCategorisation({});
+      } else {
+        setQuestions(qs);
+        setPhase('asking');
+      }
+    } catch (e) {
+      console.error('Failed to load question:', e);
+      // Fall back to pre-classified verdict so the user is never stuck
+      setVerdict({
+        category_id: transaction.auto_category_id || 'personal',
+        category_name: transaction.auto_category_name || 'Personal',
+        business_percent: transaction.auto_business_percent ?? 0,
+        tax_deductible: transaction.auto_status === 'auto_business',
+        explanation: transaction.auto_explanation || "We couldn't fetch context — make the call.",
+        tip_for_user: transaction.auto_tip_for_user || null,
+      });
+      setPhase('verdict');
+    }
+  };
+
+  const submitAnswer = async (questionIndex: number, answer: string) => {
+    const newAnswers = { ...answers, [questions[questionIndex].text]: answer };
+    setAnswers(newAnswers);
+    setShowCustomFor(null);
+    setCustomAnswer('');
+
+    // If we just answered the latest question, decide: more questions or categorise?
+    if (questionIndex === questions.length - 1) {
+      if (questions.length >= MAX_QUESTIONS) {
+        await runCategorisation(newAnswers);
+        return;
+      }
+      setPhase('thinking');
+      try {
+        const data = await apiPost('/api/generate_questions', {
+          transaction,
+          userProfile: userProfile || {},
+          previousAnswers: newAnswers,
+        });
+        const more: Question[] = data.questions || [];
+        if (more.length === 0) {
+          await runCategorisation(newAnswers);
+        } else {
+          const combined = [...questions, ...more].slice(0, MAX_QUESTIONS);
+          setQuestions(combined);
+          setPhase('asking');
+        }
+      } catch (e) {
+        console.error('Follow-up question fetch failed:', e);
+        await runCategorisation(newAnswers);
+      }
+    }
+  };
+
+  const runCategorisation = async (finalAnswers: Record<string, string>) => {
+    setPhase('thinking');
+    try {
+      const result = await apiPost('/api/categorize_from_answers', {
+        transaction,
+        userProfile: userProfile || {},
+        answers: finalAnswers,
+      });
+      setVerdict({
+        category_id: result.categoryId || result.category_id,
+        category_name: result.categoryName || result.category_name,
+        business_percent: result.businessPercent ?? result.business_percent ?? 0,
+        tax_deductible: result.taxDeductible ?? result.tax_deductible ?? false,
+        explanation: result.explanation || 'Based on what you said.',
+      });
+      setPhase('verdict');
+    } catch (e) {
+      console.error('Categorisation failed:', e);
+      Alert.alert("Couldn't categorise", "Something went wrong. Mark this one manually or skip.");
+      setPhase('verdict');
+      setVerdict({
+        category_id: 'personal',
+        category_name: 'Personal',
+        business_percent: 0,
+        tax_deductible: false,
+        explanation: 'We had trouble figuring this out.',
+      });
+    }
+  };
+
+  const isBusinessVerdict = verdict && (verdict.business_percent ?? 0) > 0 && verdict.category_id !== 'personal';
+
+  const handleConfirmVerdict = async () => {
+    if (!verdict) return;
+    setPhase('submitting');
+    try {
+      if (stage === 'learning') {
+        // We computed the verdict from answers — save as a correction with our derived values
+        await apiPost('/api/confirm_categorization', {
+          transaction_ids: [transaction.id],
+          action: 'correct',
+          correction: {
+            category_id: verdict.category_id,
+            category_name: verdict.category_name,
+            business_percent: verdict.business_percent,
+            tax_deductible: verdict.tax_deductible,
+            explanation: verdict.explanation,
+          },
+        });
+      } else {
+        // Validating / autopilot — the server already has the verdict, just confirm
+        await apiPost('/api/confirm_categorization', {
+          transaction_ids: [transaction.id],
+          action: 'confirm',
+        });
+      }
+      onComplete(isBusinessVerdict ? 'business' : 'personal');
+    } catch (e) {
+      console.error('Confirm failed:', e);
+      Alert.alert("Couldn't save", 'Try again or skip this transaction.');
+      setPhase('verdict');
+    }
+  };
+
+  const handleSaveCorrection = async () => {
+    if (!verdict) return;
+    setPhase('submitting');
+    try {
+      // Flip the category — if AI said business, user thinks personal, and vice versa.
+      // The free-text user_note is captured for the learning loop.
+      const flippedToBusiness = !isBusinessVerdict;
+      await apiPost('/api/confirm_categorization', {
+        transaction_ids: [transaction.id],
+        action: 'correct',
+        correction: {
+          category_id: flippedToBusiness ? 'supplies' : 'personal',
+          category_name: flippedToBusiness ? 'Business (needs review)' : 'Personal',
+          business_percent: flippedToBusiness ? 100 : 0,
+          tax_deductible: flippedToBusiness,
+          user_note: correctionText.trim() || null,
+        },
+      });
+      onComplete(flippedToBusiness ? 'business' : 'personal');
+    } catch (e) {
+      console.error('Correction failed:', e);
+      Alert.alert("Couldn't save", 'Try again or skip this transaction.');
+      setPhase('correcting');
+    }
+  };
+
+  // ---- Render helpers ----
+
+  const renderTxnHeader = () => (
+    <View style={styles.ccTxnHeader}>
+      <Text style={styles.ccMerchant} numberOfLines={2}>{transaction.merchant_name || 'Unknown'}</Text>
+      <Text style={styles.ccMerchantSub}>{formatDate(transaction.transaction_date)}</Text>
+      <Text style={styles.ccAmount}>{formatAmount(transaction.amount)}</Text>
+    </View>
+  );
+
+  const renderLoading = (label: string) => (
+    <View style={styles.ccLoadingWrap}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={styles.ccLoadingText}>{label}</Text>
+    </View>
+  );
+
+  const renderAsking = () => {
+    const currentIdx = Math.min(Object.keys(answers).length, questions.length - 1);
+    const q = questions[currentIdx];
+    if (!q) return renderLoading("Working that out…");
+    return (
+      <ScrollView style={styles.ccBodyScroll} showsVerticalScrollIndicator={false}>
+        <Text style={styles.ccPhaseLabel}>QUESTION {currentIdx + 1}</Text>
+        <Text style={styles.ccQuestion}>{q.text}</Text>
+        {(q.options || []).map((opt, i) => (
+          <TouchableOpacity
+            key={i}
+            style={styles.ccOption}
+            onPress={() => submitAnswer(currentIdx, opt)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.ccOptionText}>{opt}</Text>
+          </TouchableOpacity>
+        ))}
+
+        {showCustomFor === currentIdx ? (
+          <View style={styles.ccCustomInputWrap}>
+            <TextInput
+              style={styles.ccCustomInput}
+              value={customAnswer}
+              onChangeText={setCustomAnswer}
+              placeholder="Type your answer…"
+              placeholderTextColor={colors.onSurfaceMuted}
+              multiline
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                if (customAnswer.trim()) submitAnswer(currentIdx, customAnswer.trim());
+              }}
+            />
+            <TouchableOpacity
+              style={[styles.ccPrimaryButton, { marginTop: spacing.md }]}
+              onPress={() => {
+                if (customAnswer.trim()) submitAnswer(currentIdx, customAnswer.trim());
+              }}
+              disabled={!customAnswer.trim()}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.ccPrimaryButtonText}>Use my answer →</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.ccOtherButton}
+            onPress={() => setShowCustomFor(currentIdx)}
+          >
+            <Text style={styles.ccOtherButtonText}>None of these? Type your own</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.ccTertiaryButton} onPress={onOpenHelp}>
+          <Text style={styles.ccTertiaryButtonText}>What counts as business?</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  };
+
+  const renderVerdict = () => {
+    if (!verdict) return renderLoading('Loading…');
+    const badge = isBusinessVerdict ? 'WORK EXPENSE' : 'PERSONAL';
+    return (
+      <ScrollView style={styles.ccBodyScroll} showsVerticalScrollIndicator={false}>
+        <View
+          style={[
+            styles.ccVerdictBadge,
+            isBusinessVerdict ? styles.ccVerdictBadgeBusiness : styles.ccVerdictBadgePersonal,
+          ]}
+        >
+          <Text
+            style={[
+              styles.ccVerdictBadgeText,
+              { color: isBusinessVerdict ? colors.positive : colors.onSurfaceMuted },
+            ]}
+          >
+            {badge}
+          </Text>
+        </View>
+        <Text style={styles.ccVerdictTitle}>
+          {stage === 'learning'
+            ? `Based on what you said, this looks like a ${isBusinessVerdict ? 'work' : 'personal'} expense.`
+            : `We think this is ${isBusinessVerdict ? 'a work expense' : 'personal'}.`}
+        </Text>
+        <Text style={styles.ccVerdictExplanation}>{verdict.explanation}</Text>
+
+        {verdict.tip_for_user ? (
+          <View style={styles.ccTipBlock}>
+            <Text style={styles.ccTipLabel}>FOR YOU</Text>
+            <Text style={styles.ccTipText}>{verdict.tip_for_user}</Text>
+          </View>
+        ) : null}
+
+        <TouchableOpacity
+          style={styles.ccPrimaryButton}
+          onPress={handleConfirmVerdict}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ccPrimaryButtonText}>Looks right →</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.ccSecondaryButton}
+          onPress={() => setPhase('correcting')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ccSecondaryButtonText}>
+            Actually it's {isBusinessVerdict ? 'personal' : 'for work'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.ccTertiaryButton}
+          onPress={() => onComplete('unsure')}
+        >
+          <Text style={styles.ccTertiaryButtonText}>Skip this one</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  };
+
+  const renderCorrecting = () => {
+    if (!verdict) return null;
+    return (
+      <ScrollView style={styles.ccBodyScroll} showsVerticalScrollIndicator={false}>
+        <Text style={styles.ccPhaseLabel}>TELL US WHY</Text>
+        <Text style={styles.ccVerdictTitle}>
+          We'll mark this as {isBusinessVerdict ? 'personal' : 'a work expense'} instead.
+        </Text>
+        <Text style={styles.ccVerdictExplanation}>
+          A quick note helps us learn for next time. Skip if you'd rather not.
+        </Text>
+
+        <View style={styles.ccCorrectionWrap}>
+          <Text style={styles.ccCorrectionLabel}>What did we miss?</Text>
+          <TextInput
+            style={styles.ccCorrectionInput}
+            value={correctionText}
+            onChangeText={setCorrectionText}
+            placeholder="e.g. I bought this for a client shoot, not personal use"
+            placeholderTextColor={colors.onSurfaceMuted}
+            multiline
+            autoFocus
+          />
+        </View>
+
+        <TouchableOpacity
+          style={styles.ccPrimaryButton}
+          onPress={handleSaveCorrection}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.ccPrimaryButtonText}>Save →</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.ccTertiaryButton}
+          onPress={() => setPhase('verdict')}
+        >
+          <Text style={styles.ccTertiaryButtonText}>Back</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles.ccContainer}>
+      {renderTxnHeader()}
+      {phase === 'loading' && renderLoading("Bopp's thinking…")}
+      {phase === 'asking' && renderAsking()}
+      {phase === 'thinking' && renderLoading('Working that out…')}
+      {phase === 'verdict' && renderVerdict()}
+      {phase === 'correcting' && renderCorrecting()}
+      {phase === 'submitting' && renderLoading('Saving…')}
+    </View>
+  );
+}
 
 // ---- HelpSheet: "What counts as business for me?" -------------------------
 

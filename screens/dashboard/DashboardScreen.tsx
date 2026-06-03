@@ -116,6 +116,16 @@ export default function DashboardScreen({ navigation }: any) {
     }
   }, [uploadState.status]);
 
+  // Poll while statements are still processing in the background.
+  // Stops once the queue empties — at which point loadData has already
+  // refreshed and the user sees fresh transactions without needing to
+  // leave + return to the Home tab.
+  useEffect(() => {
+    if (statementsProcessing <= 0) return;
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
+  }, [statementsProcessing]);
+
   const hideUploadComplete = () => {
     Animated.timing(slideAnim, { toValue: -80, duration: 300, useNativeDriver: true }).start(() => {
       setShowUploadComplete(false);
