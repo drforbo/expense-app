@@ -331,27 +331,6 @@ export default function DashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Profile incomplete prompt */}
-        {profileLoaded && !profileCompleted && (
-          <TouchableOpacity
-            style={styles.profilePromptCard}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.profilePromptRow}>
-              <View style={styles.profilePromptIcon}>
-                <Ionicons name="person-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profilePromptTitle}>Complete your profile</Text>
-                <Text style={styles.profilePromptSub}>
-                  Add your employment details for an accurate tax estimate.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
-            </View>
-          </TouchableOpacity>
-        )}
 
         {/* Hero gradient card — clean liquid gradient, no orbs */}
         <LinearGradient
@@ -381,7 +360,7 @@ export default function DashboardScreen({ navigation }: any) {
             </View>
             <TouchableOpacity
               style={styles.heroPillAction}
-              onPress={() => navigation.getParent()?.navigate('Tax')}
+              onPress={() => navigation.navigate('Tax')}
               activeOpacity={0.8}
             >
               <Text style={styles.heroPillActionText}>Optimise →</Text>
@@ -434,128 +413,137 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Next steps section */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionEyebrow}>NEXT STEPS</Text>
-        </View>
+        {/* Next steps section — prioritized: first card is a hero */}
+        {(() => {
+          type NextStep = {
+            key: string;
+            emoji: string;
+            title: string;
+            sub: string;
+            cta: string;
+            onPress: () => void;
+          };
 
-        {/* CTA: Upload a statement — always visible */}
-        <TouchableOpacity
-          style={styles.ctaCard}
-          onPress={() => navigation.navigate('Upload')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.ctaRow}>
-            <View style={styles.ctaIconWrap}>
-              <Text style={{ fontSize: 20 }}>📄</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.ctaTitle}>Upload a statement</Text>
-              <Text style={styles.ctaSub}>
-                {hasTransactions
-                  ? 'Add another bank statement to keep your records up to date.'
-                  : 'Get started by uploading a bank statement to track your expenses.'}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
-          </View>
-        </TouchableOpacity>
+          const nextSteps: NextStep[] = [];
 
-        {/* CTA: Uncategorised transactions */}
-        {hasTransactions && uncategorizedCount > 0 && (
-          <TouchableOpacity
-            style={styles.ctaCard}
-            onPress={() => navigation.navigate('SwipeCategorize', { transactions: [] })}
-            activeOpacity={0.8}
-          >
-            <View style={styles.ctaRow}>
-              <View style={styles.ctaIconWrap}>
-                <Text style={{ fontSize: 20 }}>🏷️</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ctaTitle}>
-                  You have {uncategorizedCount} to categorise
-                </Text>
-                <Text style={styles.ctaSub}>
-                  Swipe through your transactions to categorise them.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
-            </View>
-          </TouchableOpacity>
-        )}
+          if (profileLoaded && !profileCompleted) {
+            nextSteps.push({
+              key: 'profile',
+              emoji: '👤',
+              title: 'Finish setting up your profile',
+              sub: 'Two quick questions about your work setup so we can give you an accurate tax estimate.',
+              cta: 'Complete profile',
+              onPress: () => navigation.navigate('Profile'),
+            });
+          }
 
-        {/* CTA: Needs evidence */}
-        {hasTransactions && unqualifiedCount > 0 && (
-          <TouchableOpacity
-            style={styles.ctaCard}
-            onPress={() => navigation.navigate('QualifyTransactionList')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.ctaRow}>
-              <View style={styles.ctaIconWrap}>
-                <Text style={{ fontSize: 20 }}>🧾</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ctaTitle}>
-                  {unqualifiedCount} expense{unqualifiedCount !== 1 ? 's' : ''} need a receipt
-                </Text>
-                <Text style={styles.ctaSub}>
-                  Add receipts to qualify your deductions.
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
-            </View>
-          </TouchableOpacity>
-        )}
+          if (hasTransactions && uncategorizedCount > 0) {
+            nextSteps.push({
+              key: 'categorise',
+              emoji: '🏷️',
+              title: `Categorise ${uncategorizedCount} transaction${uncategorizedCount !== 1 ? 's' : ''}`,
+              sub: 'Swipe through your transactions to sort them into the right categories.',
+              cta: 'Start categorising',
+              onPress: () => navigation.navigate('SwipeCategorize', { transactions: [] }),
+            });
+          }
 
-        {/* Gifted items card */}
-        {receivesGifts && (
-          <TouchableOpacity
-            style={styles.ctaCard}
-            onPress={() => navigation.navigate('GiftedTracker')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.ctaRow}>
-              <View style={styles.ctaIconWrap}>
-                <Text style={{ fontSize: 20 }}>🎁</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ctaTitle}>Log gifted items</Text>
-                <Text style={styles.ctaSub}>
-                  {giftedItemsCount > 0
-                    ? `${giftedItemsCount} item${giftedItemsCount !== 1 ? 's' : ''} logged`
-                    : 'PR packages count as income'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
-            </View>
-          </TouchableOpacity>
-        )}
+          if (hasTransactions && unqualifiedCount > 0) {
+            nextSteps.push({
+              key: 'receipts',
+              emoji: '🧾',
+              title: `Add receipts to ${unqualifiedCount} expense${unqualifiedCount !== 1 ? 's' : ''}`,
+              sub: 'Attach evidence so HMRC will accept these as valid deductions.',
+              cta: 'Add receipts',
+              onPress: () => navigation.navigate('QualifyTransactionList'),
+            });
+          }
 
-        {/* All good state */}
-        {hasTransactions && uncategorizedCount === 0 && unqualifiedCount === 0 && !receivesGifts && (
-          <View style={styles.ctaCard}>
-            <View style={styles.ctaRow}>
-              <View style={styles.ctaIconWrap}>
-                <Text style={{ fontSize: 20 }}>✅</Text>
+          nextSteps.push({
+            key: 'upload',
+            emoji: '📄',
+            title: hasTransactions ? 'Upload another statement' : 'Upload your first bank statement',
+            sub: hasTransactions
+              ? 'Keep your records up to date by adding the latest statement.'
+              : "We'll read it and pull out every transaction automatically.",
+            cta: hasTransactions ? 'Add statement' : 'Get started',
+            onPress: () => navigation.navigate('Upload'),
+          });
+
+          if (receivesGifts) {
+            nextSteps.push({
+              key: 'gifted',
+              emoji: '🎁',
+              title: 'Log gifted items',
+              sub: giftedItemsCount > 0
+                ? `${giftedItemsCount} item${giftedItemsCount !== 1 ? 's' : ''} logged. PR packages count as taxable income.`
+                : 'PR packages count as taxable income — log anything you received.',
+              cta: 'Log items',
+              onPress: () => navigation.navigate('GiftedTracker'),
+            });
+          }
+
+          const [primary, ...rest] = nextSteps;
+          return (
+            <>
+              <View style={styles.nextStepsHeader}>
+                <Text style={styles.nextStepsTitle}>What's next</Text>
+                <View style={styles.nextStepsCountChip}>
+                  <Text style={styles.nextStepsCountText}>
+                    {nextSteps.length} to do
+                  </Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ctaTitle}>You're all caught up</Text>
-                <Text style={styles.ctaSub}>
-                  No actions needed right now.
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
+
+              {primary && (
+                <TouchableOpacity
+                  style={styles.primaryStepCard}
+                  onPress={primary.onPress}
+                  activeOpacity={0.9}
+                >
+                  <View style={styles.primaryStepHeader}>
+                    <View style={styles.primaryStepIconWrap}>
+                      <Text style={{ fontSize: 24 }}>{primary.emoji}</Text>
+                    </View>
+                    <Text style={styles.primaryStepEyebrow}>DO THIS NEXT</Text>
+                  </View>
+                  <Text style={styles.primaryStepTitle}>{primary.title}</Text>
+                  <Text style={styles.primaryStepSub}>{primary.sub}</Text>
+                  <View style={styles.primaryStepCtaButton}>
+                    <Text style={styles.primaryStepCtaText}>{primary.cta} →</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {rest.map((step) => (
+                <TouchableOpacity
+                  key={step.key}
+                  style={styles.ctaCard}
+                  onPress={step.onPress}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.ctaRow}>
+                    <View style={styles.ctaIconWrap}>
+                      <Text style={{ fontSize: 20 }}>{step.emoji}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.ctaTitle}>{step.title}</Text>
+                      <Text style={styles.ctaSub}>{step.sub}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </>
+          );
+        })()}
 
         {/* Timeline section */}
         {recentTransactions.length > 0 && (
           <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Timeline</Text>
-              <TouchableOpacity onPress={() => navigation.getParent()?.navigate('Transactions')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
                 <Text style={styles.sectionLink}>View Archive</Text>
               </TouchableOpacity>
             </View>
@@ -876,6 +864,89 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.secondary,
+  },
+
+  // "What's next" header + primary step hero card
+  nextStepsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: spacing.xs,
+    marginBottom: 14,
+  },
+  nextStepsTitle: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  nextStepsCountChip: {
+    backgroundColor: colors.primaryContainer,
+    borderRadius: borderRadius.full,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+  },
+  nextStepsCountText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.onSurface,
+    letterSpacing: 0.2,
+  },
+  primaryStepCard: {
+    backgroundColor: colors.tagExpenseBg,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    marginHorizontal: spacing.md,
+    marginBottom: 14,
+  },
+  primaryStepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  primaryStepIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(254,136,92,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryStepEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  primaryStepTitle: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    lineHeight: 26,
+    marginBottom: 6,
+  },
+  primaryStepSub: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.onSurfaceMuted,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  primaryStepCtaButton: {
+    backgroundColor: colors.primaryContainer,
+    borderRadius: borderRadius.full,
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    alignSelf: 'flex-start',
+  },
+  primaryStepCtaText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.onSurface,
   },
 
   // CTA / next-action cards

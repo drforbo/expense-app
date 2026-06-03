@@ -48,8 +48,8 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
   const [trackingGoal, setTrackingGoal] = useState<string>('');
   const [hasOtherEmployment, setHasOtherEmployment] = useState<boolean | null>(null);
   const [employmentIncome, setEmploymentIncome] = useState(30000);
-  const [studentLoanPlan, setStudentLoanPlan] = useState<string>('none');
-  const [bankAccountCount, setBankAccountCount] = useState(1);
+  const [studentLoanPlan, setStudentLoanPlan] = useState<string>('');
+  const [bankAccountCount, setBankAccountCount] = useState(0);
   const [jobRole, setJobRole] = useState('');
   const [mainClients, setMainClients] = useState(['', '', '']);
   const [workLocation, setWorkLocation] = useState('');
@@ -151,36 +151,35 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     }
   };
 
-  const handleWorkTypeSelect = (type: string) => {
-    if (type === 'other') {
-      setWorkType('other');
-      return;
+  const goToNextStep = () => {
+    switch (currentStep) {
+      case 'workType': setCurrentStep('jobRole'); break;
+      case 'jobRole': setCurrentStep('mainClients'); break;
+      case 'mainClients': setCurrentStep('workLocation'); break;
+      case 'workLocation': setCurrentStep('income'); break;
+      case 'income': setCurrentStep('giftedItems'); break;
+      case 'giftedItems': setCurrentStep('bankAccounts'); break;
+      case 'bankAccounts': setCurrentStep('registration'); break;
+      case 'registration': setCurrentStep('employment'); break;
+      case 'employment': setCurrentStep('studentLoan'); break;
+      case 'studentLoan': handleComplete(); break;
     }
-    setWorkType(type);
-    setTimeout(() => setCurrentStep('jobRole'), 300);
   };
 
-  const handleOtherSubmit = () => {
-    if (!customWorkType.trim()) return;
-    setWorkType('other');
-    setTimeout(() => setCurrentStep('jobRole'), 300);
-  };
-
-  const handleJobRoleNext = () => {
-    setCurrentStep('mainClients');
-  };
-
-  const handleMainClientsNext = () => {
-    setCurrentStep('workLocation');
-  };
-
-  const handleWorkLocationSelect = (location: string) => {
-    setWorkLocation(location);
-    setTimeout(() => setCurrentStep('income'), 300);
-  };
-
-  const handleIncomeNext = () => {
-    setCurrentStep('giftedItems');
+  const canAdvance = (): boolean => {
+    switch (currentStep) {
+      case 'workType': return workType !== '' && (workType !== 'other' || customWorkType.trim() !== '');
+      case 'jobRole': return jobRole.trim() !== '';
+      case 'mainClients': return true; // optional
+      case 'workLocation': return workLocation !== '';
+      case 'income': return monthlyIncome > 0;
+      case 'giftedItems': return receivesGiftedItems !== null;
+      case 'bankAccounts': return bankAccountCount > 0;
+      case 'registration': return trackingGoal !== '';
+      case 'employment': return hasOtherEmployment !== null && (!hasOtherEmployment || employmentIncome > 0);
+      case 'studentLoan': return studentLoanPlan !== '';
+      default: return false;
+    }
   };
 
   const handleComplete = async () => {
@@ -212,7 +211,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           tracking_goal: trackingGoal,
           has_other_employment: hasOtherEmployment,
           employment_income: hasOtherEmployment ? employmentIncome : null,
-          student_loan_plan: studentLoanPlan,
+          student_loan_plan: studentLoanPlan || 'none',
           profile_completed: false, // Must be set to true via Profile screen
         }, {
           onConflict: 'user_id'
@@ -276,7 +275,15 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       case 'workType':
         if (workType === 'other') return `tell us\nwhat you do ✨`;
         return `what's your\nside\nhustle? 💅`;
-      case 'jobRole': return `what do\nyou\nactually do? 💼`;
+      case 'jobRole': {
+        switch (workType) {
+          case 'content_creation': return `what kind of\ncontent do\nyou make? 🎥`;
+          case 'freelancing': return `what kind of\nfreelance\nwork? 💼`;
+          case 'side_hustle': return `what do\nyou sell? 🛒`;
+          case 'other': return `tell us more\nabout your\n${customWorkType ? 'work' : 'side hustle'} ✨`;
+          default: return `give us\nmore\ndetails 💼`;
+        }
+      }
       case 'mainClients': return `who pays\nyou? 💰`;
       case 'workLocation': return `where do\nyou\nwork? 🏠`;
       case 'income': return `how much\ndo you earn\nper month? 💷`;
@@ -294,7 +301,15 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       case 'workType':
         if (workType === 'other') return 'a few words is fine';
         return 'pick the closest match';
-      case 'jobRole': return 'helps us categorize your expenses';
+      case 'jobRole': {
+        switch (workType) {
+          case 'content_creation': return 'e.g., beauty TikToks, finance newsletter';
+          case 'freelancing': return 'e.g., graphic design, copywriting, dev work';
+          case 'side_hustle': return 'e.g., vintage clothes, sneakers, craft supplies';
+          case 'other': return 'a sentence or two is plenty';
+          default: return 'helps us categorize your expenses';
+        }
+      }
       case 'mainClients': return 'helps us spot your income automatically';
       case 'workLocation': return 'affects which expenses are deductible';
       case 'income': return 'average monthly income from your side hustle, before tax';
@@ -438,6 +453,26 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
     </View>
   );
 
+  const renderContinueButton = (label?: string) => {
+    const isLast = currentStep === 'studentLoan';
+    const text = label ?? (isLast ? "let's go →" : "that's me →");
+    const enabled = canAdvance() && !loading;
+    return (
+      <TouchableOpacity
+        style={[styles.ctaButton, !enabled && styles.buttonDisabled]}
+        onPress={goToNextStep}
+        disabled={!enabled}
+        activeOpacity={0.8}
+      >
+        {loading ? (
+          <ActivityIndicator color={colors.night} />
+        ) : (
+          <Text style={styles.ctaButtonText}>{text}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   const renderWorkType = () => (
     <View style={styles.stepContainer}>
       {workType !== 'other' ? (
@@ -446,25 +481,25 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
             emoji="🎥"
             text="Content creation"
             selected={workType === 'content_creation'}
-            onPress={() => handleWorkTypeSelect('content_creation')}
+            onPress={() => setWorkType('content_creation')}
           />
           <OptionCard
             emoji="💼"
             text="Freelancing"
             selected={workType === 'freelancing'}
-            onPress={() => handleWorkTypeSelect('freelancing')}
+            onPress={() => setWorkType('freelancing')}
           />
           <OptionCard
             emoji="🛒"
             text="(Re)selling products"
             selected={workType === 'side_hustle'}
-            onPress={() => handleWorkTypeSelect('side_hustle')}
+            onPress={() => setWorkType('side_hustle')}
           />
           <OptionCard
             emoji="✨"
             text="Other"
             selected={workType === 'other'}
-            onPress={() => handleWorkTypeSelect('other')}
+            onPress={() => setWorkType('other')}
           />
         </>
       ) : (
@@ -478,19 +513,12 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
               placeholderTextColor={colors.nightMuted}
               autoFocus
               returnKeyType="done"
-              onSubmitEditing={handleOtherSubmit}
+              onSubmitEditing={() => canAdvance() && goToNextStep()}
             />
           </View>
-          <TouchableOpacity
-            style={[styles.ctaButton, !customWorkType.trim() && styles.buttonDisabled]}
-            onPress={handleOtherSubmit}
-            disabled={!customWorkType.trim()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
-          </TouchableOpacity>
         </View>
       )}
+      {renderContinueButton()}
     </View>
   );
 
@@ -501,22 +529,21 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           style={styles.input}
           value={jobRole}
           onChangeText={setJobRole}
-          placeholder="e.g., freelance photographer, UGC creator"
+          placeholder={
+            workType === 'content_creation' ? 'beauty TikToks' :
+            workType === 'freelancing' ? 'freelance photographer' :
+            workType === 'side_hustle' ? 'vintage clothes on Depop' :
+            workType === 'other' ? `${customWorkType || 'your work'}, in detail` :
+            'e.g., freelance photographer'
+          }
           placeholderTextColor={colors.nightMuted}
           autoFocus
           returnKeyType="done"
-          onSubmitEditing={handleJobRoleNext}
+          onSubmitEditing={() => canAdvance() && goToNextStep()}
         />
       </View>
 
-      <TouchableOpacity
-        style={[styles.ctaButton, !jobRole.trim() && styles.buttonDisabled]}
-        onPress={handleJobRoleNext}
-        disabled={!jobRole.trim()}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
-      </TouchableOpacity>
+      {renderContinueButton()}
     </View>
   );
 
@@ -539,17 +566,11 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         </View>
       ))}
 
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={handleMainClientsNext}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
-      </TouchableOpacity>
+      {renderContinueButton()}
 
       <TouchableOpacity
         style={styles.skipButton}
-        onPress={handleMainClientsNext}
+        onPress={goToNextStep}
       >
         <Text style={styles.skipButtonText}>Skip for now</Text>
       </TouchableOpacity>
@@ -558,12 +579,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
   const renderWorkLocation = () => (
     <View style={styles.stepContainer}>
-      <OptionCard emoji="🏠" text="From home" selected={workLocation === 'home'} onPress={() => handleWorkLocationSelect('home')} />
-      <OptionCard emoji="🏢" text="Rented office" selected={workLocation === 'office'} onPress={() => handleWorkLocationSelect('office')} />
-      <OptionCard emoji="👥" text="Co-working space" selected={workLocation === 'coworking'} onPress={() => handleWorkLocationSelect('coworking')} />
-      <OptionCard emoji="📍" text="Client sites" selected={workLocation === 'client_sites'} onPress={() => handleWorkLocationSelect('client_sites')} />
-      <OptionCard emoji="🚗" text="On the road" selected={workLocation === 'on_the_road'} onPress={() => handleWorkLocationSelect('on_the_road')} />
-      <OptionCard emoji="🔀" text="Mixed / varies" selected={workLocation === 'mixed'} onPress={() => handleWorkLocationSelect('mixed')} />
+      <OptionCard emoji="🏠" text="From home" selected={workLocation === 'home'} onPress={() => setWorkLocation('home')} />
+      <OptionCard emoji="🏢" text="Rented office" selected={workLocation === 'office'} onPress={() => setWorkLocation('office')} />
+      <OptionCard emoji="👥" text="Co-working space" selected={workLocation === 'coworking'} onPress={() => setWorkLocation('coworking')} />
+      <OptionCard emoji="📍" text="Client sites" selected={workLocation === 'client_sites'} onPress={() => setWorkLocation('client_sites')} />
+      <OptionCard emoji="🚗" text="On the road" selected={workLocation === 'on_the_road'} onPress={() => setWorkLocation('on_the_road')} />
+      <OptionCard emoji="🔀" text="Mixed / varies" selected={workLocation === 'mixed'} onPress={() => setWorkLocation('mixed')} />
+      {renderContinueButton()}
     </View>
   );
 
@@ -603,13 +625,7 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
       <Text style={styles.incrementHint}>Tap or hold to adjust by £100</Text>
 
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={handleIncomeNext}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
-      </TouchableOpacity>
+      {renderContinueButton()}
     </View>
   );
 
@@ -619,20 +635,15 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         emoji="🎁"
         text="Yes, I receive gifted items"
         selected={receivesGiftedItems === true}
-        onPress={() => {
-          setReceivesGiftedItems(true);
-          setTimeout(() => setCurrentStep('bankAccounts'), 300);
-        }}
+        onPress={() => setReceivesGiftedItems(true)}
       />
       <OptionCard
         emoji="❌"
         text="No"
         selected={receivesGiftedItems === false}
-        onPress={() => {
-          setReceivesGiftedItems(false);
-          setTimeout(() => setCurrentStep('bankAccounts'), 300);
-        }}
+        onPress={() => setReceivesGiftedItems(false)}
       />
+      {renderContinueButton()}
     </View>
   );
 
@@ -644,12 +655,10 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
           emoji={n === 1 ? '💳' : '💰'}
           text={n === 5 ? '5 or more' : `${n}`}
           selected={bankAccountCount === n}
-          onPress={() => {
-            setBankAccountCount(n);
-            setTimeout(() => setCurrentStep('registration'), 300);
-          }}
+          onPress={() => setBankAccountCount(n)}
         />
       ))}
+      {renderContinueButton()}
     </View>
   );
 
@@ -659,35 +668,21 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         emoji="👤"
         text="Yes - Sole trader"
         selected={trackingGoal === 'sole_trader'}
-        onPress={() => {
-          setTrackingGoal('sole_trader');
-          setTimeout(() => setCurrentStep('employment'), 300);
-        }}
+        onPress={() => setTrackingGoal('sole_trader')}
       />
       <OptionCard
         emoji="🏢"
         text="Yes - Limited company"
         selected={trackingGoal === 'limited_company'}
-        onPress={() => {
-          setTrackingGoal('limited_company');
-          setTimeout(() => setCurrentStep('employment'), 300);
-        }}
+        onPress={() => setTrackingGoal('limited_company')}
       />
       <OptionCard
         emoji="❓"
         text="Not yet"
         selected={trackingGoal === 'not_registered'}
-        onPress={() => {
-          setTrackingGoal('not_registered');
-          setTimeout(() => setCurrentStep('employment'), 300);
-        }}
+        onPress={() => setTrackingGoal('not_registered')}
       />
-
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.ember} />
-        </View>
-      )}
+      {renderContinueButton()}
     </View>
   );
 
@@ -697,18 +692,13 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
         emoji="💸"
         text="Yes, just my side hustle"
         selected={hasOtherEmployment === false}
-        onPress={() => {
-          setHasOtherEmployment(false);
-          setTimeout(() => setCurrentStep('studentLoan'), 300);
-        }}
+        onPress={() => setHasOtherEmployment(false)}
       />
       <OptionCard
         emoji="🏢"
         text="No, I also have a day job"
         selected={hasOtherEmployment === true}
-        onPress={() => {
-          setHasOtherEmployment(true);
-        }}
+        onPress={() => setHasOtherEmployment(true)}
       />
 
       {hasOtherEmployment === true && (
@@ -749,15 +739,10 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
 
           <Text style={styles.incrementHint}>Tap or hold to adjust by £1,000</Text>
 
-          <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => setCurrentStep('studentLoan')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.ctaButtonText}>that's me {'\u2192'}</Text>
-          </TouchableOpacity>
         </View>
       )}
+
+      {renderContinueButton()}
     </View>
   );
 
@@ -766,54 +751,35 @@ export default function SimpleOnboarding({ onComplete }: SimpleOnboardingProps) 
       <OptionCard
         emoji="❌"
         text="No student loan"
-        selected={studentLoanPlan === 'none' && currentStep === 'studentLoan'}
-        onPress={() => {
-          setStudentLoanPlan('none');
-          setTimeout(handleComplete, 300);
-        }}
+        selected={studentLoanPlan === 'none'}
+        onPress={() => setStudentLoanPlan('none')}
       />
       <OptionCard
         emoji="🎓"
         text="Plan 1 (started before 2012)"
         selected={studentLoanPlan === 'plan1'}
-        onPress={() => {
-          setStudentLoanPlan('plan1');
-          setTimeout(handleComplete, 300);
-        }}
+        onPress={() => setStudentLoanPlan('plan1')}
       />
       <OptionCard
         emoji="🎓"
         text="Plan 2 (started 2012 or later)"
         selected={studentLoanPlan === 'plan2'}
-        onPress={() => {
-          setStudentLoanPlan('plan2');
-          setTimeout(handleComplete, 300);
-        }}
+        onPress={() => setStudentLoanPlan('plan2')}
       />
       <OptionCard
         emoji="🏴󠁧󠁢󠁳󠁣󠁴󠁿"
         text="Plan 4 (Scotland)"
         selected={studentLoanPlan === 'plan4'}
-        onPress={() => {
-          setStudentLoanPlan('plan4');
-          setTimeout(handleComplete, 300);
-        }}
+        onPress={() => setStudentLoanPlan('plan4')}
       />
       <OptionCard
         emoji="📚"
         text="Postgraduate loan"
         selected={studentLoanPlan === 'postgrad'}
-        onPress={() => {
-          setStudentLoanPlan('postgrad');
-          setTimeout(handleComplete, 300);
-        }}
+        onPress={() => setStudentLoanPlan('postgrad')}
       />
 
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.ember} />
-        </View>
-      )}
+      {renderContinueButton()}
     </View>
   );
 

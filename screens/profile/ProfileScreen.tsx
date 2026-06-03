@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -301,6 +301,8 @@ export default function ProfileScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const workSetupY = useRef<number>(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -1235,6 +1237,9 @@ export default function ProfileScreen({ navigation }: any) {
   }
 
   const isProfileComplete = workFromHomeOption !== null && vehicleUseOption !== null;
+  const missingQuestions: string[] = [];
+  if (workFromHomeOption === null) missingQuestions.push('How often you work from home');
+  if (vehicleUseOption === null) missingQuestions.push('How often you drive for work');
 
   // Checklist calculations
   const completedCount = checklist.filter(item => completedItems.has(item.id)).length;
@@ -1971,7 +1976,7 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Screen label + heading */}
         <Text style={styles.screenLabel}>YOUR PROFILE</Text>
         <Text style={styles.heroHeading}>{'edit your\nprofile.'}</Text>
@@ -1981,11 +1986,23 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.completionCard}>
             <View style={styles.completionHeader}>
               <Ionicons name="person-circle" size={24} color={colors.gradientMid} />
-              <Text style={styles.completionTitle}>Complete Your Profile</Text>
+              <Text style={styles.completionTitle}>
+                {missingQuestions.length} {missingQuestions.length === 1 ? 'question' : 'questions'} left
+              </Text>
             </View>
             <Text style={styles.completionSubtitle}>
-              Answer a few more questions below for more accurate tax estimates
+              We still need to know:
             </Text>
+            {missingQuestions.map((q, i) => (
+              <Text key={i} style={styles.completionMissingItem}>•  {q}</Text>
+            ))}
+            <TouchableOpacity
+              style={styles.completionCtaButton}
+              onPress={() => scrollViewRef.current?.scrollTo({ y: Math.max(0, workSetupY.current - 16), animated: true })}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.completionCtaText}>Take me there →</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -2161,8 +2178,10 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
 
         {/* Work Setup */}
-        <Text style={styles.sectionTitle}>Work Setup</Text>
-        <Text style={styles.sectionSubtitle}>Helps us suggest relevant expense categories</Text>
+        <View onLayout={(e) => { workSetupY.current = e.nativeEvent.layout.y; }}>
+          <Text style={styles.sectionTitle}>Work Setup</Text>
+          <Text style={styles.sectionSubtitle}>Helps us suggest relevant expense categories</Text>
+        </View>
 
         {/* Work from home */}
         <View style={styles.questionCard}>
@@ -2845,6 +2864,26 @@ const styles = StyleSheet.create({
   completionSubtitle: {
     fontSize: 16,
     color: colors.onSurfaceMuted,
+  },
+  completionMissingItem: {
+    fontSize: 15,
+    color: colors.onSurface,
+    fontFamily: fonts.bodyMed,
+    marginTop: 6,
+    marginLeft: 4,
+  },
+  completionCtaButton: {
+    marginTop: 16,
+    backgroundColor: colors.primaryContainer,
+    borderRadius: borderRadius.full,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
+  },
+  completionCtaText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.onSurface,
   },
   sectionHeader: {
     flexDirection: 'row',
